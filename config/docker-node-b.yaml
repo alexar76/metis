@@ -1,0 +1,27 @@
+# Worker node B — Docker (DeepSeek cloud API)
+node_id: node-b
+host: 0.0.0.0
+port: 8444
+
+provider: openai_compat
+model: deepseek-v4-flash
+base_url: https://api.deepseek.com/v1
+
+api_key_env: METIS_NODE_B_KEY
+llm_api_key_env: DEEPSEEK_API_KEY
+production: true
+
+models:
+  - deepseek-v4-flash
+  - deepseek-v4-pro
+
+roles:
+  - parser_b
+  - red_team
+  - refiner
+  - synthesizer
+  - aggregator
+
+security:
+  tls_verify: false
+  request_signing: false

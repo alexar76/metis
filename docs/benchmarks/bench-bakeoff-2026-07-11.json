@@ -1,0 +1,41 @@
+{
+  "n": 8,
+  "configs": [
+    {
+      "name": "C0 solo (V4-Pro)",
+      "acc": 100,
+      "correct": 8,
+      "total": 8,
+      "avg_verify": 1.0,
+      "avg_lat": 99.0,
+      "errors": 0
+    },
+    {
+      "name": "C1 dual (V4-Pro+Kimi)",
+      "acc": 100,
+      "correct": 8,
+      "total": 8,
+      "avg_verify": 1.0,
+      "avg_lat": 110.1,
+      "errors": 0
+    },
+    {
+      "name": "C2 quad (V4+Kimi+Qwen+GLM)",
+      "acc": 100,
+      "correct": 8,
+      "total": 8,
+      "avg_verify": 1.0,
+      "avg_lat": 102.8,
+      "errors": 0
+    },
+    {
+      "name": "C4 tiered (diverse props, V4 agg)",
+      "acc": 100,
+      "correct": 8,
+      "total": 8,
+      "avg_verify": 1.0,
+      "avg_lat": 176.9,
+      "errors": 0
+    }
+  ]
+}

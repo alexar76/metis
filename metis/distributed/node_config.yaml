@@ -1,0 +1,25 @@
+# Example single-node worker configuration for `metis-node serve`
+
+node_id: local-node-1
+host: 127.0.0.1
+port: 8443
+
+provider: mock
+model: qwen3:8b
+base_url: http://localhost:11434/v1
+
+api_key_env: METIS_NODE_LOCAL_KEY
+
+models:
+  - qwen3:8b
+
+roles:
+  - intent_parser
+  - proposer
+  - red_team
+  - refiner
+  - synthesizer
+
+security:
+  tls_verify: true
+  request_signing: false

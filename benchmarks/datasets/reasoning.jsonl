@@ -1,0 +1,15 @@
+{"id": "math-01", "query": "What is 17 * 24? Reply with the number only.", "category": "reasoning", "checks": {"answer_contains": "408"}}
+{"id": "math-02", "query": "If a train travels 120 km in 2 hours, what is its average speed in km/h? Number only.", "category": "reasoning", "checks": {"answer_contains": "60"}}
+{"id": "logic-01", "query": "All bloops are razzies. All razzies are lazzies. Are all bloops lazzies? Answer yes or no only.", "category": "reasoning", "checks": {"answer_contains": "yes"}}
+{"id": "math-03", "query": "What is the sum of the first 10 positive integers? Number only.", "category": "reasoning", "checks": {"answer_contains": "55"}}
+{"id": "logic-02", "query": "Alice is taller than Bob. Bob is taller than Carol. Is Alice taller than Carol? Answer yes or no only.", "category": "reasoning", "checks": {"answer_contains": "yes"}}
+{"id": "math-04", "query": "How many minutes are in 3.5 hours? Number only.", "category": "reasoning", "checks": {"answer_contains": "210"}}
+{"id": "math-05", "query": "What is 2^10? Number only.", "category": "reasoning", "checks": {"answer_contains": "1024"}}
+{"id": "logic-03", "query": "If it rains, the ground is wet. The ground is wet. Did it necessarily rain? Answer yes or no only.", "category": "reasoning", "checks": {"answer_contains": "no"}}
+{"id": "math-06", "query": "A rectangle has width 7 and height 6. What is its area? Number only.", "category": "reasoning", "checks": {"answer_contains": "42"}}
+{"id": "logic-04", "query": "Exactly one of A or B is true. A is false. Is B true? Answer yes or no only.", "category": "reasoning", "checks": {"answer_contains": "yes"}}
+{"id": "math-07", "query": "What is 15% of 200? Number only.", "category": "reasoning", "checks": {"answer_contains": "30"}}
+{"id": "math-08", "query": "How many sides does a hexagon have? Number only.", "category": "reasoning", "checks": {"answer_contains": "6"}}
+{"id": "code-01", "query": "In Python, what built-in function returns the length of a list? Function name only.", "category": "code", "checks": {"answer_contains": "len"}}
+{"id": "code-02", "query": "What is the time complexity of binary search on a sorted array? Answer O(log n) or similar.", "category": "code", "checks": {"answer_regex": "O\\(log|logarithm|log n"}}
+{"id": "code-03", "query": "In JSON, what type are true and false? One word.", "category": "code", "checks": {"answer_contains": "boolean"}}

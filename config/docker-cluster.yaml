@@ -1,0 +1,32 @@
+# Metis Docker cluster — service DNS names on metis-net
+coordinator:
+  url: http://coordinator:8080
+
+nodes:
+  - id: node-a
+    url: http://node-a:8443
+    api_key_env: METIS_NODE_A_KEY
+    models:
+      - microsoft/phi-4-reasoning-plus
+      - qwen/qwen3.6-35b-a3b
+    roles:
+      - parser_a
+      - intent_parser
+      - proposer
+
+  - id: node-b
+    url: http://node-b:8444
+    api_key_env: METIS_NODE_B_KEY
+    models:
+      - deepseek-v4-flash
+      - deepseek-v4-pro
+    roles:
+      - parser_b
+      - red_team
+      - refiner
+      - synthesizer
+      - aggregator
+
+security:
+  tls_verify: false
+  request_signing: false

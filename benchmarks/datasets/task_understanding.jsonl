@@ -1,0 +1,12 @@
+{"id": "trap-01", "query": "Deploy it to production tonight.", "category": "trap", "checks": {"must_ask_clarification": true}}
+{"id": "trap-02", "query": "Fix the bug in the payment module.", "category": "trap", "checks": {"must_ask_clarification": true}}
+{"id": "trap-03", "query": "Make the dashboard faster.", "category": "ambiguous", "checks": {"must_ask_clarification": true}}
+{"id": "ambig-01", "query": "Should we use Python or JavaScript for this?", "category": "ambiguous", "checks": {"must_ask_clarification": true}}
+{"id": "ambig-02", "query": "Migrate our database.", "category": "ambiguous", "checks": {"must_ask_clarification": true}}
+{"id": "ambig-03", "query": "Optimize the API.", "category": "ambiguous", "checks": {"must_ask_clarification": true}}
+{"id": "ambig-04", "query": "Set up monitoring for the service.", "category": "ambiguous", "checks": {"must_ask_clarification": true}}
+{"id": "trap-04", "query": "Delete the old data.", "category": "trap", "checks": {"must_ask_clarification": true}}
+{"id": "ambig-05", "query": "Integrate with the CRM.", "category": "ambiguous", "checks": {"must_ask_clarification": true}}
+{"id": "trap-05", "query": "Roll back the last release.", "category": "trap", "checks": {"must_ask_clarification": true}}
+{"id": "ambig-06", "query": "Improve security.", "category": "ambiguous", "checks": {"must_ask_clarification": true}}
+{"id": "trap-06", "query": "Send the report to the team.", "category": "trap", "checks": {"must_ask_clarification": true}}

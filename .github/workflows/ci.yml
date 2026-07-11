@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,distributed]" pytest-cov hypothesis
+
+      - name: Run tests with coverage
+        if: matrix.python-version != '3.11'
+        run: |
+          pytest --cov=metis --cov-report=term-missing -v
+
+      - name: Coverage badge
+        if: matrix.python-version == '3.11'
+        env:
+          AICOM_CI_ENFORCE_BADGE_SYNC: "1"
+        run: bash scripts/ci_coverage_badge.sh -- tests/ -q --cov=metis

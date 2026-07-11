@@ -1,0 +1,1061 @@
+{
+  "n": 24,
+  "systems": {
+    "DeepSeek-V4-Pro (direct)": {
+      "correct": 23,
+      "total": 24,
+      "lat": [
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3,
+        0.3
+      ],
+      "by_cat": {
+        "math": [
+          6,
+          6
+        ],
+        "logic": [
+          5,
+          5
+        ],
+        "science": [
+          4,
+          4
+        ],
+        "deduction": [
+          3,
+          3
+        ],
+        "trap": [
+          5,
+          6
+        ]
+      },
+      "errors": 0,
+      "pass_rate": 96,
+      "avg_lat": 0.3,
+      "by_cat_pct": {
+        "math": 100,
+        "logic": 100,
+        "science": 100,
+        "deduction": 100,
+        "trap": 83
+      }
+    },
+    "Metis (V4-Pro base)": {
+      "correct": 24,
+      "total": 24,
+      "lat": [
+        73.8,
+        70.0,
+        66.7,
+        78.2,
+        85.3,
+        76.5,
+        73.7,
+        105.1,
+        65.3,
+        70.5,
+        109.8,
+        98.5,
+        78.9,
+        76.2,
+        89.7,
+        95.1,
+        116.7,
+        79.8,
+        113.3,
+        98.2,
+        105.6,
+        128.4,
+        85.5,
+        109.2
+      ],
+      "by_cat": {
+        "math": [
+          6,
+          6
+        ],
+        "logic": [
+          5,
+          5
+        ],
+        "science": [
+          4,
+          4
+        ],
+        "deduction": [
+          3,
+          3
+        ],
+        "trap": [
+          6,
+          6
+        ]
+      },
+      "errors": 0,
+      "pass_rate": 100,
+      "avg_lat": 89.6,
+      "by_cat_pct": {
+        "math": 100,
+        "logic": 100,
+        "science": 100,
+        "deduction": 100,
+        "trap": 100
+      }
+    },
+    "Kimi K2.6": {
+      "correct": 23,
+      "total": 24,
+      "lat": [
+        2.4,
+        0.8,
+        0.9,
+        1.0,
+        1.3,
+        1.0,
+        1.9,
+        2.0,
+        1.1,
+        5.0,
+        1.1,
+        0.7,
+        0.7,
+        1.3,
+        0.3,
+        1.9,
+        2.8,
+        1.4,
+        2.1,
+        0.4,
+        1.2,
+        2.3,
+        1.3,
+        1.4
+      ],
+      "by_cat": {
+        "math": [
+          6,
+          6
+        ],
+        "logic": [
+          5,
+          5
+        ],
+        "science": [
+          4,
+          4
+        ],
+        "deduction": [
+          3,
+          3
+        ],
+        "trap": [
+          5,
+          6
+        ]
+      },
+      "errors": 0,
+      "pass_rate": 96,
+      "avg_lat": 1.5,
+      "by_cat_pct": {
+        "math": 100,
+        "logic": 100,
+        "science": 100,
+        "deduction": 100,
+        "trap": 83
+      }
+    },
+    "Qwen3-Max": {
+      "correct": 23,
+      "total": 24,
+      "lat": [
+        1.1,
+        1.2,
+        1.2,
+        1.2,
+        1.4,
+        1.1,
+        1.2,
+        1.7,
+        1.1,
+        1.2,
+        2.7,
+        2.1,
+        1.1,
+        1.2,
+        1.4,
+        1.2,
+        1.3,
+        1.2,
+        1.5,
+        1.1,
+        1.0,
+        1.6,
+        1.4,
+        1.2
+      ],
+      "by_cat": {
+        "math": [
+          6,
+          6
+        ],
+        "logic": [
+          5,
+          5
+        ],
+        "science": [
+          4,
+          4
+        ],
+        "deduction": [
+          3,
+          3
+        ],
+        "trap": [
+          5,
+          6
+        ]
+      },
+      "errors": 0,
+      "pass_rate": 96,
+      "avg_lat": 1.3,
+      "by_cat_pct": {
+        "math": 100,
+        "logic": 100,
+        "science": 100,
+        "deduction": 100,
+        "trap": 83
+      }
+    },
+    "GLM-5.2": {
+      "correct": 23,
+      "total": 24,
+      "lat": [
+        1.1,
+        1.1,
+        3.6,
+        0.1,
+        0.8,
+        1.5,
+        0.5,
+        0.8,
+        0.9,
+        0.5,
+        0.3,
+        3.1,
+        0.2,
+        2.9,
+        3.0,
+        0.7,
+        2.0,
+        0.8,
+        1.0,
+        0.4,
+        1.8,
+        1.2,
+        0.5,
+        0.4
+      ],
+      "by_cat": {
+        "math": [
+          6,
+          6
+        ],
+        "logic": [
+          5,
+          5
+        ],
+        "science": [
+          4,
+          4
+        ],
+        "deduction": [
+          3,
+          3
+        ],
+        "trap": [
+          5,
+          6
+        ]
+      },
+      "errors": 0,
+      "pass_rate": 96,
+      "avg_lat": 1.2,
+      "by_cat_pct": {
+        "math": 100,
+        "logic": 100,
+        "science": 100,
+        "deduction": 100,
+        "trap": 83
+      }
+    }
+  },
+  "detail": [
+    {
+      "i": 0,
+      "cat": "math",
+      "q": "A store had 120 apples. It sold 3/8 of them in the morning a",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 73.8,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 2.4,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      }
+    },
+    {
+      "i": 1,
+      "cat": "math",
+      "q": "Tom reads 12 pages a day for 5 days, then 20 pages a day for",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 70.0,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 0.8,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      }
+    },
+    {
+      "i": 2,
+      "cat": "math",
+      "q": "A tank holds 240 liters. It fills at 8 L/min while draining ",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 66.7,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 0.9,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 3.6,
+        "err": null
+      }
+    },
+    {
+      "i": 3,
+      "cat": "math",
+      "q": "Sarah has $50. She buys 3 books at $7 each and 2 pens at $1.",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 78.2,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.0,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.1,
+        "err": null
+      }
+    },
+    {
+      "i": 4,
+      "cat": "math",
+      "q": "A rectangle is 3 times as long as it is wide. Its perimeter ",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 85.3,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.3,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.4,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.8,
+        "err": null
+      }
+    },
+    {
+      "i": 5,
+      "cat": "math",
+      "q": "12 workers build a wall in 6 days. How many days would 8 wor",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 76.5,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.0,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 1.5,
+        "err": null
+      }
+    },
+    {
+      "i": 6,
+      "cat": "logic",
+      "q": "A bat and a ball cost $1.10 in total. The bat costs $1.00 mo",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 73.7,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.9,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.5,
+        "err": null
+      }
+    },
+    {
+      "i": 7,
+      "cat": "logic",
+      "q": "If 5 machines take 5 minutes to make 5 widgets, how many min",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 105.1,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 2.0,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.7,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.8,
+        "err": null
+      }
+    },
+    {
+      "i": 8,
+      "cat": "logic",
+      "q": "A farmer has 17 sheep. All but 9 die. How many sheep are lef",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 65.3,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.9,
+        "err": null
+      }
+    },
+    {
+      "i": 9,
+      "cat": "logic",
+      "q": "Mary has 4 brothers and 3 sisters. How many sisters does one",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 70.5,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 5.0,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.5,
+        "err": null
+      }
+    },
+    {
+      "i": 10,
+      "cat": "logic",
+      "q": "A lily-pad patch doubles in size every day and covers a lake",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 109.8,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 2.7,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      }
+    },
+    {
+      "i": 11,
+      "cat": "science",
+      "q": "What is the pH of a perfectly neutral aqueous solution at 25",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 98.5,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 0.7,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 2.1,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 3.1,
+        "err": null
+      }
+    },
+    {
+      "i": 12,
+      "cat": "science",
+      "q": "How many chromosomes are in a typical human somatic (body) c",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 78.9,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 0.7,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.2,
+        "err": null
+      }
+    },
+    {
+      "i": 13,
+      "cat": "science",
+      "q": "Which is the lightest noble gas?",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 76.2,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.3,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 2.9,
+        "err": null
+      }
+    },
+    {
+      "i": 14,
+      "cat": "science",
+      "q": "What gas do plants primarily absorb from the air for photosy",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 89.7,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.4,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 3.0,
+        "err": null
+      }
+    },
+    {
+      "i": 15,
+      "cat": "deduction",
+      "q": "At exactly 3:00 on an analog clock, what is the angle in deg",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 95.1,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.9,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.7,
+        "err": null
+      }
+    },
+    {
+      "i": 16,
+      "cat": "deduction",
+      "q": "In a 12-hour period, how many times do the hour and minute h",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 116.7,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 2.8,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.3,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 2.0,
+        "err": null
+      }
+    },
+    {
+      "i": 17,
+      "cat": "deduction",
+      "q": "If today is Monday, what day of the week will it be 100 days",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 79.8,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.4,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.8,
+        "err": null
+      }
+    },
+    {
+      "i": 18,
+      "cat": "trap",
+      "q": "A snail climbs 3 m up a 10 m well each day but slips 2 m eac",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 113.3,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 2.1,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.5,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 1.0,
+        "err": null
+      }
+    },
+    {
+      "i": 19,
+      "cat": "trap",
+      "q": "A clock takes 6 seconds to strike 4 o'clock. How many second",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 98.2,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 0.4,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.1,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.4,
+        "err": null
+      }
+    },
+    {
+      "i": 20,
+      "cat": "trap",
+      "q": "How many times does the digit 7 appear when you write all th",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 105.6,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.0,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 1.8,
+        "err": null
+      }
+    },
+    {
+      "i": 21,
+      "cat": "trap",
+      "q": "How many months of the year have exactly 28 days?",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": false,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 128.4,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": false,
+        "s": 2.3,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": false,
+        "s": 1.6,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": false,
+        "s": 1.2,
+        "err": null
+      }
+    },
+    {
+      "i": 22,
+      "cat": "trap",
+      "q": "In a race, if you overtake the person in second place, what ",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 85.5,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.3,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.4,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.5,
+        "err": null
+      }
+    },
+    {
+      "i": 23,
+      "cat": "trap",
+      "q": "There are 100 people in a room and 99% are left-handed. How ",
+      "DeepSeek-V4-Pro (direct)": {
+        "ok": true,
+        "s": 0.3,
+        "err": null
+      },
+      "Metis (V4-Pro base)": {
+        "ok": true,
+        "s": 109.2,
+        "err": null,
+        "verify": 1.0
+      },
+      "Kimi K2.6": {
+        "ok": true,
+        "s": 1.4,
+        "err": null
+      },
+      "Qwen3-Max": {
+        "ok": true,
+        "s": 1.2,
+        "err": null
+      },
+      "GLM-5.2": {
+        "ok": true,
+        "s": 0.4,
+        "err": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+# Coordinator runtime config for Docker deployment
+production: true
+allow_test_provider: false
+
+distributed: true
+cluster_config: /app/config/docker-cluster.yaml
+
+default_route: council
+confidence_threshold: 0.7
+enforce_confidence_gate: true
+
+memory_dir: /data/memory
+enable_long_term_memory: true
+
+enable_code_interpreter: false
+enable_web_search: false
+
+economy:
+  enabled: true
+  currency: USD
+  session_budget_usd: 10.0
+
+security:
+  enforce_injection_scan: true
+  max_user_input_chars: 100000
+  max_request_body_bytes: 512000
+  rate_limit:
+    requests_per_minute: 60
+    burst: 10
+
+council_models:
+  - name: parser_a
+    provider: openai_compat
+    model: microsoft/phi-4-reasoning-plus
+    node_id: node-a
+    base_url: http://node-a:8443
+    api_key_env: METIS_NODE_A_KEY
+  - name: parser_b
+    provider: openai_compat
+    model: deepseek-v4-flash
+    node_id: node-b
+    base_url: http://node-b:8444
+    api_key_env: METIS_NODE_B_KEY
+  - name: red_team
+    provider: openai_compat
+    model: deepseek-v4-pro
+    node_id: node-b
+    base_url: http://node-b:8444
+    api_key_env: METIS_NODE_B_KEY
+  - name: synthesizer
+    provider: openai_compat
+    model: deepseek-v4-pro
+    node_id: node-b
+    base_url: http://node-b:8444
+    api_key_env: METIS_NODE_B_KEY

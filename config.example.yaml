@@ -1,0 +1,187 @@
+# Metis v0.2.0 — production-ready example with all features enabled
+# Copy to config.yaml and set API keys via environment variables.
+
+production: false  # set true in prod; requires METIS_API_KEY
+
+provider: openai_compat
+base_model: "deepseek-v4-flash"
+base_url: "https://api.deepseek.com/v1"
+api_key_env: DEEPSEEK_API_KEY
+
+default_route: council
+thinking_samples: 3
+thinking_temperature: 0.8
+max_agent_iterations: 5
+max_verify_retries: 3
+confidence_threshold: 0.7
+confidence_hard_floor: 0.35
+enforce_confidence_gate: true
+
+enable_code_interpreter: true
+enable_web_search: true
+enable_long_term_memory: true
+memory_dir: data/memory
+rag_top_k: 5
+
+# --- Observability (v0.2) ---
+observability:
+  log_level: INFO
+  log_format: json
+  log_content: redacted          # METIS_LOG_CONTENT=redacted|full|hash
+  log_file: data/logs/metis.jsonl
+  audit_log_file: data/logs/audit.jsonl
+  audit_hash_chain: true
+  trace_dir: data/traces
+  reliability:
+    max_retries: 3
+    base_delay_ms: 500
+    max_delay_ms: 30000
+    retryable_errors: [timeout, rate_limit, network, model_error]
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      recovery_seconds: 60
+
+# --- Shared knowledge & runtime learning (v0.2) ---
+knowledge:
+  enabled: true
+  store_path: data/knowledge
+  # database_url: postgresql://user:pass@localhost/metis  # pgvector when set
+  auto_replay_on_verify: true
+  similarity_top_k: 3
+  min_similarity: 0.1
+  export_include_feedback: true
+
+# --- Per-module hybrid: cloud pro + flash + local LM Studio ---
+modules:
+  intent_parser_a:
+    provider: openai_compat
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.5
+
+  intent_parser_b:
+    provider: openai_compat
+    model: phi-4-reasoning-plus
+    base_url: http://localhost:1234/v1
+    api_key_env: LMSTUDIO_API_KEY
+    temperature: 0.7
+
+  intent_parser_c:
+    provider: openai_compat
+    model: deepseek-v4-pro
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.9
+
+  constraint_extractor:
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+
+  ambiguity_hunter:
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+
+  red_team:
+    model: deepseek-v4-pro
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.6
+
+  synthesizer:
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.3
+
+  judge:
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.1
+
+  moa_proposer_logician:
+    model: deepseek-v4-pro
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+
+  moa_proposer_pragmatist:
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+
+  moa_proposer_skeptic:
+    model: phi-4-reasoning-plus
+    base_url: http://localhost:1234/v1
+    api_key_env: LMSTUDIO_API_KEY
+
+  moa_refiner:
+    model: deepseek-v4-pro
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+
+  moa_aggregator:
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    api_key_env: ANTHROPIC_API_KEY
+
+  router:
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.1
+
+# --- MCP ecosystem tools ---
+enable_mcp_tools: true
+mcp_ecosystem_presets:
+  - aimarket-oracle-gateway
+mcp_servers:
+  - name: aimarket-oracle-gateway
+    transport: stdio
+    command: python
+    args: ["-m", "aimarket_oracle_gateway.mcp_stdio_server"]
+    env:
+      AIMARKET_HUB_URL: https://modelmarket.dev
+    tool_prefix: oracle
+  - name: example-sse-server
+    transport: sse
+    url: http://localhost:3001/sse
+    enabled: false
+
+# --- Economy metering ---
+economy:
+  enabled: true
+  currency: USD
+  models:
+    deepseek-v4-flash:
+      input_per_1m: 0.14
+      output_per_1m: 0.28
+    deepseek-v4-pro:
+      input_per_1m: 0.435
+      output_per_1m: 0.87
+    claude-sonnet-4-20250514:
+      input_per_1m: 3.0
+      output_per_1m: 15.0
+
+# --- Security ---
+security:
+  enforce_injection_scan: true
+  rate_limit:
+    requests_per_minute: 60
+    burst: 10
+
+# --- DGPD ---
+dgpd:
+  enabled: true
+  agreement_threshold: 0.85
+
+# Optional escalation
+# escalate_model: deepseek-v4-pro
+# escalate_url: https://api.deepseek.com/v1
+
+# Distributed cluster (optional)
+# distributed: true
+# cluster_config: config/docker-cluster.yaml
