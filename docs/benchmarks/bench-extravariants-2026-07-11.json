@@ -1,0 +1,29 @@
+{
+  "n": 10,
+  "configs": [
+    {
+      "name": "C: weak proposers + DeepSeek aggregator/verifier",
+      "pass_rate": 50,
+      "correct": 5,
+      "total": 10,
+      "avg_lat": 443.5,
+      "avg_verify": 0.68,
+      "missed": [
+        1,
+        2,
+        6,
+        8,
+        10
+      ]
+    },
+    {
+      "name": "D: all-star council (5 families)",
+      "pass_rate": 100,
+      "correct": 10,
+      "total": 10,
+      "avg_lat": 240.4,
+      "avg_verify": 1.0,
+      "missed": []
+    }
+  ]
+}

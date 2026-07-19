@@ -1,0 +1,10 @@
+{"id": "simple-01", "query": "What is 2 + 2? Number only.", "category": "simple", "checks": {"answer_contains": "4"}}
+{"id": "simple-02", "query": "Spell the word 'hello'.", "category": "simple", "checks": {"answer_contains": "hello"}}
+{"id": "simple-03", "query": "What color is the sky on a clear day? One word.", "category": "simple", "checks": {"answer_contains": "blue"}}
+{"id": "simple-04", "query": "How many days are in a week? Number only.", "category": "simple", "checks": {"answer_contains": "7"}}
+{"id": "simple-05", "query": "Is water wet? Answer yes or no only.", "category": "simple", "checks": {"answer_contains": "yes"}}
+{"id": "simple-06", "query": "What is the opposite of hot? One word.", "category": "simple", "checks": {"answer_contains": "cold"}}
+{"id": "simple-07", "query": "How many legs does a dog have? Number only.", "category": "simple", "checks": {"answer_contains": "4"}}
+{"id": "simple-08", "query": "What is the first month of the year?", "category": "simple", "checks": {"answer_contains": "january"}}
+{"id": "simple-09", "query": "Translate 'cat' to Spanish. One word.", "category": "simple", "checks": {"answer_contains": "gato"}}
+{"id": "simple-10", "query": "What is 10 - 3? Number only.", "category": "simple", "checks": {"answer_contains": "7"}}

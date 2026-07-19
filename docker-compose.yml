@@ -1,0 +1,154 @@
+# Metis Docker stack — coordinator + 2 worker nodes
+# Default: external LLM APIs via .env. Add --profile local-models for Ollama.
+
+name: metis
+
+networks:
+  metis-net:
+    driver: bridge
+
+volumes:
+  metis-memory:
+  metis-config:
+  metis-logs:
+  ollama-models:
+
+x-app-image: &app-image
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: metis:latest
+  env_file:
+    - path: .env
+      required: false
+  networks:
+    - metis-net
+  restart: unless-stopped
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp:size=64M,mode=1777
+
+services:
+  coordinator:
+    <<: *app-image
+    container_name: metis-coordinator
+    entrypoint: ["/app/scripts/docker-entrypoint-coordinator.sh"]
+    environment:
+      METIS_CONFIG: /app/config/docker-runtime.yaml
+      METIS_CLUSTER_CONFIG: /app/config/docker-cluster.yaml
+      METIS_COORDINATOR_HOST: "0.0.0.0"
+      METIS_COORDINATOR_PORT: "8080"
+      METIS_PRODUCTION: "true"
+      METIS_LOG_LEVEL: "${METIS_LOG_LEVEL:-INFO}"
+      METIS_LOG_FORMAT: "${METIS_LOG_FORMAT:-json}"
+      METIS_LOG_CONTENT: "${METIS_LOG_CONTENT:-redacted}"
+      METIS_AUDIT_LOG_FILE: "/data/logs/audit.jsonl"
+    ports:
+      - "${METIS_COORDINATOR_PORT:-8080}:8080"
+    volumes:
+      - metis-memory:/data/memory
+      - metis-config:/data/config
+      - metis-logs:/data/logs
+      - ./config/docker-cluster.yaml:/app/config/docker-cluster.yaml:ro
+      - ./config/docker-runtime.yaml:/app/config/docker-runtime.yaml:ro
+    depends_on:
+      node-a:
+        condition: service_started
+      node-b:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  node-a:
+    <<: *app-image
+    container_name: metis-node-a
+    entrypoint: ["/app/scripts/docker-entrypoint-node.sh"]
+    environment:
+      NODE_ID: node-a
+      METIS_NODE_CONFIG: /app/config/docker-node-a.yaml
+      METIS_NODE_HOST: "0.0.0.0"
+      METIS_NODE_PORT: "8443"
+      METIS_PRODUCTION: "true"
+    expose:
+      - "8443"
+    volumes:
+      - ./config/docker-node-a.yaml:/app/config/docker-node-a.yaml:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -sf -H "Authorization: Bearer $METIS_NODE_A_KEY" http://127.0.0.1:8443/metis/health',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  node-b:
+    <<: *app-image
+    container_name: metis-node-b
+    entrypoint: ["/app/scripts/docker-entrypoint-node.sh"]
+    environment:
+      NODE_ID: node-b
+      METIS_NODE_CONFIG: /app/config/docker-node-b.yaml
+      METIS_NODE_HOST: "0.0.0.0"
+      METIS_NODE_PORT: "8444"
+      METIS_PRODUCTION: "true"
+    expose:
+      - "8444"
+    volumes:
+      - ./config/docker-node-b.yaml:/app/config/docker-node-b.yaml:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -sf -H "Authorization: Bearer $METIS_NODE_B_KEY" http://127.0.0.1:8444/metis/health',
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: metis-ollama
+    profiles:
+      - local-models
+    networks:
+      - metis-net
+    volumes:
+      - ollama-models:/root/.ollama
+    expose:
+      - "11434"
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7-alpine
+    container_name: metis-redis
+    profiles:
+      - redis
+    networks:
+      - metis-net
+    expose:
+      - "6379"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /data:size=128M,mode=1777
+    command: ["redis-server", "--save", "", "--appendonly", "no"]

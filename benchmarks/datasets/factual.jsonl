@@ -1,0 +1,10 @@
+{"id": "fact-01", "query": "What is the chemical symbol for gold?", "category": "factual", "checks": {"answer_contains": "au"}}
+{"id": "fact-02", "query": "How many planets are in our solar system? Number only.", "category": "factual", "checks": {"answer_contains": "8"}}
+{"id": "fact-03", "query": "What year did the first iPhone launch? Year only.", "category": "factual", "checks": {"answer_contains": "2007"}}
+{"id": "fact-04", "query": "What is the capital of Japan?", "category": "factual", "checks": {"answer_contains": "tokyo"}}
+{"id": "fact-05", "query": "Who wrote '1984'? Last name only.", "category": "factual", "checks": {"answer_contains": "orwell"}}
+{"id": "fact-06", "query": "What is the speed of light in vacuum in m/s (approximate, scientific notation ok)?", "category": "factual", "checks": {"answer_regex": "3[.]?0?\\s*\\*?\\s*10\\^?8|299792458|3e8"}}
+{"id": "fact-07", "query": "What programming language is named after a British comedy group?", "category": "factual", "checks": {"answer_contains": "python"}}
+{"id": "fact-08", "query": "What is H2O commonly known as?", "category": "factual", "checks": {"answer_contains": "water"}}
+{"id": "fact-09", "query": "How many continents are there on Earth? Number only.", "category": "factual", "checks": {"answer_contains": "7"}}
+{"id": "fact-10", "query": "What is the largest ocean on Earth?", "category": "factual", "checks": {"answer_contains": "pacific"}}

@@ -1,0 +1,16 @@
+{
+  "name": "MiniMax-M3",
+  "correct": 24,
+  "total": 24,
+  "pass_rate": 100,
+  "avg_lat": 6.6,
+  "errors": 0,
+  "by_cat": {
+    "math": "6/6",
+    "logic": "5/5",
+    "science": "4/4",
+    "deduction": "3/3",
+    "trap": "6/6"
+  },
+  "missed": []
+}

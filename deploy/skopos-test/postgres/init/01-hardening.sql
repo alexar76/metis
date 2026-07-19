@@ -1,0 +1,13 @@
+-- SKOPOS PostgreSQL hardening (runs once on empty data dir)
+REVOKE ALL ON DATABASE skopos FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO skopos;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO skopos;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO skopos;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO skopos;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO skopos;
+
+ALTER SYSTEM SET password_encryption = 'scram-sha-256';
+ALTER SYSTEM SET log_connections = 'on';
+ALTER SYSTEM SET log_disconnections = 'on';
+ALTER SYSTEM SET log_statement = 'ddl';

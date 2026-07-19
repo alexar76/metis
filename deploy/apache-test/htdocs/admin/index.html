@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Metis Admin — Apache test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.35rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    a { color: #0366d6; }
+  </style>
+</head>
+<body>
+  <h1>Админка (тест SKOPOS / Apache)</h1>
+  <p>Минимальная страница для генерации access-логов combined на порту <strong>8088</strong>.</p>
+  <div class="card">
+    <p><strong>Раздел:</strong> <span id="page">dashboard</span></p>
+    <p><a href="/admin/?page=settings">Настройки</a> · <a href="/admin/?page=users">Пользователи</a> · <a href="/">На главную</a></p>
+  </div>
+  <script>
+    const q = new URLSearchParams(location.search).get("page");
+    if (q) document.getElementById("page").textContent = q;
+  </script>
+</body>
+</html>

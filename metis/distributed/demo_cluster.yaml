@@ -1,0 +1,24 @@
+# Local 2-node cluster demo config
+coordinator:
+  url: http://127.0.0.1:9000
+
+nodes:
+  - id: node-a
+    url: http://127.0.0.1:8443
+    api_key_env: METIS_NODE_A_KEY
+    models: [qwen3:8b]
+    roles: [parser_a, intent_parser, proposer]
+
+  - id: node-b
+    url: http://127.0.0.1:8444
+    api_key_env: METIS_NODE_B_KEY
+    models: [phi4-mini, mistral:7b]
+    roles: [parser_b, red_team, refiner, synthesizer]
+
+# Ecosystem MCP servers (optional — enable_mcp_tools in runtime config)
+mcp_ecosystem_presets:
+  - aimarket-oracle-gateway
+
+security:
+  tls_verify: false
+  request_signing: false

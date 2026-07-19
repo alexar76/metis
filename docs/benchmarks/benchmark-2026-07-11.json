@@ -1,0 +1,241 @@
+{
+  "generated_note": "real calls, no mocks",
+  "routes": {
+    "fast": [
+      {
+        "q": "What is the capital of France?",
+        "s": 3.0,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      },
+      {
+        "q": "Explain why the sky is blue.",
+        "s": 1.8,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      },
+      {
+        "q": "Design a token-bucket rate limiter and n",
+        "s": 3.5,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      }
+    ],
+    "thinking": [
+      {
+        "q": "What is the capital of France?",
+        "s": 1.8,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      },
+      {
+        "q": "Explain why the sky is blue.",
+        "s": 10.0,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      },
+      {
+        "q": "Design a token-bucket rate limiter and n",
+        "s": 10.5,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      }
+    ],
+    "council": [
+      {
+        "q": "What is the capital of France?",
+        "s": 18.3,
+        "err": null,
+        "verify_score": 1.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      },
+      {
+        "q": "Explain why the sky is blue.",
+        "s": 62.9,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      },
+      {
+        "q": "Design a token-bucket rate limiter and n",
+        "s": 62.5,
+        "err": null,
+        "verify_score": 0.0,
+        "llm_calls": null,
+        "tokens_in": null,
+        "tokens_out": null,
+        "cost": null
+      }
+    ]
+  },
+  "direct_vs_metis": {
+    "direct": [
+      {
+        "q": "What is 17 times 24?",
+        "s": 0.3,
+        "ok": true,
+        "err": null
+      },
+      {
+        "q": "Is 91 a prime number? Answer yes o",
+        "s": 0.3,
+        "ok": true,
+        "err": null
+      },
+      {
+        "q": "A bat and a ball cost $1.10. The b",
+        "s": 0.3,
+        "ok": true,
+        "err": null
+      },
+      {
+        "q": "How many days are in a leap year?",
+        "s": 0.3,
+        "ok": true,
+        "err": null
+      },
+      {
+        "q": "If a train travels 60 km in 45 min",
+        "s": 0.3,
+        "ok": true,
+        "err": null
+      }
+    ],
+    "metis": [
+      {
+        "q": "What is 17 times 24?",
+        "s": 56.5,
+        "ok": true,
+        "verify_score": 0.6,
+        "err": null
+      },
+      {
+        "q": "Is 91 a prime number? Answer yes o",
+        "s": 16.5,
+        "ok": true,
+        "verify_score": 1.0,
+        "err": null
+      },
+      {
+        "q": "A bat and a ball cost $1.10. The b",
+        "s": 24.3,
+        "ok": true,
+        "verify_score": 1.0,
+        "err": null
+      },
+      {
+        "q": "How many days are in a leap year?",
+        "s": 30.9,
+        "ok": true,
+        "verify_score": 1.0,
+        "err": null
+      },
+      {
+        "q": "If a train travels 60 km in 45 min",
+        "s": 27.8,
+        "ok": true,
+        "verify_score": 1.0,
+        "err": null
+      }
+    ]
+  },
+  "vision": {
+    "raw": [
+      {
+        "s": 0.9,
+        "ok": false,
+        "err": null
+      },
+      {
+        "s": 0.7,
+        "ok": false,
+        "err": null
+      },
+      {
+        "s": 0.5,
+        "ok": false,
+        "err": null
+      },
+      {
+        "s": 0.6,
+        "ok": false,
+        "err": null
+      },
+      {
+        "s": 0.7,
+        "ok": false,
+        "err": null
+      }
+    ],
+    "metis": [
+      {
+        "s": 3.5,
+        "ok": true,
+        "err": null
+      },
+      {
+        "s": 3.2,
+        "ok": false,
+        "err": null
+      },
+      {
+        "s": 4.0,
+        "ok": true,
+        "err": null
+      }
+    ]
+  },
+  "multilingual": [
+    {
+      "lang": "en",
+      "s": 1.7,
+      "detected_hint": "en",
+      "cyr": 0,
+      "answer": "Metis is a standalone, API-only multi-agent reasoning and verification service that wraps any underlying LLM in a full c"
+    },
+    {
+      "lang": "ru",
+      "s": 1.6,
+      "detected_hint": "ru",
+      "cyr": 201,
+      "answer": "Metis — это автономный сервис многоагентного рассуждения и верификации, который выступает в роли когнитивного и доверите"
+    },
+    {
+      "lang": "es",
+      "s": 1.3,
+      "detected_hint": "es",
+      "cyr": 0,
+      "answer": "Metis es un servicio autónomo de razonamiento y verificación multiagente que envuelve cualquier LLM subyacente en una pi"
+    }
+  ]
+}

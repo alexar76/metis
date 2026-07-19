@@ -1,0 +1,80 @@
+# SKOPOS test on metis (PostgreSQL + UI on localhost:8501)
+# Build context: synced app tree at /opt/skopos-test/app
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: metis-skopos-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${SKOPOS_POSTGRES_USER:-skopos}
+      POSTGRES_PASSWORD: ${SKOPOS_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${SKOPOS_POSTGRES_DB:-skopos}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    volumes:
+      - skopos_pg_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    # No host port — reachable only on the internal Docker network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SKOPOS_POSTGRES_USER:-skopos} -d ${SKOPOS_POSTGRES_DB:-skopos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  skopos:
+    build:
+      context: ${SKOPOS_APP_DIR:-/opt/skopos-test/app}
+      dockerfile: Dockerfile
+    container_name: metis-skopos
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8501:8501"
+      - "127.0.0.1:8502:8502"
+    volumes:
+      - ./servers.yaml:/app/servers.yaml:ro
+      - ./agent.yaml:/app/agent.yaml:ro
+      - ./geoip:/app/geoip:ro
+      - ./ssh:/root/.ssh:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - skopos_ui_data:/app/.skopos
+    environment:
+      SKOPOS_DATABASE_URL: ${SKOPOS_DATABASE_URL}
+      SKOPOS_DASHBOARD_PASSWORD: ${SKOPOS_DASHBOARD_PASSWORD}
+      SKOPOS_SSH_STRICT_HOST_KEYS: ${SKOPOS_SSH_STRICT_HOST_KEYS:-0}
+      SKOPOS_GEOIP_API_FALLBACK: ${SKOPOS_GEOIP_API_FALLBACK:-}
+      MAXMIND_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
+      MAXMIND_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}
+      SKOPOS_CONFIG_PATH: /app/servers.yaml
+      SKOPOS_HEALTHZ_PORT: "8502"
+      STREAMLIT_SERVER_BASE_URL_PATH: app
+      SKOPOS_UI_PREFS_PATH: /app/.skopos/ui_prefs.json
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      # Optional: pin the floating-agent HMAC secret. If unset, SKOPOS generates
+      # one and persists it in the DB (shared by the UI and API processes).
+      SKOPOS_AGENT_TOKEN_SECRET: ${SKOPOS_AGENT_TOKEN_SECRET:-}
+    networks:
+      - default
+      - metisnet
+
+volumes:
+  skopos_pg_data:
+  skopos_ui_data:
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+  metisnet:
+    external: true

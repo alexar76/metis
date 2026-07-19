@@ -1,0 +1,26 @@
+coordinator:
+  url: https://coord.example.com
+
+nodes:
+  - id: node-eu-1
+    url: https://eu1.example.com:8443
+    api_key_env: METIS_NODE_EU1_KEY
+    models: [qwen3:8b]
+    roles: [intent_parser, proposer]
+
+  - id: node-us-1
+    url: https://us1.example.com:8443
+    api_key_env: METIS_NODE_US1_KEY
+    models: [phi4-mini, mistral:7b]
+    roles: [red_team, refiner]
+
+  - id: node-asia-1
+    url: https://asia1.example.com:8443
+    api_key_env: METIS_NODE_ASIA1_KEY
+    models: [qwen3:8b, mistral:7b]
+    roles: [synthesizer, aggregator]
+
+security:
+  tls_verify: true
+  request_signing: true
+  hmac_secret_env: METIS_HMAC_SECRET

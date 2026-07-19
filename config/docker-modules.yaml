@@ -1,0 +1,102 @@
+# Mixed per-module endpoints — local Ollama, cloud APIs, distributed nodes
+# Use with: metis-serve -c config/docker-modules.yaml
+
+production: false
+default_route: council
+
+base_model: qwen3:8b
+base_url: http://ollama:11434/v1
+api_key: ollama
+provider: ollama
+
+distributed: true
+cluster_config: config/docker-cluster.yaml
+
+modules:
+  intent_parser_a:
+    model: qwen3:8b
+    base_url: http://node-a:8443
+    api_key_env: METIS_NODE_A_KEY
+    node_id: node-a
+    temperature: 0.5
+
+  intent_parser_b:
+    provider: openai_compat
+    model: gpt-4o-mini
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    temperature: 0.7
+
+  intent_parser_c:
+    provider: openai_compat
+    model: deepseek-chat
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.9
+
+  constraint_extractor:
+    model: qwen3:8b
+    base_url: http://ollama:11434/v1
+    temperature: 0.3
+
+  ambiguity_hunter:
+    model: phi4-mini
+    base_url: http://node-b:8444
+    api_key_env: METIS_NODE_B_KEY
+    node_id: node-b
+
+  red_team:
+    model: mistral:7b
+    base_url: http://node-b:8444
+    api_key_env: METIS_NODE_B_KEY
+    node_id: node-b
+    temperature: 0.6
+
+  synthesizer:
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.3
+
+  judge:
+    provider: openai_compat
+    model: deepseek-chat
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.1
+
+  moa_proposer_logician:
+    model: qwen3:8b
+    base_url: http://node-a:8443
+    api_key_env: METIS_NODE_A_KEY
+    node_id: node-a
+
+  moa_proposer_pragmatist:
+    provider: openai_compat
+    model: gpt-4o-mini
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+
+  moa_proposer_skeptic:
+    model: mistral:7b
+    base_url: http://node-b:8444
+    api_key_env: METIS_NODE_B_KEY
+    node_id: node-b
+
+  moa_refiner:
+    provider: openai_compat
+    model: deepseek-chat
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+
+  moa_aggregator:
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    api_key_env: ANTHROPIC_API_KEY
+
+  router:
+    provider: openai_compat
+    model: gpt-4o-mini
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    temperature: 0.1

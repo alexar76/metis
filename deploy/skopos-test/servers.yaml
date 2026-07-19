@@ -1,0 +1,54 @@
+db_path: "./skopos.sqlite3"
+
+# Optional MaxMind GeoLite2-Country — auto-installed on deploy when MAXMIND_LICENSE_KEY is set.
+# Default country lookup: geojs.io + ipwho.is (free HTTP, no signup).
+# geoip_mmdb_path: "/app/geoip/GeoLite2-Country.mmdb"
+
+poll_interval_seconds: 15
+batch_lines_per_server: 4000
+security_auto_scan: true
+security_scan_interval_minutes: 60
+
+servers:
+  - name: factory
+    source: ssh_nginx_access_log
+    ssh:
+      host: 5.129.212.122
+      port: 8443
+      user: root
+      key_path: /root/.ssh/id_ed25519
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: false
+
+  - name: oracle
+    source: ssh_nginx_access_log
+    ssh:
+      host: 78.17.126.214
+      port: 22
+      user: root
+      key_path: /root/.ssh/id_ed25519
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: false
+
+  - name: metis
+    source: ssh_http_access_log
+    ssh:
+      host: host.docker.internal
+      port: 22
+      user: root
+      key_path: /root/.ssh/id_ed25519
+    nginx:
+      access_log_paths: []
+      auto_discover_logs: false
+      auto_discover_docker_logs: true
+      docker_log_containers:
+        - metis-nginx
+    apache:
+      enabled: true
+      access_log_paths:
+        - /opt/metis/deploy/apache-test/logs/access_log
+      auto_discover_logs: false

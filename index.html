@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Metis — the superbrain</title>
+<meta name="description" content="Metis — a distributed cognitive layer over any LLM. Talk to the brain: an interactive 3D visualization of multi-agent reasoning. Text or voice." />
+<meta property="og:title" content="Metis — the superbrain" />
+<meta property="og:description" content="A distributed cognitive layer over any LLM. Grab the star to rotate it, watch it pulse and think, and chat with it — text or voice." />
+<style>
+  :root{
+    --cyan:#00e5ff; --mag:#ff2fb0; --violet:#7c4dff; --green:#39ff14;
+    --bg:#03040a; --ink:#eaf6ff; --muted:#8ea6c0; --glass:rgba(10,16,30,.55);
+    --border:rgba(0,229,255,.28);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+  #scene{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;cursor:grab;
+    touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #scene:active{cursor:grabbing}
+  .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 42%,transparent 40%,rgba(3,4,10,.55) 78%,rgba(3,4,10,.92) 100%)}
+  a{color:var(--cyan);text-decoration:none}
+  .hero{position:fixed;z-index:3;top:0;left:0;right:0;padding:22px 26px;pointer-events:none;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .brand{pointer-events:auto}
+  .brand h1{margin:0;font-size:26px;letter-spacing:.14em;font-weight:800;
+    background:linear-gradient(90deg,var(--cyan),var(--violet) 55%,var(--mag));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 30px rgba(124,77,255,.25)}
+  .brand .greek{font-weight:400;opacity:.55;font-size:15px;letter-spacing:.3em}
+  .brand p{margin:6px 0 0;color:var(--muted);font-size:13px;max-width:38ch;line-height:1.5}
+  .links{pointer-events:auto;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .links a{font-size:12px;padding:7px 12px;border:1px solid var(--border);border-radius:999px;
+    background:var(--glass);backdrop-filter:blur(8px);color:var(--ink);transition:.2s;white-space:nowrap}
+  .links a:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,229,255,.25);transform:translateY(-1px)}
+  .langsw{display:inline-flex;gap:0;border:1px solid var(--border);border-radius:999px;overflow:hidden;background:var(--glass);backdrop-filter:blur(8px)}
+  .langsw button{border:none;background:transparent;color:var(--muted);font:600 11px ui-monospace,monospace;letter-spacing:.06em;padding:7px 10px;cursor:pointer;transition:.2s}
+  .langsw button:hover{color:var(--ink)}
+  .langsw button.on{background:rgba(0,229,255,.16);color:var(--cyan)}
+  .status{position:fixed;z-index:3;left:26px;bottom:22px;pointer-events:none;
+    font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);
+    display:flex;align-items:center;gap:8px;letter-spacing:.05em}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 8px currentColor}
+  .dot.on{background:var(--green);color:var(--green)}
+  .dot.think{background:var(--mag);color:var(--mag);animation:pulse .8s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .hint{position:fixed;z-index:3;left:50%;bottom:20px;transform:translateX(-50%);
+    color:var(--muted);font-size:11px;letter-spacing:.15em;text-transform:uppercase;pointer-events:none;opacity:.6}
+  #chat{position:fixed;z-index:4;right:22px;bottom:22px;width:min(400px,calc(100vw - 44px));
+    max-height:min(72vh,620px);display:flex;flex-direction:column;border:1px solid var(--border);
+    border-radius:16px;background:var(--glass);backdrop-filter:blur(14px);
+    box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 30px rgba(124,77,255,.15);overflow:hidden}
+  #chat.min{max-height:52px}
+  .chead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+  .chead b{font-size:13px;letter-spacing:.08em}
+  .chead .sub{font-size:10px;color:var(--muted);margin-left:auto;letter-spacing:.05em}
+  .chead .icn{margin-left:8px;color:var(--muted);font-size:16px;line-height:1}
+  .clog{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+  .msg{font-size:13px;line-height:1.5;max-width:88%;padding:9px 12px;border-radius:12px;white-space:pre-wrap;word-break:break-word}
+  .msg.u{align-self:flex-end;background:rgba(0,229,255,.14);border:1px solid rgba(0,229,255,.3)}
+  .msg.a{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#dfe6f2}
+  .msg.sys{align-self:center;color:var(--muted);font-size:11px;background:none;border:none;text-align:center}
+  .typing{align-self:flex-start;display:flex;gap:5px;padding:10px 12px}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--mag);animation:td 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes td{50%{opacity:.3;transform:translateY(-2px)}}
+  .cin{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.06)}
+  .cin input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--ink);font-size:13px}
+  .cin input::placeholder{color:rgba(142,166,192,.6)}
+  .ibtn{width:34px;height:34px;flex:none;border-radius:50%;border:1px solid var(--border);background:rgba(0,229,255,.08);
+    color:var(--cyan);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;padding:0}
+  .ibtn:hover{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,229,255,.3)}
+  .ibtn.active{background:rgba(255,47,176,.18);border-color:var(--mag);color:var(--mag);box-shadow:0 0 14px rgba(255,47,176,.35)}
+  .ibtn svg{width:16px;height:16px}
+  .send{width:auto;padding:0 14px;border-radius:10px;font-size:12px;font-weight:600;letter-spacing:.05em}
+  .thumbs{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px}
+  .thumbs:not(:empty){padding-bottom:8px}
+  .thumb{position:relative;width:46px;height:46px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb button{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;background:#000;color:#fff;border:1px solid var(--border);font-size:12px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 10px}
+  .chip{font-size:11px;padding:5px 9px;border:1px solid rgba(124,77,255,.3);border-radius:999px;
+    background:rgba(124,77,255,.08);color:#cbb8ff;cursor:pointer;transition:.2s}
+  .chip:hover{border-color:var(--violet);box-shadow:0 0 10px rgba(124,77,255,.3)}
+  #cfg{position:fixed;z-index:6;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,4,10,.7);backdrop-filter:blur(4px)}
+  #cfg.show{display:flex}
+  .card{width:min(440px,92vw);border:1px solid var(--border);border-radius:16px;background:#0a1020;padding:20px}
+  .card h3{margin:0 0 4px;font-size:15px}.card p{margin:0 0 14px;color:var(--muted);font-size:12px;line-height:1.5}
+  .card label{display:block;font-size:11px;color:var(--muted);margin:10px 0 5px;letter-spacing:.05em}
+  .card input{width:100%;padding:9px 11px;background:#060a14;border:1px solid var(--border);border-radius:9px;color:var(--ink);font-size:13px;outline:none}
+  .card .row{display:flex;gap:10px;margin-top:16px}
+  .card button{flex:1;padding:10px;border-radius:9px;border:1px solid var(--border);background:rgba(0,229,255,.1);color:var(--cyan);font-weight:600;cursor:pointer;font-size:13px}
+  .card button.ghost{background:transparent;color:var(--muted)}
+  .loader{position:fixed;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--muted);font:13px ui-monospace,monospace;letter-spacing:.2em;transition:opacity .6s}
+  .loader.hide{opacity:0;pointer-events:none}
+
+  /* ── cognition panel — live view of Metis's real thought process ────────── */
+  #cog{position:fixed;z-index:5;left:22px;top:118px;width:302px;
+    max-height:calc(100vh - 168px);display:none;flex-direction:column;
+    border:1px solid var(--border);border-radius:16px;background:var(--glass);
+    backdrop-filter:blur(14px);box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 30px rgba(124,77,255,.14);overflow:hidden}
+  #cog.show{display:flex}
+  .cog-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+  .cog-route{font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.12em;padding:3px 8px;border-radius:999px;
+    border:1px solid var(--border);color:var(--cyan);background:rgba(0,229,255,.08);transition:.3s}
+  .cog-route[data-r="council"]{color:var(--violet);border-color:rgba(124,77,255,.45);background:rgba(124,77,255,.12)}
+  .cog-route[data-r="agent"]{color:var(--mag);border-color:rgba(255,47,176,.45);background:rgba(255,47,176,.12)}
+  .cog-route[data-r="thinking"]{color:#7de3c8;border-color:rgba(57,255,180,.4)}
+  .cog-depth{font:10px ui-monospace,monospace;color:var(--muted);letter-spacing:.05em}
+  .cog-deep{margin-left:auto;display:flex;align-items:center;gap:5px;color:var(--muted);font-size:10px;cursor:pointer;user-select:none;white-space:nowrap}
+  .cog-deep input{accent-color:var(--violet);margin:0}
+  .cog-timer{font:10px ui-monospace,monospace;color:var(--muted);min-width:40px;text-align:right}
+  .cog-svg{width:100%;height:auto;display:block;padding:6px 4px 0}
+  .cn-edge{stroke:rgba(140,170,210,.16);stroke-width:1.2;fill:none;transition:stroke .3s,opacity .35s}
+  .cn-edge.active{stroke:var(--cyan);stroke-width:1.7;stroke-dasharray:4 6;filter:drop-shadow(0 0 3px rgba(0,229,255,.7));animation:cnflow .55s linear infinite}
+  .cn-edge.done{stroke:rgba(0,229,255,.5)}
+  .cn-edge.ghost{opacity:.1}
+  .cn-edge.retry{stroke:var(--mag);stroke-dasharray:3 4;filter:drop-shadow(0 0 3px rgba(255,47,176,.6));animation:cnflow .5s linear infinite}
+  @keyframes cnflow{to{stroke-dashoffset:-10}}
+  .cn-node{opacity:.5;transition:opacity .35s}
+  .cn-node .sh{fill:rgba(12,20,38,.92);stroke:rgba(140,170,210,.35);stroke-width:1.2;transition:.3s}
+  .cn-node text{fill:var(--muted);font:7.5px ui-sans-serif,system-ui;text-anchor:middle;pointer-events:none;transition:fill .3s}
+  .cn-node.active{opacity:1}
+  .cn-node.active .sh{stroke:var(--cyan);fill:rgba(0,229,255,.14);filter:drop-shadow(0 0 5px rgba(0,229,255,.8))}
+  .cn-node.active text{fill:var(--ink)}
+  .cn-node.done{opacity:1}
+  .cn-node.done .sh{stroke:rgba(57,255,120,.7);fill:rgba(57,255,80,.07)}
+  .cn-node.done text{fill:#bfeccf}
+  .cn-node.fail{opacity:1}
+  .cn-node.fail .sh{stroke:var(--mag);fill:rgba(255,47,176,.1);filter:drop-shadow(0 0 5px rgba(255,47,176,.6))}
+  .cn-node.ghost{opacity:.14}
+  .cn-node.dim{opacity:.3}
+  .cn-node.hidden{display:none}
+  /* per-stage time breakdown */
+  .cog-tl{padding:2px 12px 8px}
+  .cog-tl-head{display:flex;justify-content:space-between;font:9px ui-monospace,monospace;color:var(--muted);letter-spacing:.05em;margin-bottom:4px}
+  .cog-tl-head b{color:var(--ink);font-weight:600}
+  .cog-tl-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:rgba(140,170,210,.1)}
+  .cog-tl-bar > span{transition:width .35s ease;min-width:2px}
+  .cog-tl-legend{display:flex;flex-wrap:wrap;gap:3px 10px;margin-top:6px;font:9px ui-monospace,monospace;color:var(--muted)}
+  .cog-tl-legend b{color:var(--ink);font-weight:600}
+  .cog-tl-legend i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px;vertical-align:middle}
+  .cog-foot{display:flex;gap:10px;align-items:center;padding:8px 12px 11px;border-top:1px solid rgba(255,255,255,.06)}
+  .cog-gauge{width:104px;height:60px;flex:none}
+  .cog-meta{font:9px ui-monospace,Menlo,monospace;color:var(--muted);line-height:1.55;overflow:hidden;flex:1;min-width:0}
+  .cog-meta b{color:var(--ink);font-weight:600}
+  #cogChip{position:fixed;z-index:5;left:22px;top:118px;padding:8px 13px;border:1px solid var(--border);border-radius:999px;
+    background:var(--glass);backdrop-filter:blur(8px);color:var(--cyan);font-size:11px;letter-spacing:.06em;cursor:pointer;display:none}
+  #cogChip:hover{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,229,255,.25)}
+  .cog-x{margin-left:2px;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+  .cog-x:hover{color:var(--ink)}
+
+  @media (max-width:760px){#cog{display:none!important}#cogChip{display:none!important}}
+  @media (max-width:640px){.brand p{display:none}.hero{padding:14px}}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="vignette"></div>
+<div class="loader" id="loader">SYNAPSING…</div>
+
+<header class="hero">
+  <div class="brand">
+    <h1>METIS <span class="greek">μῆτις</span></h1>
+    <p data-i18n="tagline">A distributed cognitive layer over any LLM. It deliberates, verifies, and asks before it guesses. Grab the star to rotate it — watch it pulse and think — then talk to it.</p>
+  </div>
+  <nav class="links">
+    <span class="langsw" id="langsw" aria-label="Language">
+      <button data-lang="en">EN</button><button data-lang="ru">RU</button><button data-lang="es">ES</button>
+    </span>
+    <a href="https://github.com/alexar76/metis" target="_blank" rel="noreferrer">GitHub ↗</a>
+    <a href="https://github.com/alexar76/metis#readme" target="_blank" rel="noreferrer">Docs ↗</a>
+    <a href="#" id="cfgOpen">⚙ Connect</a>
+  </nav>
+</header>
+
+<div class="status"><span class="dot" id="statusDot"></span><span id="statusText" data-i18n="status_idle">star idle · grab to rotate</span></div>
+<div class="hint" data-i18n="hint">grab to rotate · scroll to zoom</div>
+
+<section id="chat">
+  <div class="chead" id="chatHead">
+    <span class="dot" id="chatDot"></span><b data-i18n="chat_title">Chat with Metis</b>
+    <span class="sub" id="chatSub">demo</span><span class="icn" id="chatToggle">–</span>
+  </div>
+  <div class="clog" id="clog"></div>
+  <div class="chips" id="chips">
+    <span class="chip" data-i18n="chip1">What is a superbrain?</span>
+    <span class="chip" data-i18n="chip2">Explain multi-agent reasoning</span>
+    <span class="chip" data-i18n="chip3">Why verify answers?</span>
+  </div>
+  <div class="thumbs" id="thumbs"></div>
+  <div class="cin">
+    <input id="cinput" data-i18n-ph="ask_ph" placeholder="Ask Metis…  (or tap the mic)" autocomplete="off" />
+    <input type="file" id="fileInput" accept="image/*" multiple hidden />
+    <button class="ibtn" id="attachBtn" data-i18n-title="attach_title" title="Attach images (up to 5)" aria-label="Attach images">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+    </button>
+    <button class="ibtn" id="micBtn" title="Voice input" aria-label="Voice input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button class="ibtn" id="spkBtn" title="Speak answers" aria-label="Speak answers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    </button>
+    <button class="ibtn send" id="sendBtn" data-i18n="send">Send</button>
+  </div>
+</section>
+
+<aside id="cog" aria-label="Metis cognition">
+  <div class="cog-head">
+    <span class="cog-route" id="cogRoute" data-r="idle">IDLE</span>
+    <span class="cog-depth" id="cogDepth"></span>
+    <label class="cog-deep" data-i18n-title="deep_title" title="On: full Understanding Council + verifier (the whole trace). Off: smart auto-routing — faster on simple asks.">
+      <input type="checkbox" id="cogDeep"><span data-i18n="deep_label">Deep think</span></label>
+    <span class="cog-timer" id="cogTimer">0.0s</span>
+    <span class="cog-x" id="cogClose" title="hide">×</span>
+  </div>
+  <svg class="cog-svg" id="cogSvg" viewBox="0 0 260 296" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="cog-tl" id="cogTL">
+    <div class="cog-tl-head"><span data-i18n="stage_timing">stage timing</span><b id="cogTLTotal"></b></div>
+    <div class="cog-tl-bar" id="cogTLBar"></div>
+    <div class="cog-tl-legend" id="cogTLLegend"></div>
+  </div>
+  <div class="cog-foot">
+    <svg class="cog-gauge" id="cogGauge" viewBox="0 0 108 62"></svg>
+    <div class="cog-meta" id="cogMeta" data-i18n="cog_idle">Idle — ask Metis and watch it think.</div>
+  </div>
+</aside>
+<button id="cogChip" data-i18n="cog_chip" title="show cognition panel">◵ cognition</button>
+
+<div id="cfg">
+  <div class="card">
+    <h3 data-i18n="cfg_title">Connect to your Metis</h3>
+    <p data-i18n="cfg_desc">The brain lives on its own. To make the chat real, point it at a running Metis
+       (metis-serve). Metis must allow this page's origin via security.cors_origins.</p>
+    <label data-i18n="cfg_url_label">Metis endpoint URL</label>
+    <input id="cfgUrl" placeholder="http://localhost:8080" />
+    <label data-i18n="cfg_key_label">API key (optional — only if Metis runs with auth)</label>
+    <input id="cfgKey" type="password" placeholder="sk-…" />
+    <div class="row">
+      <button id="cfgSave" data-i18n="cfg_save">Save</button>
+      <button class="ghost" id="cfgClose" data-i18n="cfg_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const COL = { cyan:0x00e5ff, blue:0x2b8cff, violet:0x7c4dff, ice:0xcdeeff };
+
+// value-noise fbm for labyrinthine cortical folds
+const fract=x=>x-Math.floor(x);
+const h3=(x,y,z)=>fract(Math.sin(x*12.9898+y*78.233+z*37.719)*43758.5453);
+function noise3(x,y,z){const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z);const xf=x-xi,yf=y-yi,zf=z-zi;const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),w=zf*zf*(3-2*zf);const g=(i,j,k)=>h3(xi+i,yi+j,zi+k);const x00=g(0,0,0)*(1-u)+g(1,0,0)*u,x10=g(0,1,0)*(1-u)+g(1,1,0)*u,x01=g(0,0,1)*(1-u)+g(1,0,1)*u,x11=g(0,1,1)*(1-u)+g(1,1,1)*u;const y0=x00*(1-v)+x10*v,y1=x01*(1-v)+x11*v;return y0*(1-w)+y1*w;}
+function fbm(x,y,z){let a=0,amp=.5,f=1;for(let i=0;i<4;i++){a+=amp*noise3(x*f,y*f,z*f);f*=2;amp*=.5;}return a;}
+const ridged=(x,y,z)=>1-Math.abs(fbm(x,y,z)*2-1);
+
+const canvas=document.getElementById('scene');
+// coarse pointer OR narrow screen → phones/tablets: lighter + touch-tuned
+const MOBILE = matchMedia('(max-width:760px), (pointer:coarse)').matches;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE?1.5:2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0;
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x03040a,0.02);
+const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,0.1,200);
+camera.position.set(0,0.2,6.6);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=0.08;controls.autoRotate=false;
+controls.rotateSpeed=0.75;controls.minDistance=3.4;controls.maxDistance=12;controls.enablePan=false;
+controls.zoomToCursor=false;
+// Fit the urchin on ANY aspect — widen the lens on portrait phones so the spikes
+// + orbital rings don't clip off the sides.
+function frameCamera(){ const a=innerWidth/innerHeight; camera.aspect=a;
+  camera.fov = a<1 ? Math.min(66, 46 + (1-a)*40) : 46; camera.updateProjectionMatrix(); }
+frameCamera();
+// Mobile UX: let the urchin be the hero (chat starts collapsed). Hint text is i18n'd in applyLang().
+if(MOBILE){ document.getElementById('chat')?.classList.add('min'); }
+
+scene.add(new THREE.AmbientLight(0x16304f,0.7));
+const l1=new THREE.PointLight(0x62b0ff,70,60);l1.position.set(5,5,7);scene.add(l1);
+const l2=new THREE.PointLight(0x7c4dff,36,60);l2.position.set(-6,-2,4);scene.add(l2);
+const l3=new THREE.PointLight(0x00e5ff,30,60);l3.position.set(-3,4,-6);scene.add(l3);
+
+(function stars(){const N=MOBILE?1200:2600,pos=new Float32Array(N*3),col=new Float32Array(N*3);const pal=[new THREE.Color(0x00e5ff),new THREE.Color(0x7c4dff),new THREE.Color(0xffffff),new THREE.Color(0x2b8cff)];for(let i=0;i<N;i++){const r=30+Math.random()*60,tt=Math.random()*Math.PI*2,p=Math.acos(2*Math.random()-1);pos[i*3]=r*Math.sin(p)*Math.cos(tt);pos[i*3+1]=r*Math.sin(p)*Math.sin(tt);pos[i*3+2]=r*Math.cos(p);const c=pal[(Math.random()*pal.length)|0];col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b;}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:.13,vertexColors:true,transparent:true,opacity:.9,depthWrite:false})));})();
+function glowSprite(color,size,x,y,z,op){const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d');const col=new THREE.Color(color);const g=ctx.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,`rgba(${col.r*255|0},${col.g*255|0},${col.b*255|0},1)`);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,128,128);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:op}));s.scale.set(size,size,1);s.position.set(x,y,z);scene.add(s);}
+glowSprite(0x1e5fce,32,-9,3,-16,.5);glowSprite(0x6a2fbf,26,10,-4,-18,.42);glowSprite(0x00b3ff,22,3,6,-13,.3);
+
+// ── the cosmic star / sea-urchin (procedural, pulsating, iridescent) ──
+const starGroup=new THREE.Group(); starGroup.position.y=0.05; starGroup.rotation.set(0.2,-0.3,0); scene.add(starGroup);
+
+// iridescent glowing core + bright inner kernel
+const coreMat=new THREE.MeshPhysicalMaterial({ color:0x1b2f7a, emissive:0x2b8cff, emissiveIntensity:0.3,
+  roughness:0.25, metalness:0.3, clearcoat:1, iridescence:1, iridescenceIOR:1.4, iridescenceThicknessRange:[120,760] });
+const core=new THREE.Mesh(new THREE.IcosahedronGeometry(0.42,3), coreMat); starGroup.add(core);
+const kernel=new THREE.Mesh(new THREE.IcosahedronGeometry(0.26,2),
+  new THREE.MeshBasicMaterial({color:0xbfe9ff,transparent:true,opacity:0.22,blending:THREE.AdditiveBlending,depthWrite:false}));
+starGroup.add(kernel);
+
+// spikes on a fibonacci sphere
+const N=MOBILE?160:260, UP=new THREE.Vector3(0,1,0), CORE_R=0.4;
+const dirs=[], baseLen=[], phase=[];
+for(let i=0;i<N;i++){
+  const y=1-(i/(N-1))*2, r=Math.sqrt(Math.max(0,1-y*y)), th=i*2.399963229;
+  dirs.push(new THREE.Vector3(Math.cos(th)*r, y, Math.sin(th)*r));
+  baseLen.push(0.55+Math.random()*0.95); phase.push(Math.random()*Math.PI*2);
+}
+const spikeGeo=new THREE.ConeGeometry(0.03,1,7); spikeGeo.translate(0,0.5,0);   // base at origin → tip at +1
+const spikeMat=new THREE.MeshStandardMaterial({color:0xffffff, emissive:0x000000, roughness:0.35, metalness:0.25});
+spikeMat.userData.emis={value:0.5};
+spikeMat.onBeforeCompile=(sh)=>{ sh.uniforms.uEmis=spikeMat.userData.emis;
+  sh.fragmentShader='uniform float uEmis;\n'+sh.fragmentShader.replace(
+    'vec3 totalEmissiveRadiance = emissive;','vec3 totalEmissiveRadiance = emissive + vColor * uEmis;'); };
+const spikes=new THREE.InstancedMesh(spikeGeo, spikeMat, N);
+const _q=new THREE.Quaternion(), _m=new THREE.Matrix4(), _s=new THREE.Vector3(), _p=new THREE.Vector3(), _col=new THREE.Color();
+function setSpike(i,lenMul){ const d=dirs[i]; _q.setFromUnitVectors(UP,d); _p.copy(d).multiplyScalar(CORE_R); _s.set(1,baseLen[i]*lenMul,1); _m.compose(_p,_q,_s); spikes.setMatrixAt(i,_m); }
+function hueOf(i){ return (dirs[i].y*0.5+0.5)*0.5 + (Math.atan2(dirs[i].z,dirs[i].x)/(2*Math.PI))*0.5; }
+for(let i=0;i<N;i++){ setSpike(i,1); _col.setHSL((0.5+hueOf(i))%1,0.85,0.6); spikes.setColorAt(i,_col); }
+spikes.instanceMatrix.needsUpdate=true; if(spikes.instanceColor) spikes.instanceColor.needsUpdate=true;
+starGroup.add(spikes);
+
+// glowing spike tips (also the lightning endpoints)
+const tipPos=dirs.map((d,i)=>d.clone().multiplyScalar(CORE_R+baseLen[i]));
+const tipArr=new Float32Array(N*3); const tipGeo=new THREE.BufferGeometry(); tipGeo.setAttribute('position',new THREE.BufferAttribute(tipArr,3));
+const tipPoints=new THREE.Points(tipGeo,new THREE.PointsMaterial({color:0xdff3ff,size:0.05,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false}));
+starGroup.add(tipPoints);
+
+// multidimensional orbital rings
+const rings=[];
+[0x00e5ff,0x7c4dff,0xff2fb0].forEach((c,i)=>{ const ring=new THREE.Mesh(new THREE.TorusGeometry(1.55+i*0.28,0.012,8,140),
+  new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false}));
+  ring.rotation.set(i*1.1,i*0.7,i*0.5); starGroup.add(ring); rings.push(ring); });
+
+// lightning arcs between spike tips
+const BOLTS=MOBILE?7:12,SEG=14,bolts=[];
+for(let i=0;i<BOLTS;i++){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(SEG*3),3));const m=new THREE.LineBasicMaterial({color:0xcdf3ff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});const line=new THREE.Line(g,m);starGroup.add(line);bolts.push({line,life:0,max:0.001});}
+function fireBolt(b){const a=tipPos[(Math.random()*N)|0],c=tipPos[(Math.random()*N)|0];const arr=b.line.geometry.attributes.position.array;for(let s=0;s<SEG;s++){const t=s/(SEG-1),j=(s>0&&s<SEG-1)?0.12:0;arr[s*3]=a.x+(c.x-a.x)*t+(Math.random()-.5)*j;arr[s*3+1]=a.y+(c.y-a.y)*t+(Math.random()-.5)*j;arr[s*3+2]=a.z+(c.z-a.z)*t+(Math.random()-.5)*j;}b.line.geometry.attributes.position.needsUpdate=true;b.max=0.07+Math.random()*0.14;b.life=b.max;b.line.material.color.setHex(Math.random()<0.5?0xcdf3ff:0xa07bff);}
+
+// bloom
+const comp=new EffectComposer(renderer);
+comp.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.5,0.6,0.55);
+comp.addPass(bloom);
+
+let think=0,thinkTarget=0;
+// ── cognition state: the star's reaction to Metis's REAL thought process ──
+// Fed by the live SSE trace (see COGNITION PANEL). *T = eased target.
+const cog={active:false,phase:'idle',hue:0.52,hueT:0.52,spread:1,spreadT:1,
+  sat:0.85,satT:0.85,light:0.6,lightT:0.6,energy:0,energyT:0,conv:0,convT:0,
+  lock:false,flash:0,boltBoost:0,_decay:0};
+const hueLerp=(a,b,f)=>{const d=((b-a+1.5)%1)-0.5;return (a+d*f+1)%1;};
+// Consistent "it's thinking now" ignition — identical for every query.
+function cogIgnite(){ clearTimeout(cog._decay); cog.active=true; cog.lock=false; cog.phase='ignite';
+  cog.hueT=0.52; cog.satT=1.0; cog.lightT=0.62; cog.spreadT=1;
+  cog.energyT=0.55; cog.convT=0; cog.flash=1; cog.boltBoost=0.3; }
+// Per-stage tint (ignored once locked/solved).
+function cogStage(hue,o){ if(cog.lock)return; o=o||{}; cog.active=true; cog.phase='stage';
+  cog.hueT=hue; cog.spreadT=(o.spread!=null?o.spread:1); cog.energyT=(o.energy!=null?o.energy:0.7);
+  cog.satT=(o.sat!=null?o.sat:0.9); cog.lightT=(o.light!=null?o.light:0.6);
+  if(o.bolt)cog.boltBoost=o.bolt; if(o.flash)cog.flash=o.flash; }
+// "Almost done" — spikes stop wandering a beat before the answer lands.
+function cogConverge(){ if(cog.lock)return; cog.convT=0.6; cog.phase='converge'; }
+// Distinct completion palette keyed to the verifier confidence.
+function cogComplete(kind,score){ cog.active=true; cog.phase='done'; score=score||0;
+  if(kind==='solved'){ cog.hueT=0.33; cog.satT=Math.min(1,0.72+score*0.4); cog.lightT=0.6; cog.spreadT=0.12; cog.convT=1; cog.lock=true; cog.energyT=0.5; cog.flash=1; cog.boltBoost=0; }
+  else if(kind==='medium'){ cog.hueT=0.5; cog.satT=0.72; cog.lightT=0.6; cog.spreadT=0.42; cog.convT=0.5; cog.energyT=0.35; cog.flash=0.5; }
+  else if(kind==='low'){ cog.hueT=0.08; cog.satT=0.82; cog.lightT=0.56; cog.spreadT=0.85; cog.convT=0; cog.energyT=0.42; }
+  else if(kind==='clarify'){ cog.hueT=0.9; cog.satT=0.9; cog.lightT=0.62; cog.spreadT=0.95; cog.convT=0; cog.energyT=0.45; cog.flash=0.6; }
+  else if(kind==='fast'){ cog.hueT=0.52; cog.satT=0.8; cog.lightT=0.6; cog.spreadT=0.7; cog.convT=0.25; cog.energyT=0.25; }
+  else { cog.hueT=0.0; cog.satT=0.9; cog.lightT=0.5; cog.spreadT=0.5; cog.convT=0; cog.energyT=0.1; cog.flash=0.8; } // error
+  clearTimeout(cog._decay); cog._decay=setTimeout(cogIdle,2800); }
+function cogIdle(){ cog.active=false; cog.lock=false; cog.phase='idle';
+  cog.hueT=0.52; cog.satT=0.85; cog.lightT=0.6; cog.spreadT=1; cog.energyT=0; cog.convT=0; }
+const setThinking=on=>{ thinkTarget=on?1:0; if(on)cogIgnite(); };
+const clock=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(0.05,clock.getDelta()),t=clock.elapsedTime;
+  think+=(thinkTarget-think)*Math.min(1,dt*3);
+  // ease cognition state toward its targets
+  cog.energy+=(cog.energyT-cog.energy)*Math.min(1,dt*3);
+  cog.hue=hueLerp(cog.hue,cog.hueT,Math.min(1,dt*2.5));
+  cog.spread+=(cog.spreadT-cog.spread)*Math.min(1,dt*2);
+  cog.sat+=(cog.satT-cog.sat)*Math.min(1,dt*2);
+  cog.light+=(cog.lightT-cog.light)*Math.min(1,dt*2);
+  cog.conv+=(cog.convT-cog.conv)*Math.min(1,dt*1.2);
+  cog.flash=Math.max(0,cog.flash-dt*1.6);
+  cog.boltBoost=Math.max(0,cog.boltBoost-dt*0.7);
+  const E=Math.max(think,cog.energy);           // combined drive (cog trace or fallback)
+  controls.update();
+  const cyc=(t*0.9)%1, hb=Math.exp(-14*cyc*cyc)+0.6*Math.exp(-18*(cyc-0.16)*(cyc-0.16));
+  starGroup.scale.setScalar(1+0.03*hb+0.01*Math.sin(t*0.6));
+  // ripple the spikes + update tips — convergence collapses the wander
+  const wave=(0.16+E*0.28)*(1-0.85*cog.conv);
+  const drift=cog.active?0:(t*0.05)%1;          // idle drifts; thinking pins the hue
+  const baseHue=cog.active?cog.hue:0.5;
+  for(let i=0;i<N;i++){ const lm=1+wave*Math.sin(t*2.2+phase[i]+i*0.05)+hb*0.15; setSpike(i,lm);
+    const L=CORE_R+baseLen[i]*lm; tipArr[i*3]=dirs[i].x*L; tipArr[i*3+1]=dirs[i].y*L; tipArr[i*3+2]=dirs[i].z*L;
+    tipPos[i].set(tipArr[i*3],tipArr[i*3+1],tipArr[i*3+2]);
+    _col.setHSL((baseHue+hueOf(i)*cog.spread+drift)%1,cog.sat,cog.light); spikes.setColorAt(i,_col); }
+  spikes.instanceMatrix.needsUpdate=true; spikes.instanceColor.needsUpdate=true; tipGeo.attributes.position.needsUpdate=true;
+  spikeMat.userData.emis.value=0.28+0.28*hb+E*0.5;
+  coreMat.emissiveIntensity=0.2+0.3*hb+E*0.6; coreMat.iridescence=0.7+0.3*(0.5+0.5*Math.sin(t*0.5));
+  kernel.material.opacity=0.14+0.18*hb;
+  bloom.strength=0.45+hb*0.22+E*0.4+cog.flash*0.8;
+  rings.forEach((r,i)=>{ r.rotation.z+=dt*(0.1+i*0.05); r.rotation.x+=dt*0.04; });
+  for(const b of bolts){ b.life-=dt; if(b.life<=0){ if(Math.random()<(0.12+E*0.25+cog.boltBoost)) fireBolt(b); else b.line.material.opacity=0; } else { b.line.material.opacity=Math.max(0,b.life/b.max)*(0.7+0.3*Math.random()); } }
+  comp.render();
+}
+animate();
+(function hideLoader(){const el=document.getElementById('loader'); if(el){el.classList.add('hide'); setTimeout(()=>{el.style.display='none';},700);}})();
+setTimeout(()=>{const el=document.getElementById('loader'); if(el) el.style.display='none';}, 2500);
+function onResize(){ frameCamera(); renderer.setSize(innerWidth,innerHeight); comp.setSize(innerWidth,innerHeight); }
+addEventListener('resize',onResize);
+addEventListener('orientationchange',()=>setTimeout(onResize,250));
+
+// ══════════════════════════════ CHAT ══════════════════════════════
+const clog=document.getElementById('clog'), cinput=document.getElementById('cinput');
+const statusDot=document.getElementById('statusDot'), statusText=document.getElementById('statusText');
+const chatSub=document.getElementById('chatSub');
+const chatDot=document.getElementById('chatDot');
+const LS='metis.landing.cfg';
+const getCfg=()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch{return{}}};
+const setCfg=c=>localStorage.setItem(LS,JSON.stringify(c));
+let cfg=getCfg(); if(cfg.url===undefined){
+  // On the deployed site the API is same-origin (nginx → metis). Anywhere else
+  // (a local file://, a dev server, an embed) point straight at the LIVE node so
+  // the chat is REAL, not demo — the live node allows cross-origin (CORS).
+  const LIVE='https://metis.modelmarket.dev';
+  const onLive = location.protocol.startsWith('http') && /(^|\.)modelmarket\.dev$/.test(location.hostname);
+  cfg={url: onLive ? location.origin : LIVE, key:'', deep:false};  // auto-route by default (smart + reliable); toggle "Deep think" to force the full council
+}
+if(cfg.deep===undefined) cfg.deep=false;   // auto-route: classifier picks fast/thinking/council per query
+
+// ══════════════════════════ i18n (EN / RU / ES) ══════════════════════════
+const I18N = {
+  en: {
+    tagline:"A distributed cognitive layer over any LLM. It deliberates, verifies, and asks before it guesses. Grab the star to rotate it — watch it pulse and think — then talk to it.",
+    status_idle:"star idle · grab to rotate", status_idle_mobile:"drag to rotate",
+    hint:"grab to rotate · scroll to zoom", hint_mobile:"drag to rotate · pinch to zoom",
+    chat_title:"Chat with Metis", chip1:"What is a superbrain?", chip2:"Explain multi-agent reasoning", chip3:"Why verify answers?",
+    ask_ph:"Ask Metis…  (or tap the mic)", send:"Send", attach_title:"Attach images (up to 5)",
+    deep_label:"Deep think", deep_title:"On: full Understanding Council + verifier (the whole trace). Off: smart auto-routing — faster on simple asks.",
+    stage_timing:"stage timing", cog_idle:"Idle — ask Metis and watch it think.", cog_chip:"◵ cognition",
+    cfg_title:"Connect to your Metis", cfg_desc:"The brain lives on its own. To make the chat real, point it at a running Metis (metis-serve). Metis must allow this page's origin via security.cors_origins.",
+    cfg_url_label:"Metis endpoint URL", cfg_key_label:"API key (optional — only if Metis runs with auth)", cfg_save:"Save", cfg_cancel:"Cancel",
+    connect:"⚙ Connect", connected:"⚙ Connected", live:"live", demo:"demo", connecting:"connecting…",
+    sys_intro:"Metis is a distributed cognitive layer over any LLM. Ask it anything — connect a live Metis via ⚙ Connect, or explore in demo mode.",
+    demo_reply:"I'm in demo mode on this page. Connect a running Metis (⚙ Connect → your metis-serve URL) and I'll answer for real — deliberating across a council and verifying before I reply.",
+    could_not_reach:"(Could not reach Metis right now — please try again in a moment.)",
+    max_img:"Up to 5 images per message.",
+    connected_ok:"Connected — ask away.", saved_unreach:"Saved, but the endpoint is not reachable (CORS / offline) — demo mode until it responds.", demo_mode:"Demo mode.",
+    answer_directive:"Always reply in English, regardless of the language of the question.",
+  },
+  ru: {
+    tagline:"Распределённый когнитивный слой над любой LLM. Он размышляет, проверяет и переспрашивает, прежде чем гадать. Схвати звезду мышкой, чтобы вращать, смотри как она пульсирует и думает — и поговори с ней.",
+    status_idle:"звезда покоится · тяни, чтобы вращать", status_idle_mobile:"тяни, чтобы вращать",
+    hint:"тяни, чтобы вращать · колесо — зум", hint_mobile:"тяни, чтобы вращать · щипок — зум",
+    chat_title:"Чат с Metis", chip1:"Что такое супермозг?", chip2:"Объясни мультиагентное рассуждение", chip3:"Зачем проверять ответы?",
+    ask_ph:"Спроси Metis…  (или нажми микрофон)", send:"Отпр.", attach_title:"Прикрепить изображения (до 5)",
+    deep_label:"Глубоко", deep_title:"Вкл: полный Совет понимания + верификатор (весь трейс). Выкл: умная авто-маршрутизация — быстрее на простых вопросах.",
+    stage_timing:"тайминг по этапам", cog_idle:"Ожидание — спроси Metis и смотри, как он думает.", cog_chip:"◵ мышление",
+    cfg_title:"Подключить свой Metis", cfg_desc:"Мозг живёт сам по себе. Чтобы чат стал реальным, укажи адрес запущенного Metis (metis-serve). Metis должен разрешить origin этой страницы через security.cors_origins.",
+    cfg_url_label:"URL эндпоинта Metis", cfg_key_label:"API-ключ (опц. — только если Metis с авторизацией)", cfg_save:"Сохранить", cfg_cancel:"Отмена",
+    connect:"⚙ Подключить", connected:"⚙ Подключено", live:"вживую", demo:"демо", connecting:"подключение…",
+    sys_intro:"Metis — распределённый когнитивный слой над любой LLM. Спроси что угодно — подключи живой Metis через ⚙ Подключить или изучай в демо-режиме.",
+    demo_reply:"Я в демо-режиме на этой странице. Подключи запущенный Metis (⚙ Подключить → адрес metis-serve), и я отвечу по-настоящему — обсужу в совете и проверю перед ответом.",
+    could_not_reach:"(Не удалось достучаться до Metis — попробуй ещё раз через мгновение.)",
+    max_img:"До 5 изображений на сообщение.",
+    connected_ok:"Подключено — спрашивай.", saved_unreach:"Сохранено, но эндпоинт недоступен (CORS / офлайн) — демо-режим, пока не ответит.", demo_mode:"Демо-режим.",
+    answer_directive:"Всегда отвечай на русском языке, независимо от языка вопроса.",
+  },
+  es: {
+    tagline:"Una capa cognitiva distribuida sobre cualquier LLM. Delibera, verifica y pregunta antes de adivinar. Agarra la estrella para rotarla, mírala pulsar y pensar, y habla con ella.",
+    status_idle:"estrella en reposo · arrastra para rotar", status_idle_mobile:"arrastra para rotar",
+    hint:"arrastra para rotar · rueda para zoom", hint_mobile:"arrastra para rotar · pellizca para zoom",
+    chat_title:"Chat con Metis", chip1:"¿Qué es un supercerebro?", chip2:"Explica el razonamiento multiagente", chip3:"¿Por qué verificar las respuestas?",
+    ask_ph:"Pregunta a Metis…  (o toca el micrófono)", send:"Enviar", attach_title:"Adjuntar imágenes (hasta 5)",
+    deep_label:"Pensar a fondo", deep_title:"Activado: Consejo de Comprensión completo + verificador (toda la traza). Desactivado: enrutamiento inteligente — más rápido en preguntas simples.",
+    stage_timing:"tiempo por etapa", cog_idle:"Inactivo — pregunta a Metis y mira cómo piensa.", cog_chip:"◵ cognición",
+    cfg_title:"Conecta tu Metis", cfg_desc:"El cerebro vive por su cuenta. Para que el chat sea real, apúntalo a un Metis en ejecución (metis-serve). Metis debe permitir el origen de esta página vía security.cors_origins.",
+    cfg_url_label:"URL del endpoint de Metis", cfg_key_label:"Clave API (opcional — solo si Metis usa auth)", cfg_save:"Guardar", cfg_cancel:"Cancelar",
+    connect:"⚙ Conectar", connected:"⚙ Conectado", live:"en vivo", demo:"demo", connecting:"conectando…",
+    sys_intro:"Metis es una capa cognitiva distribuida sobre cualquier LLM. Pregúntale lo que sea — conecta un Metis en vivo vía ⚙ Conectar, o explora en modo demo.",
+    demo_reply:"Estoy en modo demo en esta página. Conecta un Metis en ejecución (⚙ Conectar → tu URL de metis-serve) y responderé de verdad — deliberando en consejo y verificando antes de responder.",
+    could_not_reach:"(No se pudo contactar con Metis ahora mismo — inténtalo de nuevo en un momento.)",
+    max_img:"Hasta 5 imágenes por mensaje.",
+    connected_ok:"Conectado — pregunta.", saved_unreach:"Guardado, pero el endpoint no responde (CORS / sin conexión) — modo demo hasta que responda.", demo_mode:"Modo demo.",
+    answer_directive:"Responde siempre en español, sin importar el idioma de la pregunta.",
+  },
+};
+const SUP=['en','ru','es'];
+if(!SUP.includes(cfg.lang)){ const n=(navigator.language||'en').slice(0,2).toLowerCase(); cfg.lang=SUP.includes(n)?n:'en'; }
+let lang=cfg.lang;
+const t = k => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
+const idleStatus = () => t(MOBILE?'status_idle_mobile':'status_idle');
+// Force the ANSWER language = interface language by appending the directive to the
+// LAST user message (a separate system message gets flattened into the query and
+// ignored; part of the user turn is honoured reliably).
+function withLang(msgs){
+  const dir = t('answer_directive');
+  const out = msgs.map(m=>({...m}));
+  for(let i=out.length-1;i>=0;i--){ if(out[i].role==='user'){
+    const c=out[i].content;
+    if(typeof c==='string'){ out[i].content = c + "\n\n[[ " + dir + " ]]"; }
+    else if(Array.isArray(c)){ out[i].content=c.map(p=>({...p}));
+      const ti=out[i].content.findIndex(p=>p&&p.type==='text');
+      if(ti>=0) out[i].content[ti].text = (out[i].content[ti].text||'') + "\n\n[[ " + dir + " ]]";
+      else out[i].content.unshift({type:'text', text:dir});
+    }
+    break;
+  }}
+  return out;
+}
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(e=>{ const v=t(e.getAttribute('data-i18n')); if(v)e.textContent=v; });
+  document.querySelectorAll('[data-i18n-ph]').forEach(e=>{ e.placeholder=t(e.getAttribute('data-i18n-ph')); });
+  document.querySelectorAll('[data-i18n-title]').forEach(e=>{ e.title=t(e.getAttribute('data-i18n-title')); });
+  if(MOBILE){ const h=document.querySelector('.hint'); if(h)h.textContent=t('hint_mobile'); }
+  const st=document.getElementById('statusText'); if(st && (st.dataset.busy!=='1')) st.textContent=idleStatus();
+  document.querySelectorAll('#langsw button').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+}
+function setLang(l){ if(!SUP.includes(l))return; lang=l; cfg.lang=l; setCfg(cfg);
+  applyLang(); if(typeof refreshMode==='function') refreshMode(); }
+document.querySelectorAll('#langsw button').forEach(b=> b.onclick=()=>setLang(b.dataset.lang));
+const history=[];
+const connHost=()=>{ try{ return cfg.url ? new URL(cfg.url).host : ''; }catch{ return cfg.url||''; } };
+function setConnectBtn(on){ const b=document.getElementById('cfgOpen'); if(b){ b.textContent = on?t('connected'):t('connect'); b.style.color = on?'var(--green)':''; } }
+// Probe the endpoint so the header reflects REAL connectivity (not a static dot).
+async function probeConnection(){
+  const host=connHost();
+  if(!cfg.url){ chatDot.className='dot'; chatSub.textContent=t('demo'); setConnectBtn(false); return false; }
+  chatDot.className='dot'; chatSub.textContent=t('connecting')+' · '+host;
+  try{
+    const c=new AbortController(), to=setTimeout(()=>c.abort(),6000);
+    const r=await fetch(cfg.url.replace(/\/+$/,'')+'/health',{signal:c.signal}); clearTimeout(to);
+    if(!r.ok) throw 0;
+    const j=await r.json().catch(()=>({}));
+    if(j && j.service && j.service!=='metis') throw 0;
+    chatDot.className='dot on'; chatSub.textContent=t('live')+' · '+host; chatSub.title='connected to '+cfg.url; setConnectBtn(true); return true;
+  }catch{ chatDot.className='dot'; chatSub.textContent=t('demo')+' · '+(host||'offline'); chatSub.title='not reachable — demo mode'; setConnectBtn(false); return false; }
+}
+const refreshMode=()=>probeConnection();
+probeConnection();
+
+function add(role,text){
+  const d=document.createElement('div'); d.className='msg '+(role==='user'?'u':role==='sys'?'sys':'a'); d.textContent=text;
+  clog.appendChild(d); clog.scrollTop=clog.scrollHeight; return d;
+}
+function typing(on){
+  let el=document.getElementById('typing');
+  if(on){ if(!el){el=document.createElement('div');el.id='typing';el.className='typing';el.innerHTML='<i></i><i></i><i></i>';clog.appendChild(el);clog.scrollTop=clog.scrollHeight;} }
+  else if(el) el.remove();
+}
+add('sys',t('sys_intro'));
+
+const DEMO = {
+  'what is a superbrain?':"A \"superbrain\" isn't a bigger model — it's an orchestration layer. Metis wraps ANY LLM in an Understanding Council, a fail-closed confidence gate, a layered Mixture-of-Agents, and a verifier. It returns a verify score and asks for clarification instead of guessing.",
+  'explain multi-agent reasoning':"Several agents (proposers at different temperatures, a red-team critic, a synthesizer) reason in parallel, then a verifier scores the result and can trigger a retry. Diversity + verification beats a single confident pass.",
+  'why verify answers?':"A single LLM call has no \"I'm not sure\" signal. Metis's verifier produces a machine-readable verify_score, so autonomous systems can proceed, retry, or pause — instead of shipping a confident mistake."
+};
+const demoReply = q => t('demo_reply');
+
+// ── image attachments (up to 5) ──────────────────────────────────────────────
+const MAX_IMG=5, MAX_IMG_BYTES=4*1024*1024;
+let pending=[];
+const thumbsEl=document.getElementById('thumbs');
+const fileInput=document.getElementById('fileInput');
+document.getElementById('attachBtn').onclick=()=>fileInput.click();
+fileInput.onchange=async()=>{
+  for(const f of [...fileInput.files]){
+    if(pending.length>=MAX_IMG){ add('sys',t('max_img')); break; }
+    if(!f.type.startsWith('image/')) continue;
+    if(f.size>MAX_IMG_BYTES){ add('sys',`${f.name} is too large (max 4 MB).`); continue; }
+    const url=await new Promise(r=>{const rd=new FileReader();rd.onload=()=>r(rd.result);rd.readAsDataURL(f);});
+    pending.push(url);
+  }
+  fileInput.value=''; renderThumbs();
+};
+function renderThumbs(){
+  thumbsEl.innerHTML='';
+  pending.forEach((u,i)=>{
+    const d=document.createElement('div'); d.className='thumb';
+    const img=document.createElement('img'); img.src=u; img.alt='';
+    const b=document.createElement('button'); b.textContent='×'; b.title='remove';
+    b.onclick=()=>{ pending.splice(i,1); renderThumbs(); };
+    d.append(img,b); thumbsEl.appendChild(d);
+  });
+}
+
+let busy=false;
+async function ask(text){
+  const imgs=pending.slice();
+  if(busy || (!text.trim() && imgs.length===0)) return; busy=true;
+  document.getElementById('chips')?.remove();
+  add('user', (text || '(image)') + (imgs.length?`   📎 ${imgs.length}`:'')); cinput.value='';
+  pending=[]; renderThumbs();
+  typing(true); setThinking(true);
+  statusDot.className='dot think'; statusText.dataset.busy='1'; statusText.textContent='…';
+  const content = imgs.length
+    ? [{type:'text', text: text || 'What do you see?'}, ...imgs.map(u=>({type:'image_url', image_url:{url:u}}))]
+    : text;
+  history.push({role:'user', content});
+  let answer='';
+  showCog();
+  try{
+    if(!cfg.url) throw new Error('no endpoint');
+    // Primary path: stream the REAL cognition trace → drives the panel + star.
+    const r=await askStream(history.slice(-12), !!cfg.deep);
+    answer = r.answer || (r.clar && r.clar.length
+      ? ('I need to clarify first:\n• '+r.clar.join('\n• ')) : '(empty response)');
+  }catch(err){
+    // Stream unavailable (offline / no CORS / old build): keep the panel alive
+    // with a storyboard, then try the plain non-stream chat, else demo mode.
+    cogStoryboard();
+    try{
+      if(!cfg.url) throw new Error('no endpoint');
+      const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),90000);
+      const res=await fetch(cfg.url.replace(/\/+$/,'')+'/v1/chat/completions',{
+        method:'POST',headers:{'Content-Type':'application/json',...(cfg.key?{'Authorization':'Bearer '+cfg.key}:{})},
+        body:JSON.stringify({model:'metis',messages:withLang(history.slice(-12))}),signal:ctrl.signal});
+      clearTimeout(to);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data=await res.json();
+      answer=data.choices?.[0]?.message?.content||'(empty response)';
+      cogComplete('fast');
+    }catch(e2){
+      answer = demoReply(text) + (cfg.url?`\n\n${t('could_not_reach')}`:'');
+      cogComplete('medium');
+    }
+  }
+  typing(false); history.push({role:'assistant',content:answer});
+  add('assistant',answer);
+  setThinking(false); statusDot.className='dot on'; statusText.dataset.busy='0'; statusText.textContent=idleStatus();
+  if(speakOn) speak(answer);
+  busy=false;
+}
+document.getElementById('sendBtn').onclick=()=>ask(cinput.value);
+cinput.addEventListener('keydown',e=>{ if(e.key==='Enter') ask(cinput.value); });
+
+// ══════════════════════ COGNITION PANEL (live real-trace) ══════════════════════
+// A constellation of Metis's REAL components. Each node/edge lights from the SSE
+// trace streamed by /v1/verify/stream as the pipeline actually runs.
+const SVGNS='http://www.w3.org/2000/svg';
+const NODES={}, EDGES={};
+function buildGraph(){
+  const svg=document.getElementById('cogSvg'); if(!svg||svg.dataset.built)return; svg.dataset.built='1';
+  const chips=[ // id,x,y,w,label
+    ['query',130,14,50,'QUERY'],['router',130,44,50,'ROUTER'],
+    ['council',130,96,54,'COUNCIL'],['synth',130,128,50,'SYNTH'],['gate',130,158,46,'GATE'],
+    ['moa0',74,194,42,'LOGIC'],['moa1',130,194,46,'PRAGMA'],['moa2',186,194,46,'SKEPTIC'],
+    ['refiner',100,226,46,'REFINER'],['agg',162,226,40,'AGG'],
+    ['verify',130,256,50,'VERIFY'],['answer',130,286,50,'ANSWER'],
+  ];
+  const dots=[ // id,x,y,r,label,hidden
+    ['depth',214,44,7,'',false],['percept',46,44,8,'VIS',true],
+    ['sc',236,194,7,'×N',true],['grounded',208,256,7,'CODE',true],
+  ];
+  for(let i=0;i<6;i++) dots.push(['sat'+i,72+i*24,70,4.5,'',false]);
+  const POS={}; chips.forEach(c=>POS[c[0]]=[c[1],c[2]]); dots.forEach(d=>POS[d[0]]=[d[1],d[2]]);
+  const edges=[ // from,to,optional?
+    ['query','router'],['router','depth'],['router','percept',true],['router','council'],
+    ['council','synth'],['synth','gate'],['gate','moa0'],['gate','moa1'],['gate','moa2'],
+    ['moa0','refiner'],['moa1','refiner'],['moa2','refiner'],['refiner','agg'],
+    ['agg','verify'],['verify','answer'],
+  ];
+  for(let i=0;i<6;i++) edges.push(['council','sat'+i]);
+  const line=(a,b,opt)=>{ const p1=POS[a],p2=POS[b],e=document.createElementNS(SVGNS,'path');
+    e.setAttribute('d',`M${p1[0]} ${p1[1]} L${p2[0]} ${p2[1]}`); e.setAttribute('class','cn-edge'+(opt?' ghost':'')); svg.appendChild(e); EDGES[a+'>'+b]=e; };
+  edges.forEach(e=>line(e[0],e[1],e[2]));
+  const curve=(a,b,bend,cls)=>{ const p1=POS[a],p2=POS[b],mx=(p1[0]+p2[0])/2+bend,my=(p1[1]+p2[1])/2,e=document.createElementNS(SVGNS,'path');
+    e.setAttribute('d',`M${p1[0]} ${p1[1]} Q${mx} ${my} ${p2[0]} ${p2[1]}`); e.setAttribute('class','cn-edge '+cls); svg.appendChild(e); EDGES[a+'>'+b]=e; };
+  curve('verify','gate',88,'retry ghost');   // retry loop (right)
+  curve('router','answer',106,'ghost');       // fast direct path (far right)
+  chips.forEach(([id,x,y,w,label])=>{ const g=document.createElementNS(SVGNS,'g'); g.setAttribute('class','cn-node'); g.dataset.id=id;
+    const r=document.createElementNS(SVGNS,'rect'); r.setAttribute('class','sh'); r.setAttribute('x',x-w/2); r.setAttribute('y',y-8); r.setAttribute('width',w); r.setAttribute('height',16); r.setAttribute('rx',7);
+    const tx=document.createElementNS(SVGNS,'text'); tx.setAttribute('x',x); tx.setAttribute('y',y+2.6); tx.textContent=label;
+    g.append(r,tx); svg.appendChild(g); NODES[id]=g; });
+  dots.forEach(([id,x,y,r,label,hidden])=>{ const g=document.createElementNS(SVGNS,'g'); g.setAttribute('class','cn-node'+(hidden?' hidden':'')); g.dataset.id=id;
+    const c=document.createElementNS(SVGNS,'circle'); c.setAttribute('class','sh'); c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',r); g.appendChild(c);
+    if(label){ const tx=document.createElementNS(SVGNS,'text'); tx.setAttribute('x',x); tx.setAttribute('y',y-r-2); tx.setAttribute('style','font-size:6px'); tx.textContent=label; g.appendChild(tx); }
+    svg.appendChild(g); NODES[id]=g; });
+}
+function setNode(id,st){ const g=NODES[id]; if(!g)return; g.classList.remove('active','done','fail','ghost','dim'); if(st)g.classList.add(st); }
+function showNode(id){ const g=NODES[id]; if(g)g.classList.remove('hidden'); }
+function setEdge(a,b,st){ const e=EDGES[a+'>'+b]; if(!e)return; e.classList.remove('active','done','ghost'); if(a==='verify'&&b==='gate')e.classList.add('retry'); if(st)e.classList.add(st); }
+function cogReset(){ Object.values(NODES).forEach(g=>g.classList.remove('active','done','fail','dim','ghost'));
+  ['percept','sc','grounded'].forEach(id=>NODES[id]&&NODES[id].classList.add('hidden'));
+  Object.values(EDGES).forEach(e=>e.classList.remove('active','done'));
+  ['router>percept','verify>gate','router>answer'].forEach(k=>EDGES[k]&&EDGES[k].classList.add('ghost'));
+  ['query>router','router>council','council>synth','synth>gate'].forEach(k=>EDGES[k]&&EDGES[k].classList.remove('ghost'));
+  gaugeReset(); setRoute('idle'); setDepth(''); metaSet('Thinking…'); window._cogAttempt=1; tlReset(); }
+function setRoute(r){ const el=document.getElementById('cogRoute'); if(!el)return; el.dataset.r=r||'idle'; el.textContent=(r||'idle').toUpperCase(); }
+function setDepth(d){ const el=document.getElementById('cogDepth'); if(!el)return; el.textContent=d?('· '+String(d).split('_')[0].toUpperCase()):''; }
+function metaSet(h){ const el=document.getElementById('cogMeta'); if(el)el.innerHTML=h; }
+
+// ── per-stage time breakdown (Δt between consecutive real events) ──
+const TL_META={ router:['Router','#00e5ff'], perception:['Vision','#cdeeff'], council:['Council','#7c4dff'],
+  gate:['Gate','#ff2fb0'], moa:['MoA','#2b8cff'], verify:['Verify','#39ff8a'], answer:['Answer','#aef4c8'] };
+const TL_ORDER=['router','perception','council','gate','moa','verify','answer'];
+const TL_BUCKET={ start:'router', route_selected:'router', depth_level:'router',
+  perception:'perception', council_started:'council', task_spec_created:'council', confidence_gate:'gate',
+  moa_layer1:'moa', moa_layer2:'moa', moa_layer3:'moa', self_consistency:'moa', escalation:'moa',
+  verify_started:'verify', verify_pass:'verify', verify_fail:'verify',
+  done:'answer' };  // the tail before `done` = final generation (esp. on the fast route)
+const tlBucketOf=(ev,d)=> ev==='tool_call' ? ((d&&d.tool==='vision')?'perception':'verify') : (TL_BUCKET[ev]||null);
+let tlTimes={}, tlPrev=0, tlLastBucket=null;
+const fmtMs=ms=> ms>=1000 ? (ms/1000).toFixed(ms>=9950?0:1)+'s' : Math.round(ms)+'ms';
+function tlReset(){ tlTimes={}; tlPrev=0; tlLastBucket=null; renderTimeline(); }
+// Attribute the interval it took to PRODUCE this event to this event's stage
+// (so post-gate RAG/setup counts toward MoA, and the instant gate stays ~0).
+function tlTick(ev,d){ const now=performance.now(); const cur=tlBucketOf(ev,d); const b=cur||tlLastBucket;
+  if(tlPrev>0 && b) tlTimes[b]=(tlTimes[b]||0)+(now-tlPrev);
+  if(cur) tlLastBucket=cur; tlPrev=now; renderTimeline(); }
+function renderTimeline(){
+  const bar=document.getElementById('cogTLBar'), leg=document.getElementById('cogTLLegend'), tot=document.getElementById('cogTLTotal');
+  if(!bar) return;
+  const total=TL_ORDER.reduce((s,k)=>s+(tlTimes[k]||0),0);
+  bar.innerHTML=''; leg.innerHTML='';
+  if(total<=0){ leg.textContent='per-stage timing appears as it runs'; if(tot)tot.textContent=''; return; }
+  if(tot) tot.textContent='Σ '+fmtMs(total);
+  TL_ORDER.forEach(k=>{ const ms=tlTimes[k]||0; if(ms<1) return; const m=TL_META[k];
+    const seg=document.createElement('span'); seg.style.background=m[1]; seg.style.width=(ms/total*100)+'%';
+    seg.title=m[0]+': '+fmtMs(ms)+'  ('+Math.round(ms/total*100)+'%)'; bar.appendChild(seg);
+    const l=document.createElement('span'); l.innerHTML='<i style="background:'+m[1]+'"></i>'+m[0]+' <b>'+fmtMs(ms)+'</b>'; leg.appendChild(l); });
+}
+
+// ── confidence gauge (220° arc; ticks at hard-floor 0.35 & pass 0.70) ──
+const GA={cx:54,cy:52,r:40,span:110};
+const gpol=a=>[GA.cx+GA.r*Math.sin(a*Math.PI/180), GA.cy-GA.r*Math.cos(a*Math.PI/180)];
+const arcPath=(a0,a1)=>{ const p0=gpol(a0),p1=gpol(a1),lg=(a1-a0)>180?1:0; return `M${p0[0].toFixed(1)} ${p0[1].toFixed(1)} A${GA.r} ${GA.r} 0 ${lg} 1 ${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`; };
+function buildGauge(){ const g=document.getElementById('cogGauge'); if(!g||g.dataset.built)return; g.dataset.built='1';
+  const mk=(tag,at)=>{const e=document.createElementNS(SVGNS,tag);for(const k in at)e.setAttribute(k,at[k]);g.appendChild(e);return e;};
+  mk('path',{d:arcPath(-GA.span,GA.span),fill:'none',stroke:'rgba(140,170,210,.18)','stroke-width':6,'stroke-linecap':'round'});
+  const val=mk('path',{id:'gVal',fill:'none',stroke:'var(--cyan)','stroke-width':6,'stroke-linecap':'round'}); val.setAttribute('d',arcPath(-GA.span,-GA.span));
+  [[0.35,'#ff5a5a'],[0.70,'#39ff8a']].forEach(([f,c])=>{ const a=-GA.span+f*2*GA.span,o=gpol(a),ri=GA.r-6,xi=GA.cx+ri*Math.sin(a*Math.PI/180),yi=GA.cy-ri*Math.cos(a*Math.PI/180);
+    mk('line',{x1:xi,y1:yi,x2:o[0],y2:o[1],stroke:c,'stroke-width':1.6}); });
+  mk('text',{id:'gTxt',x:GA.cx,y:GA.cy-1,'text-anchor':'middle',style:'font:700 15px ui-monospace,monospace;fill:var(--ink)'}).textContent='—';
+  mk('text',{id:'gStamp',x:GA.cx,y:GA.cy+12,'text-anchor':'middle',style:'font:8px ui-monospace,monospace;fill:var(--muted);letter-spacing:.1em'}).textContent='';
+}
+function gRaw(f,c){ const v=document.getElementById('gVal'); if(!v)return; const a=-GA.span+Math.max(0,Math.min(1,f))*2*GA.span; v.setAttribute('d',arcPath(-GA.span,a)); v.setAttribute('stroke',c); }
+function gaugeReset(){ buildGauge(); gRaw(0,'var(--cyan)'); const t=document.getElementById('gTxt'),s=document.getElementById('gStamp'); if(t)t.textContent='—'; if(s)s.textContent=''; }
+function gaugeSeed(c){ if(c==null)return; gRaw(c*0.6,'rgba(0,229,255,.5)'); }
+function gaugeSet(score,passed){ if(score==null)return; const c=passed&&score>=0.7?'#39ff8a':score<0.35?'#ff5a5a':'#ffd24a'; gRaw(score,c);
+  const t=document.getElementById('gTxt'); if(t)t.textContent=Math.round(score*100);
+  const s=document.getElementById('gStamp'); if(s){ s.textContent=passed?'PASS':'FAIL'; s.setAttribute('style','font:8px ui-monospace,monospace;letter-spacing:.1em;fill:'+(passed?'#39ff8a':'#ff5a5a')); } }
+function gaugeUnverified(){ const t=document.getElementById('gTxt'); if(t)t.textContent='—';
+  const s=document.getElementById('gStamp'); if(s){ s.textContent='UNVERIFIED'; s.setAttribute('style','font:7px ui-monospace,monospace;letter-spacing:.06em;fill:var(--muted)'); } gRaw(0,'rgba(140,170,210,.3)'); }
+function updateMeta(env){ const u=env.usage||{},p=[`route <b>${env.route}</b>`];
+  if(u.total_tokens_in!=null||u.total_tokens_out!=null)p.push(`tok ${u.total_tokens_in||0}/${u.total_tokens_out||0}`);
+  if(u.estimated_cost_usd!=null)p.push(`$${Number(u.estimated_cost_usd).toFixed(4)}`);
+  if(u.total_latency_ms!=null)p.push(`${Math.round(u.total_latency_ms)}ms`);
+  const tid=env.trace_id?String(env.trace_id).slice(-6):''; if(tid)p.push(`trace ${tid}`);
+  metaSet(p.join(' · ')); }
+
+// ── timer ──
+let _cogT0=0,_cogTI=0;
+function cogTimerStart(){ _cogT0=performance.now(); clearInterval(_cogTI); _cogTI=setInterval(()=>{ const el=document.getElementById('cogTimer'); if(el)el.textContent=((performance.now()-_cogT0)/1000).toFixed(1)+'s'; },100); }
+function cogTimerStop(){ clearInterval(_cogTI); }
+
+// ── map each REAL pipeline event → nodes/edges/gauge + the reactive star ──
+// Pipeline frames wrap their payload under `.data`; start/done/error carry it
+// at the top level — unwrap so d is always the actual payload.
+function cogHandle(ev,rec){ rec=rec||{}; const d=(rec.pipeline_event && rec.data)?rec.data:rec;
+  tlTick(ev,d);
+  switch(ev){
+    case 'start': setNode('query','done'); setNode('router','active'); setEdge('query','router','active'); setRoute(d.route_hint); metaSet('Thinking…'); break;
+    case 'route_selected': setRoute(d.route); setNode('router','done'); setEdge('query','router','done');
+      if(d.route==='fast'||d.route==='thinking'){ setEdge('router','answer','active');
+        ['council','synth','gate','moa0','moa1','moa2','refiner','agg','verify','sat0','sat1','sat2','sat3','sat4','sat5'].forEach(id=>setNode(id,'ghost')); } break;
+    case 'depth_level': setDepth(d.depth); setNode('depth','done'); setEdge('router','depth','done'); break;
+    case 'perception': showNode('percept'); setNode('percept','active'); setEdge('router','percept','active'); cogStage(0.58,{light:0.85,flash:0.5}); break;
+    case 'council_started': setNode('council','active'); setEdge('router','council','active');
+      (d.agents||[0,0,0,0,0,0]).forEach((a,i)=>{ if(NODES['sat'+i]){ setNode('sat'+i,'active'); setEdge('council','sat'+i,'active'); } });
+      cogStage(0.72,{energy:0.72,bolt:0.35}); metaSet('Understanding council — 6 agents interpreting…'); break;
+    case 'task_spec_created': setNode('council','done'); for(let i=0;i<6;i++){ setNode('sat'+i,'done'); setEdge('council','sat'+i,'done'); }
+      setNode('synth','done'); setEdge('council','synth','done'); if(d.confidence!=null)gaugeSeed(d.confidence); break;
+    case 'confidence_gate': { const clar=String(d.action||'').toLowerCase().indexOf('clarif')>=0; setNode('gate',clar?'fail':'done'); setEdge('synth','gate',clar?'active':'done');
+      if(clar){ metaSet('Confidence gate → needs clarification'); cogComplete('clarify'); } break; }
+    case 'moa_layer1': ['moa0','moa1','moa2'].forEach(id=>setNode(id,'active')); ['gate>moa0','gate>moa1','gate>moa2'].forEach(k=>setEdge2(k,'active'));
+      cogStage(0.62,{energy:0.82}); window._cogAttempt=d.attempt||1; metaSet(window._cogAttempt>1?('Retry '+window._cogAttempt+' — re-proposing after a failed verify'):'Mixture-of-Agents — 3 proposers…'); break;
+    case 'self_consistency': showNode('sc'); setNode('sc','active'); break;
+    case 'moa_layer2': ['moa0','moa1','moa2'].forEach(id=>setNode(id,'done'));
+      if(d.skip_refiner){ setNode('refiner','ghost'); ['moa0>refiner','moa1>refiner','moa2>refiner'].forEach(k=>setEdge2(k,'ghost')); }
+      else { setNode('refiner','active'); ['moa0>refiner','moa1>refiner','moa2>refiner'].forEach(k=>setEdge2(k,'active')); } break;
+    case 'moa_layer3': if(NODES.refiner && !NODES.refiner.classList.contains('ghost')) setNode('refiner','done'); setNode('agg','active'); setEdge('refiner','agg','active'); break;
+    case 'verify_started': setNode('agg','done'); setNode('verify','active'); setEdge('agg','verify','active'); cogConverge(); metaSet('Verifying the answer…'); break;
+    case 'tool_call': if(d.tool==='code_interpreter'){ showNode('grounded'); setNode('grounded','active'); } else if(d.tool==='vision'){ showNode('percept'); setNode('percept','active'); } break;
+    case 'verify_pass': setNode('verify','done'); setNode('answer','done'); setEdge('verify','answer','done'); if(d.score!=null)gaugeSet(d.score,true); break;
+    case 'verify_fail': setNode('verify','fail'); if(d.score!=null)gaugeSet(d.score,false); setEdge('verify','gate','active'); cogStage(0.96,{energy:0.85,bolt:0.4,flash:0.5}); break;
+    case 'escalation': cogStage(0.96,{bolt:0.4,flash:0.5}); metaSet('Escalating L2 → L3 (low proposer agreement)'); break;
+    case 'injection_blocked': metaSet('⛔ prompt injection blocked'); cogComplete('error'); break;
+    case 'budget_exceeded': metaSet('budget exceeded'); cogComplete('error'); break;
+    case 'done': onDone(d); break;
+    case 'error': metaSet('error: '+(d.error||'?')); cogComplete('error'); break;
+  }
+}
+function setEdge2(key,st){ const e=EDGES[key]; if(!e)return; e.classList.remove('ghost','done','active'); e.classList.add(st); }
+function onDone(env){ setNode('answer','done'); setEdge('verify','answer','done');
+  const r=env.route, sc=env.verify_score, st=env.status;
+  if(st==='needs_clarification'){ cogComplete('clarify'); metaSet('Needs clarification'); return; }
+  if(st==='error'){ cogComplete('error'); }
+  else if(r==='fast'||r==='thinking'){ setEdge('router','answer','done'); gaugeUnverified(); cogComplete('fast'); }
+  else if(sc>=0.7){ cogComplete('solved',sc); }
+  else if(sc>=0.35){ cogComplete('medium',sc); }
+  else { cogComplete('low',sc); }
+  updateMeta(env);
+}
+
+async function askStream(msgs, deep){
+  buildGraph(); buildGauge(); cogReset(); cogIgnite(); cogTimerStart();
+  const url=cfg.url.replace(/\/+$/,'')+'/v1/verify/stream';
+  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),120000);
+  let res;
+  try{ res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...(cfg.key?{'Authorization':'Bearer '+cfg.key}:{})},
+    body:JSON.stringify({input:{messages:withLang(msgs)}, route:deep?'council':undefined}), signal:ctrl.signal}); }
+  catch(e){ clearTimeout(to); cogTimerStop(); throw e; }
+  if(!res.ok||!res.body){ clearTimeout(to); cogTimerStop(); throw new Error('HTTP '+res.status); }
+  const reader=res.body.getReader(), dec=new TextDecoder(); let buf='', done=null;
+  try{
+    for(;;){ const {value,done:d}=await reader.read(); if(d)break; buf+=dec.decode(value,{stream:true});
+      let i; while((i=buf.indexOf('\n\n'))>=0){ const frame=buf.slice(0,i); buf=buf.slice(i+2); const f=parseSSE(frame); if(!f)continue; if(f.event==='done')done=f.data; cogHandle(f.event,f.data); } }
+  } finally { clearTimeout(to); cogTimerStop(); }
+  if(!done) throw new Error('no done frame');
+  return {ok:true, answer:done.answer||'', clar:done.clarifications||[], env:done};
+}
+function parseSSE(frame){ let ev=null,data=null; for(const l of frame.split('\n')){ if(l.startsWith('event:'))ev=l.slice(6).trim(); else if(l.startsWith('data:')){ try{data=JSON.parse(l.slice(5).trim());}catch{} } } return ev?{event:ev,data}:null; }
+
+// graceful degrade: keep the panel + star alive when the live trace isn't reachable
+function cogStoryboard(){ buildGraph(); buildGauge(); cogReset(); cogIgnite(); setRoute('demo');
+  setNode('query','done'); setNode('router','active'); setEdge('query','router','active'); setEdge('router','answer','active');
+  metaSet('Live trace unavailable — basic / demo mode'); }
+
+// panel show/hide
+function showCog(){ if(innerWidth<=760)return; buildGraph(); buildGauge(); document.getElementById('cog').classList.add('show'); document.getElementById('cogChip').style.display='none'; }
+function hideCog(){ document.getElementById('cog').classList.remove('show'); document.getElementById('cogChip').style.display=(innerWidth<=760?'none':'block'); }
+document.getElementById('cogClose').onclick=hideCog;
+document.getElementById('cogChip').onclick=showCog;
+const _deepEl=document.getElementById('cogDeep'); if(_deepEl){ _deepEl.checked=!!cfg.deep; _deepEl.onchange=()=>{ cfg.deep=_deepEl.checked; setCfg(cfg); }; }
+// show the architecture at rest on load (desktop)
+applyLang(); buildGraph(); buildGauge(); renderTimeline(); showCog();
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>ask(c.textContent));
+document.getElementById('chatHead').onclick=()=>{
+  const c=document.getElementById('chat'); c.classList.toggle('min');
+  document.getElementById('chatToggle').textContent=c.classList.contains('min')?'+':'–';
+};
+
+// voice input
+const micBtn=document.getElementById('micBtn');
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, listening=false;
+if(SR){
+  rec=new SR(); rec.continuous=false; rec.interimResults=true; rec.lang='en-US';
+  rec.onresult=e=>{ let s=''; for(const r of e.results) s+=r[0].transcript; cinput.value=s;
+    if(e.results[e.results.length-1].isFinal){ stopListen(); ask(s); } };
+  rec.onend=stopListen; rec.onerror=stopListen;
+} else micBtn.style.opacity=0.4;
+function startListen(){ if(!rec)return; try{rec.start();micBtn.classList.add('active');cinput.placeholder='listening…';}catch{} }
+function stopListen(){ listening=false; micBtn.classList.remove('active'); cinput.placeholder='Ask Metis…  (or tap the mic)'; }
+micBtn.onclick=()=>{ if(!rec){alert('Voice input needs a Chromium-based browser.');return;} listening=!listening; listening?startListen():rec.stop(); };
+
+// voice output
+const spkBtn=document.getElementById('spkBtn'); let speakOn=false;
+spkBtn.onclick=()=>{ speakOn=!speakOn; spkBtn.classList.toggle('active',speakOn); if(!speakOn) speechSynthesis.cancel(); };
+function speak(t){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t.slice(0,600)); u.rate=1.02; speechSynthesis.speak(u); }catch{} }
+
+// settings
+const cfgModal=document.getElementById('cfg');
+document.getElementById('cfgOpen').onclick=e=>{ e.preventDefault();
+  document.getElementById('cfgUrl').value=cfg.url||''; document.getElementById('cfgKey').value=cfg.key||''; cfgModal.classList.add('show'); };
+document.getElementById('cfgClose').onclick=()=>cfgModal.classList.remove('show');
+document.getElementById('cfgSave').onclick=async()=>{
+  cfg={url:document.getElementById('cfgUrl').value.trim(),key:document.getElementById('cfgKey').value.trim(),deep:cfg.deep};
+  setCfg(cfg); cfgModal.classList.remove('show');
+  const ok=await probeConnection();
+  add('sys', !cfg.url ? t('demo_mode') : (ok ? t('connected_ok') : t('saved_unreach')));
+};
+</script>
+</body>
+</html>

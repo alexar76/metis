@@ -1,0 +1,48 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "Comma-separated models (e.g. deepseek-chat,gpt-4o-mini)"
+        required: false
+        default: "deepseek-chat"
+      dataset:
+        description: "Dataset name or all"
+        required: false
+        default: "all"
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: Run mock harness tests (CI-safe)
+        run: pytest tests/benchmarks -m benchmark -q
+
+      - name: Run live benchmarks (skipped without API keys)
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          metis-benchmark run \
+            --models "${{ github.event.inputs.models }}" \
+            --dataset "${{ github.event.inputs.dataset }}" \
+            --compare direct,metis \
+            --output reports/bench-${{ github.run_id }}.md || true
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: reports/
+          if-no-files-found: ignore

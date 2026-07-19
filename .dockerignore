@@ -1,0 +1,38 @@
+# Build context exclusions — production image has no test/mock code
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+dist
+build
+.pytest_cache
+.mypy_cache
+*.db
+.env
+.env.*
+!.env.example
+!config/docker.env.example
+
+# Tests and dev tooling (no mock provider in production image)
+tests/
+docs/
+data/
+*.md
+!README.md
+
+# Local configs with secrets
+config.production.yaml
+config.example.yaml
+
+# IDE / OS
+.idea
+.vscode
+.DS_Store
+*.swp
+
+# Docker compose (not needed inside image)
+docker-compose*.yml
+Dockerfile*

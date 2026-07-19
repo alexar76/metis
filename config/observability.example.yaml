@@ -1,0 +1,19 @@
+# Observability — logging, tracing, retries, circuit breaker
+
+reliability:
+  max_retries: 3
+  base_delay_ms: 500
+  max_delay_ms: 30000
+  retryable_errors: [timeout, rate_limit, network, model_error]
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    recovery_seconds: 60
+
+observability:
+  log_level: INFO
+  log_format: json
+  log_content: redacted
+  trace_dir: data/traces
+  audit_log_file: data/logs/audit.jsonl
+  audit_hash_chain: false

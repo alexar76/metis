@@ -1,0 +1,42 @@
+{
+  "__comment": "Metis — Grafana dashboard. Import into Grafana (Dashboards → Import); datasource = your Prometheus scraping metis:8080/metrics.",
+  "title": "Metis — cognition tier",
+  "uid": "metis-cognition",
+  "schemaVersion": 39,
+  "tags": ["metis", "aicom", "cognition"],
+  "timezone": "utc",
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": { "list": [{ "name": "datasource", "type": "datasource", "query": "prometheus" }] },
+  "panels": [
+    {
+      "type": "stat", "title": "Up", "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }] } },
+      "targets": [{ "expr": "up{job=\"metis\"}", "datasource": "${datasource}" }]
+    },
+    {
+      "type": "stat", "title": "Knowledge entries", "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [{ "expr": "metis_knowledge_entries", "datasource": "${datasource}" }]
+    },
+    {
+      "type": "stat", "title": "Open circuit breakers", "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
+      "targets": [{ "expr": "sum(metis_circuit_breaker_open)", "datasource": "${datasource}" }]
+    },
+    {
+      "type": "timeseries", "title": "Provider circuit-breaker state", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [{ "expr": "metis_circuit_breaker_open", "legendFormat": "{{endpoint}}", "datasource": "${datasource}" }]
+    },
+    {
+      "type": "timeseries", "title": "Scrape availability (up)", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [{ "expr": "up{job=\"metis\"}", "legendFormat": "up", "datasource": "${datasource}" }]
+    },
+    {
+      "type": "timeseries", "title": "Traced runs & failures (rate/5m)", "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "rate(metis_traced_runs_total[5m])", "legendFormat": "runs/s", "datasource": "${datasource}" },
+        { "expr": "rate(metis_traced_failures_total[5m])", "legendFormat": "failures/s", "datasource": "${datasource}" }
+      ]
+    }
+  ]
+}

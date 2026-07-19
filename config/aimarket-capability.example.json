@@ -1,0 +1,57 @@
+{
+  "$comment": "AIMarket Hub capability manifest for a Metis deployment. Copy, set invoke_url to your PUBLIC https Metis host + /aimarket/invoke, then register with `aimarket publish aimarket-capability.json` (aimarket-hub CLI) or POST to {hub}/ai-market/v2/supply/register. Registration is OPTIONAL — Metis runs standalone without it. For localhost dev set AIMARKET_ALLOW_LOCAL_PUBLISH=1 on the hub.",
+  "product_id": "metis.cognition",
+  "capability_id": "metis.verify@v1",
+  "name": "Metis verified cognition",
+  "version": "v1",
+  "description": "Run a query through the Metis cognitive stack (Understanding Council -> confidence gate -> layered MoA -> verifier) and get back a verification envelope: answer, verify_score, verified flag, route, depth, and clarifications when the input is too ambiguous to answer confidently.",
+  "publisher": "metis",
+  "publisher_id": "metis",
+  "agent": "metis",
+  "invoke_url": "https://REPLACE_WITH_YOUR_METIS_HOST/aimarket/invoke",
+  "price_per_call_usd": 0.02,
+  "p50_latency_ms": 4000,
+  "success_rate_30d": 0.98,
+  "trust_score": 0.6,
+  "provider_pubkey": "",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "input": {
+        "description": "A query string, or {messages|query|prompt|text}, or any JSON payload.",
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object" }
+        ]
+      },
+      "route": {
+        "type": "string",
+        "enum": ["fast", "thinking", "council", "agent"],
+        "description": "Optional route override; omit to auto-route by task type."
+      }
+    },
+    "required": ["input"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "result": {
+        "type": "object",
+        "properties": {
+          "answer": { "type": "string" },
+          "status": { "type": "string", "enum": ["success", "needs_clarification", "error"] },
+          "verified": { "type": "boolean" },
+          "verify_score": { "type": "number", "minimum": 0, "maximum": 1 },
+          "route": { "type": "string" },
+          "depth": { "type": ["string", "null"] },
+          "iterations": { "type": "integer" },
+          "clarifications": { "type": "array", "items": { "type": "string" } },
+          "usage": { "type": "object" },
+          "trace_id": { "type": ["string", "null"] }
+        },
+        "required": ["answer", "status", "verified", "verify_score", "route"]
+      }
+    },
+    "required": ["result"]
+  }
+}

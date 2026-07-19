@@ -1,0 +1,41 @@
+# Prometheus alert rules for Metis. Load via prometheus.yml `rule_files:` and point a scrape
+# job at metis:8080/metrics (internal only — do NOT expose /metrics through nginx).
+#
+# scrape_configs:
+#   - job_name: metis
+#     metrics_path: /metrics
+#     static_configs: [{ targets: ["metis:8080"] }]
+groups:
+  - name: metis
+    rules:
+      - alert: MetisDown
+        expr: up{job="metis"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Metis is down"
+          description: "The Metis scrape target has been unreachable for 1m — the cognition tier is not serving. Users will see the demo fall back to demo mode; the factory gate fails open."
+
+      - alert: MetisProviderCircuitOpen
+        expr: metis_circuit_breaker_open == 1
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Metis provider circuit open ({{ $labels.endpoint }})"
+          description: "The circuit breaker for {{ $labels.endpoint }} has been open for 2m — that LLM/vision provider is failing. Council quality degrades or requests error."
+
+      - alert: MetisKnowledgeStoreEmptied
+        expr: metis_knowledge_entries == 0
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Metis knowledge store is empty"
+          description: "knowledge_entries dropped to 0 for 10m — likely a lost data mount or an un-seeded container. Grounding is degraded; run scripts/seed_ecosystem_knowledge.py and check the /app/data volume."
+
+      - alert: MetisNoScrape
+        expr: absent(up{job="metis"})
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Metis metrics target missing"
+          description: "Prometheus has no Metis target for 5m — scrape config or the service is gone."

@@ -1,0 +1,33 @@
+default_provider: openrouter
+briefing_provider: deepseek
+
+system_prompt: |
+  You are the SKOPOS DevSecOps assistant. SKOPOS is a self-hosted fleet dashboard;
+  this public demo runs on the Metis node and monitors a small server fleet
+  (factory, oracle, metis) — you cover the whole fleet, not just one host.
+  Analyze the fleet's security snapshots, Docker workloads, and HTTP traffic
+  patterns from the provided context. Introduce yourself as the SKOPOS assistant.
+  Be concise and actionable.
+
+max_context_chars: 80000
+
+providers:
+  openrouter:
+    kind: openai_compatible
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    model: minimax/minimax-m3
+    extra_headers:
+      HTTP-Referer: https://metis.modelmarket.dev
+      X-Title: SKOPOS Metis Test
+
+  deepseek:
+    kind: openai_compatible
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    model: deepseek-chat
+
+  ollama:
+    kind: ollama
+    base_url: http://host.docker.internal:11434
+    model: llama3.2

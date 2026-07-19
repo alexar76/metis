@@ -1,0 +1,26 @@
+# Worker node A — Docker (LM Studio on host via host.docker.internal)
+node_id: node-a
+host: 0.0.0.0
+port: 8443
+
+provider: openai_compat
+model: microsoft/phi-4-reasoning-plus
+base_url: http://host.docker.internal:1234/v1
+
+api_key_env: METIS_NODE_A_KEY
+llm_api_key_env: LMSTUDIO_API_KEY
+production: true
+
+models:
+  - microsoft/phi-4-reasoning-plus
+  - qwen/qwen3.6-35b-a3b
+
+roles:
+  - parser_a
+  - intent_parser
+  - proposer
+  - synthesizer
+
+security:
+  tls_verify: false
+  request_signing: false
