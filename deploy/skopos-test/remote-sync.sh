@@ -35,7 +35,10 @@ rsync -avz --delete \
   "${REPO}/skopos/docs/landing/" "${METIS_HOST}:${LANDING_REMOTE}/"
 
 echo "[sync] nginx.conf → ${METIS_HOST}:${NGINX_REMOTE}"
-rsync -avz \
+# --inplace: the file is bind-mounted into metis-nginx; a rename-style update
+# creates a new inode the container never sees, so the in-container `nginx -t`
+# below would validate the STALE config while restart applies the new one.
+rsync -avz --inplace \
   "${REPO}/metis/deploy/nginx.conf" "${METIS_HOST}:${NGINX_REMOTE}"
 
 # Ensure probe key exists, distribute to factory/oracle, then build + start stack.
