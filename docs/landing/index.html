@@ -212,7 +212,7 @@
     <span class="cog-route" id="cogRoute" data-r="idle">IDLE</span>
     <span class="cog-depth" id="cogDepth"></span>
     <label class="cog-deep" data-i18n-title="deep_title" title="On: full Understanding Council + verifier (the whole trace). Off: smart auto-routing — faster on simple asks.">
-      <input type="checkbox" id="cogDeep"><span data-i18n="deep_label">Deep think</span></label>
+      <input type="checkbox" id="cogDeep" checked><span data-i18n="deep_label">Deep think</span></label>
     <span class="cog-timer" id="cogTimer">0.0s</span>
     <span class="cog-x" id="cogClose" title="hide">×</span>
   </div>
@@ -445,9 +445,11 @@ let cfg=getCfg(); if(cfg.url===undefined){
   // the chat is REAL, not demo — the live node allows cross-origin (CORS).
   const LIVE='https://metis.modelmarket.dev';
   const onLive = location.protocol.startsWith('http') && /(^|\.)modelmarket\.dev$/.test(location.hostname);
-  cfg={url: onLive ? location.origin : LIVE, key:'', deep:false};  // auto-route by default (smart + reliable); toggle "Deep think" to force the full council
+  cfg={url: onLive ? location.origin : LIVE, key:'', deep:true};  // Deep think on by default (full council + verifier)
 }
-if(cfg.deep===undefined) cfg.deep=false;   // auto-route: classifier picks fast/thinking/council per query
+// One-time migrate: Deep think is the product default. After deepDefaultV=1, user toggle wins.
+if(cfg.deepDefaultV !== 1){ cfg.deep=true; cfg.deepDefaultV=1; setCfg(cfg); }
+if(cfg.deep===undefined) cfg.deep=true;
 
 // ══════════════════════════ i18n (EN / RU / ES) ══════════════════════════
 const I18N = {
