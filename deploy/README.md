@@ -3,6 +3,14 @@
 The live demo node serves **https://metis.modelmarket.dev** (Metis landing + API) and
 **https://skopos.modelmarket.dev** (SKOPOS dashboard). This folder holds the reproducible nginx config.
 
+> **Host sync warning:** never `rsync --delete` the monorepo `metis/` tree onto `/opt/metis`
+> without excludes. Host-only paths that must survive:
+> - TLS store: `/var/lib/metis/letsencrypt` (mounted into `metis-nginx` as `/etc/letsencrypt`)
+> - Runtime config: `/opt/metis/deploy/prod.yaml` (secrets — not in git)
+> - Env: `/opt/metis/.env`, data under `/opt/metis/data/`
+>
+> Example: `rsync -az --delete --exclude .env --exclude data/ --exclude deploy/prod.yaml --exclude deploy/letsencrypt …`
+
 ## Topology
 
 ```
@@ -37,7 +45,7 @@ docker network connect metisnet metis-skopos   # idempotent if compose already a
 Issue TLS (once DNS `A` → node IP):
 
 ```bash
-docker run --rm -v /opt/metis/deploy/letsencrypt:/etc/letsencrypt \
+docker run --rm -v /var/lib/metis/letsencrypt:/etc/letsencrypt \
   -v /var/www/certbot:/var/www/certbot certbot/certbot certonly --webroot \
   -w /var/www/certbot -d skopos.modelmarket.dev --agree-tos --register-unsafely-without-email --non-interactive
 docker exec metis-nginx nginx -s reload
@@ -87,13 +95,13 @@ silently resets `knowledge_entries` to 0.
 4. **Run nginx** (HTTP first, so the ACME challenge is reachable):
 
    ```bash
-   mkdir -p /var/www/certbot /opt/metis/deploy/letsencrypt
+   mkdir -p /var/www/certbot /var/lib/metis/letsencrypt
    docker run -d --name metis-nginx --restart unless-stopped \
      --network metisnet -p 80:80 -p 443:443 \
      -v /var/www/metis-landing:/usr/share/nginx/html:ro \
      -v /opt/metis/deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
      -v /var/www/certbot:/var/www/certbot:ro \
-     -v /opt/metis/deploy/letsencrypt:/etc/letsencrypt:ro \
+     -v /var/lib/metis/letsencrypt:/etc/letsencrypt:ro \
      nginx:alpine
    ```
 
@@ -101,7 +109,7 @@ silently resets `knowledge_entries` to 0.
 
    ```bash
    docker run --rm \
-     -v /opt/metis/deploy/letsencrypt:/etc/letsencrypt \
+     -v /var/lib/metis/letsencrypt:/etc/letsencrypt \
      -v /var/www/certbot:/var/www/certbot \
      certbot/certbot certonly --webroot -w /var/www/certbot \
      -d metis.modelmarket.dev --agree-tos --register-unsafely-without-email --non-interactive
@@ -114,7 +122,7 @@ silently resets `knowledge_entries` to 0.
 Weekly cron on the host (Let's Encrypt certs last 90 days):
 
 ```cron
-0 3 * * 1 docker run --rm -v /opt/metis/deploy/letsencrypt:/etc/letsencrypt -v /var/www/certbot:/var/www/certbot certbot/certbot renew --webroot -w /var/www/certbot --quiet && docker exec metis-nginx nginx -s reload
+0 3 * * 1 docker run --rm -v /var/lib/metis/letsencrypt:/etc/letsencrypt -v /var/www/certbot:/var/www/certbot certbot/certbot renew --webroot -w /var/www/certbot --quiet && docker exec metis-nginx nginx -s reload
 ```
 
 Test it without touching the live cert: append `--dry-run` to the `renew` call.

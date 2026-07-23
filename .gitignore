@@ -3,13 +3,6 @@ __pycache__/
 .venv/
 venv/
 .env
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.mypy_cache/
-.coverage
-.hypothesis/
-reports/
-data/
+deploy/prod.yaml
+deploy/letsencrypt/
 *.db
