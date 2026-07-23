@@ -5,4 +5,13 @@ venv/
 .env
 deploy/prod.yaml
 deploy/letsencrypt/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.coverage
+.hypothesis/
+reports/
+data/
 *.db
