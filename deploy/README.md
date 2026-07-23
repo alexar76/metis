@@ -81,7 +81,7 @@ silently resets `knowledge_entries` to 0.
 
 ## First-time setup
 
-1. **DNS** — point an `A` record at the node (e.g. `metis.modelmarket.dev → 31.77.67.99`).
+1. **DNS** — point an `A` record at the node (e.g. `metis.modelmarket.dev → <metis-host-ip>`).
 2. **Landing** — sync `docs/landing/` to `/var/www/metis-landing/`.
 3. **Config** — copy `nginx.conf` to `/opt/metis/deploy/nginx.conf`.
 4. **Run nginx** (HTTP first, so the ACME challenge is reachable):

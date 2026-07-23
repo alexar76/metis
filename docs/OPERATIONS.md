@@ -20,12 +20,12 @@ alerting**, **backup & disaster recovery**, and **load testing**. Honest status 
       static_configs: [{ targets: ["metis:8080"] }]
   rule_files: [ "deploy/monitoring/prometheus-alerts.yml" ]
   ```
-- **Alerts** ([`deploy/monitoring/prometheus-alerts.yml`](deploy/monitoring/prometheus-alerts.yml)):
+- **Alerts** ([`deploy/monitoring/prometheus-alerts.yml`](../deploy/monitoring/prometheus-alerts.yml)):
   `MetisDown` (up==0, 1m, **critical**), `MetisNoScrape` (target absent), `MetisProviderCircuitOpen`
   (an LLM/vision provider failing), `MetisKnowledgeStoreEmptied` (lost data mount). Route
   `severity: critical` to your pager (PagerDuty/OpsGenie/Alertmanager) so a Metis outage pages
   **you**, not your users.
-- **Grafana**: import [`deploy/monitoring/grafana-dashboard.json`](deploy/monitoring/grafana-dashboard.json)
+- **Grafana**: import [`deploy/monitoring/grafana-dashboard.json`](../deploy/monitoring/grafana-dashboard.json)
   (uid `metis-cognition`) — up, knowledge, breaker state, run/failure rates.
 
 ## Backup & disaster recovery
@@ -34,21 +34,21 @@ State that matters lives in the **`/app/data` bind-mount** (`/opt/metis/data` on
 knowledge store (SQLite), vector/episodic memory, traces. It is **not** rebuildable from the
 image — back it up.
 
-- **Snapshot + rotate**: [`deploy/backup.sh`](deploy/backup.sh) → `/opt/metis/backups/metis-data-<ts>.tar.gz`, keeps newest 14.
+- **Snapshot + rotate**: [`deploy/backup.sh`](../deploy/backup.sh) → `/opt/metis/backups/metis-data-<ts>.tar.gz`, keeps newest 14.
   ```cron
   30 3 * * *  /opt/metis/deploy/backup.sh >/var/log/metis-backup.log 2>&1
   ```
 - **Restore**: `./deploy/backup.sh --restore /opt/metis/backups/metis-data-<ts>.tar.gz`
   (stops the container, rsyncs the snapshot, `chown 1000:1000`, restarts).
 - **Rebuild from scratch** (total loss): recreate the container per
-  [`deploy/README.md`](deploy/README.md), then re-seed grounding:
+  [`deploy/README.md`](../deploy/README.md), then re-seed grounding:
   `docker exec -i metis python3 - data/knowledge < scripts/seed_ecosystem_knowledge.py`.
 - **Config**: `prod.yaml` holds the provider keys and is **git-excluded** — keep it in your
   secret store; it is the only piece not reproducible from the repo.
 
 ## Load testing
 
-[`deploy/loadtest.k6.js`](deploy/loadtest.k6.js) (k6): a health + fast-route mix with SLO
+[`deploy/loadtest.k6.js`](../deploy/loadtest.k6.js) (k6): a health + fast-route mix with SLO
 thresholds (errors <5%, health p95 <500ms, fast-verify p95 <20s).
 ```bash
 k6 run -e BASE=http://127.0.0.1:8080 -e VUS=20 -e DURATION=2m deploy/loadtest.k6.js

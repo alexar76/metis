@@ -13,7 +13,7 @@ servers:
   - name: factory
     source: ssh_nginx_access_log
     ssh:
-      host: 5.129.212.122
+      host: modeldev.modelmarket.dev
       port: 8443
       user: root
       key_path: /root/.ssh/id_ed25519
@@ -25,7 +25,7 @@ servers:
   - name: oracle
     source: ssh_nginx_access_log
     ssh:
-      host: 78.17.126.214
+      host: oracles.modelmarket.dev
       port: 22
       user: root
       key_path: /root/.ssh/id_ed25519

@@ -40,8 +40,8 @@ install_probe_key() {
 }
 
 # Best-effort: allow SKOPOS container to SSH to factory + oracle for fleet logs.
-install_probe_key "root@5.129.212.122" 8443 || true
-install_probe_key "root@78.17.126.214" 22 || true
+install_probe_key "root@modeldev.modelmarket.dev" 8443 || true
+install_probe_key "root@oracles.modelmarket.dev" 22 || true
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   log "Creating .env from example with generated passwords…"
@@ -135,7 +135,7 @@ PY
 log "Done."
 echo ""
 echo "  UI (on server):  http://127.0.0.1:8501"
-echo "  SSH tunnel:      ssh -L 8501:127.0.0.1:8501 root@31.77.67.99"
+echo "  SSH tunnel:      ssh -L 8501:127.0.0.1:8501 root@skopos.modelmarket.dev"
 echo "  Password:        grep SKOPOS_DASHBOARD_PASSWORD ${ENV_FILE}"
 echo "  Postgres:        docker exec -it metis-skopos-postgres psql -U skopos skopos"
 echo "  Logs:            cd ${ROOT} && docker compose logs -f skopos"

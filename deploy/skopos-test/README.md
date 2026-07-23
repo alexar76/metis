@@ -1,6 +1,6 @@
 # SKOPOS test deployment on metis
 
-Test instance of **SKOPOS** on the Metis node (`31.77.67.99`) — PostgreSQL + dashboard on **localhost:8501** (not public by default).
+Test instance of **SKOPOS** on the Metis node — PostgreSQL + dashboard on **localhost:8501** (not public by default).
 
 ## Stack
 
@@ -39,7 +39,7 @@ Manual Pages publish:
 ## Open UI locally
 
 ```bash
-ssh -L 8501:127.0.0.1:8501 root@31.77.67.99
+ssh -L 8501:127.0.0.1:8501 root@<metis-host>
 # browser: http://localhost:8501
 ```
 

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO="${REPO:-$(cd "$(dirname "$0")/../../.." && pwd)}"
-METIS_HOST="${METIS_HOST:-root@31.77.67.99}"
+METIS_HOST="${METIS_HOST:-root@skopos.modelmarket.dev}"
 APP_REMOTE="/opt/skopos-test/app"
 DEPLOY_REMOTE="/opt/skopos-test/deploy"
 APACHE_REMOTE="/opt/metis/deploy/apache-test"
@@ -60,7 +60,7 @@ REMOTE
 
 PROBE_PUB="$(ssh "${METIS_HOST}" "cat ${DEPLOY_REMOTE}/ssh/id_ed25519.pub 2>/dev/null" || true)"
 if [[ -n "${PROBE_PUB}" ]]; then
-  for spec in "root@5.129.212.122:8443" "root@78.17.126.214:22"; do
+  for spec in "root@modeldev.modelmarket.dev:8443" "root@oracles.modelmarket.dev:22"; do
     target="${spec%%:*}"
     port="${spec##*:}"
     ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p "${port}" "${target}" \

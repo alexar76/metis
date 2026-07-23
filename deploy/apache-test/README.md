@@ -35,7 +35,7 @@ Logs land at:
   - name: metis
     source: ssh_http_access_log
     ssh:
-      host: "31.77.67.99"
+      host: "<metis-host>"
       port: 22
       user: stats
       key_path: "~/.ssh/id_ed25519"

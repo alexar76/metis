@@ -168,7 +168,7 @@
   </div>
   <nav class="links">
     <span class="langsw" id="langsw" aria-label="Language">
-      <button data-lang="en">EN</button><button data-lang="ru">RU</button><button data-lang="es">ES</button>
+      <button data-lang="en">EN</button><button data-lang="ru">RU</button><button data-lang="es">ES</button><button data-lang="fr">FR</button><button data-lang="zh">ZH</button>
     </span>
     <a href="https://github.com/alexar76/metis" target="_blank" rel="noreferrer">GitHub ↗</a>
     <a href="https://github.com/alexar76/metis#readme" target="_blank" rel="noreferrer">Docs ↗</a>
@@ -465,6 +465,7 @@ const I18N = {
     sys_intro:"Metis is a distributed cognitive layer over any LLM. Ask it anything — connect a live Metis via ⚙ Connect, or explore in demo mode.",
     demo_reply:"I'm in demo mode on this page. Connect a running Metis (⚙ Connect → your metis-serve URL) and I'll answer for real — deliberating across a council and verifying before I reply.",
     could_not_reach:"(Could not reach Metis right now — please try again in a moment.)",
+    slow_or_timeout:"(Metis is connected, but the council run timed out or the stream broke — try again, or turn off Deep think for a faster answer.)",
     max_img:"Up to 5 images per message.",
     connected_ok:"Connected — ask away.", saved_unreach:"Saved, but the endpoint is not reachable (CORS / offline) — demo mode until it responds.", demo_mode:"Demo mode.",
     answer_directive:"Always reply in English, regardless of the language of the question.",
@@ -483,6 +484,7 @@ const I18N = {
     sys_intro:"Metis — распределённый когнитивный слой над любой LLM. Спроси что угодно — подключи живой Metis через ⚙ Подключить или изучай в демо-режиме.",
     demo_reply:"Я в демо-режиме на этой странице. Подключи запущенный Metis (⚙ Подключить → адрес metis-serve), и я отвечу по-настоящему — обсужу в совете и проверю перед ответом.",
     could_not_reach:"(Не удалось достучаться до Metis — попробуй ещё раз через мгновение.)",
+    slow_or_timeout:"(Metis подключён, но прогон совета оборвался по таймауту или стриму — попробуй ещё раз или выключи Deep think для быстрого ответа.)",
     max_img:"До 5 изображений на сообщение.",
     connected_ok:"Подключено — спрашивай.", saved_unreach:"Сохранено, но эндпоинт недоступен (CORS / офлайн) — демо-режим, пока не ответит.", demo_mode:"Демо-режим.",
     answer_directive:"Всегда отвечай на русском языке, независимо от языка вопроса.",
@@ -501,12 +503,51 @@ const I18N = {
     sys_intro:"Metis es una capa cognitiva distribuida sobre cualquier LLM. Pregúntale lo que sea — conecta un Metis en vivo vía ⚙ Conectar, o explora en modo demo.",
     demo_reply:"Estoy en modo demo en esta página. Conecta un Metis en ejecución (⚙ Conectar → tu URL de metis-serve) y responderé de verdad — deliberando en consejo y verificando antes de responder.",
     could_not_reach:"(No se pudo contactar con Metis ahora mismo — inténtalo de nuevo en un momento.)",
+    slow_or_timeout:"(Metis está conectado, pero el council cortó por timeout o stream — reintenta, o apaga Deep think para una respuesta rápida.)",
     max_img:"Hasta 5 imágenes por mensaje.",
     connected_ok:"Conectado — pregunta.", saved_unreach:"Guardado, pero el endpoint no responde (CORS / sin conexión) — modo demo hasta que responda.", demo_mode:"Modo demo.",
     answer_directive:"Responde siempre en español, sin importar el idioma de la pregunta.",
   },
+  fr: {
+    tagline:"Une couche cognitive distribuée au-dessus de n'importe quel LLM. Elle délibère, vérifie et demande avant de deviner. Attrape l'étoile pour la faire tourner, regarde-la pulser et réfléchir, puis parle-lui.",
+    status_idle:"étoile au repos · attrape pour tourner", status_idle_mobile:"glisse pour tourner",
+    hint:"attrape pour tourner · molette pour zoomer", hint_mobile:"glisse pour tourner · pince pour zoomer",
+    chat_title:"Discuter avec Metis", chip1:"Qu'est-ce qu'un supercerveau ?", chip2:"Explique le raisonnement multi-agent", chip3:"Pourquoi vérifier les réponses ?",
+    ask_ph:"Demande à Metis…  (ou touche le micro)", send:"Envoyer", attach_title:"Joindre des images (jusqu'à 5)",
+    deep_label:"Réflexion approfondie", deep_title:"Activé : Conseil de Compréhension complet + vérificateur (toute la trace). Désactivé : routage intelligent — plus rapide sur les questions simples.",
+    stage_timing:"durée par étape", cog_idle:"Inactif — pose une question à Metis et regarde-le réfléchir.", cog_chip:"◵ cognition",
+    cfg_title:"Connecte ton Metis", cfg_desc:"Le cerveau vit de son côté. Pour rendre le chat réel, pointe-le vers un Metis en cours d'exécution (metis-serve). Metis doit autoriser l'origine de cette page via security.cors_origins.",
+    cfg_url_label:"URL du endpoint Metis", cfg_key_label:"Clé API (optionnelle — seulement si Metis tourne avec auth)", cfg_save:"Enregistrer", cfg_cancel:"Annuler",
+    connect:"⚙ Connecter", connected:"⚙ Connecté", live:"en direct", demo:"démo", connecting:"connexion…",
+    sys_intro:"Metis est une couche cognitive distribuée au-dessus de n'importe quel LLM. Demande-lui n'importe quoi — connecte un Metis en direct via ⚙ Connecter, ou explore en mode démo.",
+    demo_reply:"Je suis en mode démo sur cette page. Connecte un Metis en cours d'exécution (⚙ Connecter → l'URL de ton metis-serve) et je répondrai pour de vrai — en délibérant en conseil et en vérifiant avant de répondre.",
+    could_not_reach:"(Impossible de joindre Metis pour le moment — réessaie dans un instant.)",
+    slow_or_timeout:"(Metis est connecté, mais le conseil a expiré ou le flux s'est interrompu — réessaie, ou désactive Deep think pour une réponse plus rapide.)",
+    max_img:"Jusqu'à 5 images par message.",
+    connected_ok:"Connecté — pose ta question.", saved_unreach:"Enregistré, mais le endpoint est injoignable (CORS / hors ligne) — mode démo jusqu'à ce qu'il réponde.", demo_mode:"Mode démo.",
+    answer_directive:"Réponds toujours en français, quelle que soit la langue de la question.",
+  },
+  zh: {
+    tagline:"一个架构在任意 LLM 之上的分布式认知层。它会审议、验证，并在猜测前先发问。抓住星体拖动旋转，看它脉动与思考，然后与它对话。",
+    status_idle:"星体静止 · 拖动以旋转", status_idle_mobile:"拖动以旋转",
+    hint:"拖动以旋转 · 滚轮缩放", hint_mobile:"拖动以旋转 · 双指捏合缩放",
+    chat_title:"与 Metis 对话", chip1:"什么是超级大脑？", chip2:"解释多智能体推理", chip3:"为什么要验证答案？",
+    ask_ph:"向 Metis 提问…（或点按麦克风）", send:"发送", attach_title:"附加图片（最多 5 张）",
+    deep_label:"深度思考", deep_title:"开启：完整的理解委员会 + 验证器（完整思考轨迹）。关闭：智能自动路由——简单问题更快。",
+    stage_timing:"各阶段耗时", cog_idle:"空闲——向 Metis 提问，看它如何思考。", cog_chip:"◵ 认知",
+    cfg_title:"连接你的 Metis", cfg_desc:"大脑独立运行。要让对话变为真实，请将其指向一个正在运行的 Metis（metis-serve）。Metis 必须通过 security.cors_origins 允许本页面的来源。",
+    cfg_url_label:"Metis 端点 URL", cfg_key_label:"API 密钥（可选——仅当 Metis 启用鉴权时）", cfg_save:"保存", cfg_cancel:"取消",
+    connect:"⚙ 连接", connected:"⚙ 已连接", live:"实时", demo:"演示", connecting:"连接中…",
+    sys_intro:"Metis 是一个架构在任意 LLM 之上的分布式认知层。尽管向它提问——通过 ⚙ 连接接入实时 Metis，或在演示模式中探索。",
+    demo_reply:"我在本页处于演示模式。接入一个正在运行的 Metis（⚙ 连接 → 你的 metis-serve URL），我就会真正作答——在委员会中审议并在回复前验证。",
+    could_not_reach:"（暂时无法连接到 Metis——请稍后再试。）",
+    slow_or_timeout:"（Metis 已连接，但委员会运行超时或数据流中断——请重试，或关闭 Deep think 以获得更快的回答。）",
+    max_img:"每条消息最多 5 张图片。",
+    connected_ok:"已连接——尽管提问。", saved_unreach:"已保存，但端点不可达（CORS / 离线）——在其响应前处于演示模式。", demo_mode:"演示模式。",
+    answer_directive:"无论问题使用哪种语言，始终用中文回答。",
+  },
 };
-const SUP=['en','ru','es'];
+const SUP=['en','ru','es','fr','zh'];
 if(!SUP.includes(cfg.lang)){ const n=(navigator.language||'en').slice(0,2).toLowerCase(); cfg.lang=SUP.includes(n)?n:'en'; }
 let lang=cfg.lang;
 const t = k => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
@@ -633,7 +674,7 @@ async function ask(text){
     cogStoryboard();
     try{
       if(!cfg.url) throw new Error('no endpoint');
-      const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),90000);
+      const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),180000);
       const res=await fetch(cfg.url.replace(/\/+$/,'')+'/v1/chat/completions',{
         method:'POST',headers:{'Content-Type':'application/json',...(cfg.key?{'Authorization':'Bearer '+cfg.key}:{})},
         body:JSON.stringify({model:'metis',messages:withLang(history.slice(-12))}),signal:ctrl.signal});
@@ -643,8 +684,10 @@ async function ask(text){
       answer=data.choices?.[0]?.message?.content||'(empty response)';
       cogComplete('fast');
     }catch(e2){
-      answer = demoReply(text) + (cfg.url?`\n\n${t('could_not_reach')}`:'');
+      // Connected but stream/chat failed: do NOT pretend we're in offline demo mode.
+      answer = cfg.url ? t('slow_or_timeout') : demoReply(text);
       cogComplete('medium');
+      metaSet(cfg.url ? 'Live trace timed out — retry or disable Deep think' : 'Live trace unavailable — basic / demo mode');
     }
   }
   typing(false); history.push({role:'assistant',content:answer});
@@ -828,7 +871,8 @@ function onDone(env){ setNode('answer','done'); setEdge('verify','answer','done'
 async function askStream(msgs, deep){
   buildGraph(); buildGauge(); cogReset(); cogIgnite(); cogTimerStart();
   const url=cfg.url.replace(/\/+$/,'')+'/v1/verify/stream';
-  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),120000);
+  // Council (Deep think) routinely runs 2–4+ minutes; 120s abort caused false "demo mode".
+  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(), deep ? 420000 : 180000);
   let res;
   try{ res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...(cfg.key?{'Authorization':'Bearer '+cfg.key}:{})},
     body:JSON.stringify({input:{messages:withLang(msgs)}, route:deep?'council':undefined}), signal:ctrl.signal}); }
