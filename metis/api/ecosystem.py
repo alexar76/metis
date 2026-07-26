@@ -4,9 +4,23 @@ Two routes, one handler, zero coupling:
 
 * ``POST /v1/verify`` — run any input through Metis's cognitive stack and return
   the full verification envelope ``{answer, status, verify_score, verified,
-  route, clarifications, usage, depth, trace_id}``. This is what a *consumer*
-  (e.g. the AICOM factory confidence-gate) calls to turn "trust one LLM call"
-  into "deliberate → verify → get a confidence score → gate or ask".
+  verify_performed, threshold, route, clarifications, usage, depth, trace_id}``. This is
+  what a *consumer* (e.g. the AICOM factory confidence-gate) calls to turn
+  "trust one LLM call" into "deliberate → verify → get a confidence score →
+  gate or ask".
+
+  The verify endpoints **guarantee** the score is real: the ``fast`` and
+  ``thinking`` routes are a single provider call and leave ``verify_score`` at
+  its 0.0 default because no verifier runs on them, so these endpoints run the
+  critic over the produced answer before answering. ``verify_performed`` says
+  whether a verifier actually scored the answer — a consumer that moves money on
+  the verdict (the hub's Pay-on-Verified escrow) must not read "nothing was
+  verified" as "the work failed".
+
+  That guarantee costs a second provider call on those two routes. It is on by
+  default and switched off only by an explicit ``METIS_VERIFY_GUARANTEE=0`` (see
+  ``verify_guarantee_enabled``); switched off, the endpoint reports the unscored run
+  honestly rather than inventing a number.
 
 * ``POST /aimarket/invoke`` — the AIMarket Hub capability contract. The hub
   POSTs ``{input, product_id, capability_id}`` to a capability's ``invoke_url``
@@ -25,6 +39,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import time
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -35,6 +51,8 @@ from metis.api.auth import verify_api_key
 from metis.api.bridge import messages_to_query
 from metis.config import RouteMode, RuntimeConfig
 from metis.exoskeleton import ExoskeletonResult, Metis, RunStatus
+from metis.schemas.task_spec import TaskSpec
+from metis.verify.critic import clamp_score, verify_answer
 
 logger = logging.getLogger("metis.api.ecosystem")
 
@@ -51,6 +69,74 @@ _MAX_INPUT_CHARS = 200_000
 
 # Server-side wall-clock cap so a client disconnect can't orphan expensive work.
 _RUN_TIMEOUT = 300.0
+
+# Floor for the guaranteed-verification pass when the main run already ate most
+# of the request budget: a judge call that is refused for lack of time reports
+# verify_performed=False, which is *worse* for the caller than one extra second.
+_VERIFY_PASS_MIN_BUDGET_S = 10.0
+
+# …but that floor is time the caller was never promised. `request_timeout_seconds`
+# is the deadline /v1/verify advertises, and granting the floor unconditionally let
+# a run that had already consumed the whole budget push the response arbitrarily
+# past it (the run is time-boxed, so the excess was small in practice, but it was
+# never *stated* anywhere and nothing bounded it). So the overrun is now explicit:
+# the forced critic may finish inside whatever budget is left, and when the budget
+# is gone it may borrow at most this much beyond the deadline — after which it is
+# refused outright and the envelope says `verify_performed: false` (indeterminate to
+# a money gate, never a fault). Hard invariant, asserted in the tests:
+#
+#   elapsed_s + granted_budget <= timeout_s + _VERIFY_PASS_MAX_OVERRUN_S
+_VERIFY_PASS_MAX_OVERRUN_S = 10.0
+
+# The synthesised TaskSpec's goal is echoed into the judge prompt alongside the
+# original query; cap it so a 200k-char audit request is not paid for twice.
+_JUDGE_GOAL_CHARS = 2000
+
+# Generic success criteria for the routes that carry no council-built TaskSpec.
+_ANSWER_CRITERIA = (
+    "The answer addresses the request directly and completely",
+    "The answer is internally consistent and makes no unsupported claims",
+    "The answer obeys any output format the request demands",
+)
+
+# ── The verification guarantee's cost knob ────────────────────────────────────
+#
+# On the ``fast``/``thinking`` routes the guarantee is a SECOND provider call (the
+# run, then the critic). That is the right trade for a verdict a consumer can move
+# money on, but it doubles the per-request bill on the cheap routes, so it must be a
+# decision an operator can see and take — not a surprise on an invoice.
+#
+# Default ON, and only an explicit 0/false/no/off turns it off: a value that parses
+# as NEITHER boolean is a typo, and reading a typo as "stop verifying" would silently
+# return /v1/verify to answering "success, nothing verified" — the exact envelope the
+# hub's escrow classifies as indeterminate. Same convention (and the same reasoning)
+# as the hub's AIMARKET_VERIFY_FAIL_CLOSED.
+_GUARANTEE_ENV = "METIS_VERIFY_GUARANTEE"
+_FALSEY_TOKENS = ("0", "false", "no", "off")
+_TRUTHY_TOKENS = ("1", "true", "yes", "on")
+
+# Misconfiguration must be loud, but this is read once per request — warn once.
+_warned_knobs: set[str] = set()
+
+
+def verify_guarantee_enabled() -> bool:
+    """Whether /v1/verify pays for the forced critic pass on a non-scoring route.
+
+    Read dynamically (not cached at import) so an operator can flip it without a
+    rebuild, and so tests can exercise both settings.
+    """
+    raw = os.environ.get(_GUARANTEE_ENV, "").strip().lower()
+    if not raw:
+        return True
+    if raw in _FALSEY_TOKENS:
+        return False
+    if raw not in _TRUTHY_TOKENS and _GUARANTEE_ENV not in _warned_knobs:
+        _warned_knobs.add(_GUARANTEE_ENV)
+        logger.warning(
+            "%s=%r is not a recognised boolean — keeping the verification guarantee on",
+            _GUARANTEE_ENV, raw,
+        )
+    return True
 
 
 def _rate_limit(request: Request, api_key: str | None = None) -> None:
@@ -135,8 +221,106 @@ def _config(request: Request) -> RuntimeConfig:
     return cfg if isinstance(cfg, RuntimeConfig) else RuntimeConfig()
 
 
-def _envelope(result: ExoskeletonResult, *, min_score: float) -> Dict[str, Any]:
-    score = float(result.verify_score or 0.0)
+def _verifier_ran(result: ExoskeletonResult) -> bool:
+    """True when a verifier actually scored ``result.answer``.
+
+    Keyed off the artifact, not the route name: the council/agent paths attach the
+    TaskSpec their critic judged the answer against, while ``fast``/``thinking``
+    return no spec because no verifier runs there — and a request routed ``fast``
+    can still be escalated onto the council path by the security gate, so the
+    requested route is not a reliable signal. A clarification short-circuits
+    before the critic, so it has a spec but no verdict.
+    """
+    return (
+        result.task_spec is not None
+        and result.status != RunStatus.NEEDS_CLARIFICATION
+    )
+
+
+def _spec_for_answer(query: str) -> TaskSpec:
+    """Minimal TaskSpec so the critic can judge an answer from a non-scoring route.
+
+    ``verify_answer`` contracts on a TaskSpec (it renders ``to_context()`` into the
+    judge prompt), and the fast/thinking routes never build one. The request itself
+    IS the goal on those routes, so the spec is derived from it rather than faked:
+    confidence 1.0 because there is no council uncertainty to report.
+    """
+    return TaskSpec(
+        goal=query[:_JUDGE_GOAL_CHARS],
+        success_criteria=list(_ANSWER_CRITERIA),
+        confidence=1.0,
+    )
+
+
+def _verify_pass_budget(remaining_s: float) -> float:
+    """Wall clock the forced critic pass may use. ``0.0`` means "refuse to start it".
+
+    ``remaining_s`` is what is left of the request's deadline once the main run is
+    done (it can be zero or negative — the run is allowed to consume all of it).
+
+    * Budget left to cover the floor → the pass runs entirely INSIDE the deadline.
+    * Budget short of the floor → it borrows, but only up to
+      ``_VERIFY_PASS_MAX_OVERRUN_S`` past the deadline, so the response time is
+      bounded at ``timeout_s + _VERIFY_PASS_MAX_OVERRUN_S`` no matter how the time
+      was spent.
+    * Overrun allowance already gone → 0.0. Fail closed on the *guarantee* (report
+      "nothing verified") rather than on the deadline: a late verdict is useless to
+      the caller that set the deadline, and an unscored envelope is honest.
+    """
+    if remaining_s >= _VERIFY_PASS_MIN_BUDGET_S:
+        return remaining_s
+    grant = min(_VERIFY_PASS_MIN_BUDGET_S, remaining_s + _VERIFY_PASS_MAX_OVERRUN_S)
+    return grant if grant > 0.0 else 0.0
+
+
+async def _score_unverified(
+    cfg: RuntimeConfig, result: ExoskeletonResult, query: str, *, budget_s: float,
+) -> tuple[float, bool]:
+    """Run the real critic over an answer that no verifier has scored yet.
+
+    Returns ``(score, performed)``. If the critic itself cannot run — no time left
+    in the request's budget included — the answer is ``(0.0, False)``, an honest
+    "nothing was verified", never an invented score: a consumer gating money on the
+    verdict must be able to tell the difference.
+    """
+    if not (result.answer or "").strip():
+        return 0.0, False
+    budget = _verify_pass_budget(budget_s)
+    if budget <= 0.0:
+        logger.warning(
+            "metis verify: request budget exhausted (%.1fs past the deadline) — "
+            "delivery critic refused, envelope reports verify_performed=false",
+            -budget_s,
+        )
+        return 0.0, False
+    try:
+        verdict = await asyncio.wait_for(
+            verify_answer(cfg, _spec_for_answer(query), result.answer, query),
+            timeout=budget,
+        )
+    except Exception as exc:  # noqa: BLE001 - type only; a provider error can embed secrets
+        logger.warning("metis verify: delivery critic unavailable (%s)", type(exc).__name__)
+        return 0.0, False
+    return float(verdict.score or 0.0), True
+
+
+def _envelope(
+    result: ExoskeletonResult,
+    *,
+    min_score: float,
+    verify_score: float | None = None,
+    verify_performed: bool | None = None,
+) -> Dict[str, Any]:
+    performed = _verifier_ran(result) if verify_performed is None else bool(verify_performed)
+    raw = float(result.verify_score or 0.0) if verify_score is None else float(verify_score)
+    # The envelope contract is 0.0–1.0, and a consumer gating money on it compares the
+    # number against a bar in that range. Bound it at the one place the envelope's score
+    # is produced, so no upstream scorer — the pipeline's own verifier or the forced
+    # critic pass — can put an off-scale value where a threshold comparison would read
+    # it as overwhelming confidence. Deliberately the SAME reader the critic uses: two
+    # bounds functions with different opinions about an off-scale number is how one of
+    # them ends up being the one a money gate reads.
+    score = clamp_score(raw)
     status = result.status.value
     depth = getattr(result, "depth", None)
     meta = result.metadata or {}
@@ -144,8 +328,18 @@ def _envelope(result: ExoskeletonResult, *, min_score: float) -> Dict[str, Any]:
     return {
         "answer": result.answer,
         "status": status,
-        "verified": status == RunStatus.SUCCESS.value and score >= min_score,
+        # `verified` requires an actual verification: without it a caller passing a
+        # permissive min_score would read an unscored run as a clean bill of health.
+        "verified": performed and status == RunStatus.SUCCESS.value and score >= min_score,
         "verify_score": round(score, 4),
+        "verify_performed": performed,
+        # The bar `verified` was decided at, echoed back. Two thresholds that must
+        # agree are otherwise configured in two places with no cross-check: the hub's
+        # Pay-on-Verified escrow sends its AIMARKET_VERIFY_SCORE_THRESHOLD as
+        # `min_verify_score` and then re-applies it to the returned numbers, so a
+        # verifier judging at a different bar has to be *detectable* rather than
+        # silently producing a verdict the operator never asked for.
+        "threshold": round(float(min_score), 4),
         "route": result.route.value,
         "depth": getattr(depth, "value", None),
         "iterations": getattr(result, "iterations", 0),
@@ -162,11 +356,17 @@ async def _run_envelope(
     route: Optional[str],
     min_score: float,
     api_key: str | None = None,
+    ensure_verified: bool = False,
 ) -> Dict[str, Any]:
     """Shared handler: run one stateless Metis pass and build the envelope.
 
     Never raises for provider/LLM failures — returns an ``error`` envelope so
     callers get a clean, machine-readable result (and no stack trace leaks).
+
+    ``ensure_verified`` is the /v1/verify contract: when the chosen route ran no
+    verifier, score the answer with the real critic before answering. It is an
+    explicit parameter (not the default) because this handler is shared with
+    ``POST /aimarket/invoke``, whose billed cost profile must stay one pass.
     """
     query = _coerce_query(raw_input)
     if not query.strip():
@@ -182,6 +382,7 @@ async def _run_envelope(
     # bleed) — the same pattern coordinator_server.py uses for /v1/query.
     brain = Metis(cfg)
     timeout_s = float(getattr(cfg.security, "request_timeout_seconds", 0) or _RUN_TIMEOUT)
+    started = time.monotonic()
     try:
         result = await asyncio.wait_for(
             brain.run(query, route=mode, images=images or None), timeout=timeout_s
@@ -192,7 +393,9 @@ async def _run_envelope(
         logger.warning("metis verify run timed out after %ss", timeout_s)
         return {
             "answer": "", "status": RunStatus.ERROR.value, "verified": False,
-            "verify_score": 0.0, "route": (mode or cfg.default_route).value,
+            "verify_score": 0.0, "verify_performed": False,
+            "threshold": round(float(min_score), 4),
+            "route": (mode or cfg.default_route).value,
             "depth": None, "iterations": 0, "clarifications": [], "usage": {},
             "trace_id": None, "error": "timeout",
         }
@@ -204,6 +407,8 @@ async def _run_envelope(
             "status": RunStatus.ERROR.value,
             "verified": False,
             "verify_score": 0.0,
+            "verify_performed": False,
+            "threshold": round(float(min_score), 4),
             "route": (mode or cfg.default_route).value,
             "depth": None,
             "iterations": 0,
@@ -212,7 +417,41 @@ async def _run_envelope(
             "trace_id": None,
             "error": type(exc).__name__,
         }
-    return _envelope(result, min_score=min_score)
+    score, performed = await _guarantee_verification(
+        cfg, result, query,
+        ensure_verified=ensure_verified, elapsed_s=time.monotonic() - started,
+        timeout_s=timeout_s,
+    )
+    return _envelope(result, min_score=min_score, verify_score=score, verify_performed=performed)
+
+
+async def _guarantee_verification(
+    cfg: RuntimeConfig,
+    result: ExoskeletonResult,
+    query: str,
+    *,
+    ensure_verified: bool,
+    elapsed_s: float,
+    timeout_s: float,
+) -> tuple[float | None, bool | None]:
+    """Resolve the ``(verify_score, verify_performed)`` the envelope should carry.
+
+    Returns ``(None, None)`` — "use the run's own numbers" — whenever a verifier
+    already scored the answer, or the caller did not ask for the guarantee, or the
+    operator switched the (billable) guarantee off, or there is nothing to score (a
+    failed/clarifying run has no answer to judge).
+
+    Switching the guarantee off does not fake a verdict: the run's own numbers on a
+    non-scoring route are ``verify_score`` 0.0 with ``verify_performed`` false, which
+    is the truth, and which a money gate reads as "indeterminate", never as a fault.
+    """
+    if not ensure_verified or not verify_guarantee_enabled():
+        return None, None
+    if _verifier_ran(result) or result.status != RunStatus.SUCCESS:
+        return None, None
+    return await _score_unverified(
+        cfg, result, query, budget_s=timeout_s - elapsed_s,
+    )
 
 
 @router.post("/v1/verify")
@@ -225,7 +464,7 @@ async def verify_endpoint(
     min_score = body.min_verify_score if body.min_verify_score is not None else DEFAULT_VERIFY_PASS
     return await _run_envelope(
         request, raw_input=body.input, route=body.route, min_score=min_score,
-        api_key=_api_key,
+        api_key=_api_key, ensure_verified=True,
     )
 
 
@@ -281,6 +520,7 @@ async def verify_stream_endpoint(
 
         yield _sse("start", {"route_hint": (mode or cfg.default_route).value})
 
+        started = time.monotonic()
         task = asyncio.create_task(
             asyncio.wait_for(
                 brain.run(query, route=mode, images=images or None, on_event=sink),
@@ -296,7 +536,16 @@ async def verify_stream_endpoint(
                     continue
                 yield _sse(str(rec.get("pipeline_event", "pipeline")), rec)
             result = await task
-            yield _sse("done", _envelope(result, min_score=min_score))
+            # Same /v1/verify guarantee as the non-streamed endpoint: the done frame
+            # must never carry an unscored run as if it were a verdict. The critic
+            # runs outside the pipeline sink, so the streamed event trace is unchanged.
+            score, performed = await _guarantee_verification(
+                cfg, result, query, ensure_verified=True,
+                elapsed_s=time.monotonic() - started, timeout_s=timeout_s,
+            )
+            yield _sse("done", _envelope(
+                result, min_score=min_score, verify_score=score, verify_performed=performed,
+            ))
         except asyncio.TimeoutError:
             yield _sse("error", {"error": "timeout"})
         except Exception as exc:  # pragma: no cover - defensive; type only, no secrets
@@ -325,6 +574,11 @@ async def aimarket_invoke(
 
     Sandbox invokes (``X-AIMarket-Sandbox: 1``) are forced onto the cheap
     ``fast`` route so catalog probes never spend a full council budget.
+
+    Deliberately does NOT request the /v1/verify verification guarantee: this is a
+    billed capability invoke, and silently adding a second LLM call would change
+    the cost the hub priced. The envelope still reports ``verify_performed``
+    truthfully, so the caller knows whether the score means anything.
     """
     route = body.route
     if (x_aimarket_sandbox or "").strip() == "1":

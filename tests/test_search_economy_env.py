@@ -4,7 +4,6 @@ import os
 
 import pytest
 
-from metis.config import ProviderKind, RuntimeConfig
 from metis.economy.bridge import BudgetExceededError, EcosystemBridge
 from metis.economy.config import EconomyConfig
 from metis.economy.cost import CostCalculator
@@ -16,8 +15,16 @@ from metis.tools.registry import WebSearchTool
 def test_env_compat_migration(monkeypatch):
     monkeypatch.delenv("METIS_API_KEY", raising=False)
     monkeypatch.setenv("SUPERBRAIN_API_KEY", "migrated")
-    migrate_legacy_env()
-    assert os.environ.get("METIS_API_KEY") == "migrated"
+    try:
+        migrate_legacy_env()
+        assert os.environ.get("METIS_API_KEY") == "migrated"
+    finally:
+        # migrate_legacy_env writes os.environ DIRECTLY, so monkeypatch recorded
+        # nothing to undo. Without this the migrated key stays set for the rest of the
+        # session, and API auth is env-driven: every later test that posts to an
+        # auth-gated endpoint without a Bearer header then 401s, depending only on
+        # collection order.
+        os.environ.pop("METIS_API_KEY", None)
 
 
 def test_env_compat_does_not_override(monkeypatch):
