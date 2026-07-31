@@ -17,6 +17,7 @@ flowchart TB
         MCP_GW[aimarket-mcp MCP]
         PLUGINS[aimarket-plugins MCP]
         AGENT[aimarket-agent SDK]
+        BRIDGES[aimarket-bridges]
         MESH[ai-service-mesh]
     end
 
@@ -41,6 +42,8 @@ flowchart TB
     SB -->|usage events| HUB
     ARGUS --> HUB
     ARGUS -->|WARDEN filters| ORACLE_GW
+    BRIDGES --> HUB
+    BRIDGES --> AGENT
     HUB --> ACEX
 ```
 

@@ -100,7 +100,8 @@ docker compose up -d
 | **[AIMarket Hub](https://github.com/alexar76/aimarket-hub)** | Federated capability catalog and invoke API |
 | **[aimarket-oracle-gateway](https://github.com/alexar76/aimarket-oracle-gateway)** | Verifiable oracle MCP services |
 | **[aimarket-mcp](https://github.com/alexar76/aimarket-mcp)** | Shared MCP gateway — web fetch/search + Metis verify ([Glama](https://glama.ai/mcp/servers/alexar76/aimarket-mcp)) |
-| **[Ecosystem landing](https://modeldev.modelmarket.dev)** | Full AICOM map — Metis, MCP servers, oracles, ARGUS |
+| **[aimarket-bridges](https://github.com/alexar76/aimarket-bridges)** | LangGraph / CrewAI / AutoGen adapters over Hub capabilities ([landing](https://modeldev.modelmarket.dev/bridges/)) |
+| **[Ecosystem landing](https://modeldev.modelmarket.dev)** | Full AICOM map — Metis, MCP, bridges, oracles, ARGUS |
 | **[HELIOS](https://github.com/alexar76/helios)** | Broadcast pipeline for ecosystem content |
 | **[AICOM](https://github.com/alexar76/aicom)** | AI-Factory — autonomous product pipeline |
 
