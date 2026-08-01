@@ -9,14 +9,23 @@ batch_lines_per_server: 4000
 security_auto_scan: true
 security_scan_interval_minutes: 60
 
+# Every host here reports in over HTTPS with its own credential. SKOPOS holds no
+# SSH key for any of them and never connects out, so compromising this dashboard
+# does not hand anyone the fleet.
+#
+# Onboarding one host:
+#   python skoposctl.py node-ticket    --server <name>
+#   python skoposctl.py node-installer --server <name> \
+#       --base-url https://skopos.modelmarket.dev --out install.sh
+#   scp install.sh <host>: && ssh <host> "printf %s '<ticket>' | sudo bash install.sh"
+#
+# `address` only labels the traffic; nothing dials it.
+
 servers:
   - name: factory
     source: ssh_nginx_access_log
-    ssh:
-      host: modeldev.modelmarket.dev
-      port: 8443
-      user: root
-      key_path: /root/.ssh/id_ed25519
+    transport: agent-push
+    address: modeldev.modelmarket.dev
     nginx:
       access_log_path: /var/log/nginx/access.log
       auto_discover_logs: true
@@ -24,11 +33,8 @@ servers:
 
   - name: oracle
     source: ssh_nginx_access_log
-    ssh:
-      host: oracles.modelmarket.dev
-      port: 22
-      user: root
-      key_path: /root/.ssh/id_ed25519
+    transport: agent-push
+    address: oracles.modelmarket.dev
     nginx:
       access_log_path: /var/log/nginx/access.log
       auto_discover_logs: true
@@ -36,15 +42,14 @@ servers:
 
   - name: metis
     source: ssh_http_access_log
-    ssh:
-      host: host.docker.internal
-      port: 22
-      user: root
-      key_path: /root/.ssh/id_ed25519
+    transport: agent-push
+    address: skopos.modelmarket.dev
     nginx:
       access_log_paths: []
       auto_discover_logs: false
       auto_discover_docker_logs: true
+      # The agent only reads containers named here, and the list is written into
+      # a root-owned file on the host at install time.
       docker_log_containers:
         - metis-nginx
     apache:

@@ -43,13 +43,20 @@ services:
       - ./servers.yaml:/app/servers.yaml:ro
       - ./agent.yaml:/app/agent.yaml:ro
       - ./geoip:/app/geoip:ro
+      # Collector keys and the host-key trust store. Nothing else from the
+      # operator's ~/.ssh belongs in here — one key per monitored host, and the
+      # container must not be able to authenticate with anything it wasn't given.
       - ./ssh:/root/.ssh:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # NOTE: /var/run/docker.sock is deliberately NOT mounted. No code path in
+      # SKOPOS reads it, and a socket bind is not made safe by :ro — anyone who
+      # can talk to it can start a privileged container, so mounting it would
+      # make every dashboard bug a root-on-the-host bug.
       - skopos_ui_data:/app/.skopos
     environment:
       SKOPOS_DATABASE_URL: ${SKOPOS_DATABASE_URL}
       SKOPOS_DASHBOARD_PASSWORD: ${SKOPOS_DASHBOARD_PASSWORD}
-      SKOPOS_SSH_STRICT_HOST_KEYS: ${SKOPOS_SSH_STRICT_HOST_KEYS:-0}
+      SKOPOS_SSH_STRICT_HOST_KEYS: ${SKOPOS_SSH_STRICT_HOST_KEYS:-1}
+      SKOPOS_KNOWN_HOSTS: /root/.ssh/known_hosts
       SKOPOS_GEOIP_API_FALLBACK: ${SKOPOS_GEOIP_API_FALLBACK:-}
       MAXMIND_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
       MAXMIND_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}

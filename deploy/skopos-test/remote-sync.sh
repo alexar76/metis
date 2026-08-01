@@ -47,27 +47,26 @@ set -euo pipefail
 ROOT="/opt/skopos-test/deploy"
 SSH_DIR="${ROOT}/ssh"
 mkdir -p "${SSH_DIR}"
-if [[ ! -f "${SSH_DIR}/id_ed25519" ]]; then
-  ssh-keygen -t ed25519 -f "${SSH_DIR}/id_ed25519" -N "" -C "skopos-metis-probe"
-  chmod 700 "${SSH_DIR}"
-  chmod 600 "${SSH_DIR}/id_ed25519"
-  chmod 644 "${SSH_DIR}/id_ed25519.pub"
-  PUB="$(cat "${SSH_DIR}/id_ed25519.pub")"
-  grep -qF "${PUB}" /root/.ssh/authorized_keys 2>/dev/null || echo "${PUB}" >> /root/.ssh/authorized_keys
-  chmod 600 /root/.ssh/authorized_keys
-fi
+chmod 700 "${SSH_DIR}"
+# The trust store for host keys lives here and is mounted read-only into the
+# container. Collection keys, if any host still needs one, are placed here by
+# `skoposctl provision` — deliberately not minted by the deploy script.
+touch "${SSH_DIR}/known_hosts"
+chmod 600 "${SSH_DIR}/known_hosts"
 REMOTE
 
-PROBE_PUB="$(ssh "${METIS_HOST}" "cat ${DEPLOY_REMOTE}/ssh/id_ed25519.pub 2>/dev/null" || true)"
-if [[ -n "${PROBE_PUB}" ]]; then
-  for spec in "root@modeldev.modelmarket.dev:8443" "root@oracles.modelmarket.dev:22"; do
-    target="${spec%%:*}"
-    port="${spec##*:}"
-    ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p "${port}" "${target}" \
-      "grep -qF '${PROBE_PUB}' /root/.ssh/authorized_keys 2>/dev/null || { mkdir -p /root/.ssh; chmod 700 /root/.ssh; echo '${PROBE_PUB}' >> /root/.ssh/authorized_keys; chmod 600 /root/.ssh/authorized_keys; echo installed; }" \
-      2>/dev/null && echo "[sync] probe key → ${target}:${port}" || echo "[sync] probe key skipped for ${target}:${port}"
-  done
-fi
+# This script used to generate an SSH key and append it to /root/.ssh/authorized_keys
+# on metis and on every monitored host — recreating, on every single deploy, a
+# root-shell key for the whole fleet that nothing ever revoked.
+#
+# Hosts are onboarded with the agent instead:
+#
+#   python skoposctl.py node-ticket    --server <name>
+#   python skoposctl.py node-installer --server <name> --base-url https://skopos.modelmarket.dev --out install.sh
+#   scp install.sh <host>: && ssh <host> "printf %s '<ticket>' | sudo bash install.sh"
+#
+# The agent reports outbound and SKOPOS holds no credential for the host at all.
+# See docs/collection-transports.md.
 
 ssh "${METIS_HOST}" "chmod +x ${DEPLOY_REMOTE}/deploy.sh ${APACHE_REMOTE}/deploy.sh 2>/dev/null || true; bash ${DEPLOY_REMOTE}/deploy.sh"
 
