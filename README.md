@@ -9,14 +9,14 @@
 
 <!-- aicom-readme-badges -->
 <p align="center">
-  <a href="https://github.com/alexar76/metis/actions/workflows/ci.yml"><img src="docs/badges/ci.svg" alt="CI" /></a>
-  <a href="https://pypi.org/project/aimarket-metis/"><img src="docs/badges/pypi.svg" alt="PyPI" /></a>
-  <img src="docs/badges/python.svg" alt="Python 3.11 | 3.12" />
-  <img src="docs/badges/tests.svg" alt="238 tests passing" />
-  <img src="docs/badges/docker.svg" alt="Docker ready" />
-  <a href="https://metis.modelmarket.dev/"><img src="docs/badges/demo.svg" alt="Live demo" /></a>
-  <a href="docs/badges/coverage.svg"><img src="docs/badges/coverage.svg" alt="Test coverage" /></a>
-  <a href="LICENSE"><img src="docs/badges/license.svg" alt="License: MIT" /></a>
+  <a href="https://github.com/alexar76/metis/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/ci.svg" alt="CI" /></a>
+  <a href="https://pypi.org/project/aimarket-metis/"><img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/pypi.svg" alt="PyPI" /></a>
+  <img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/python.svg" alt="Python 3.11 | 3.12" />
+  <img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/tests.svg" alt="238 tests passing" />
+  <img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/docker.svg" alt="Docker ready" />
+  <a href="https://metis.modelmarket.dev/"><img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/demo.svg" alt="Live demo" /></a>
+  <a href="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/coverage.svg"><img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/coverage.svg" alt="Test coverage" /></a>
+  <a href="https://github.com/alexar76/metis/blob/main/LICENSE"><img src="https://raw.githubusercontent.com/alexar76/metis/main/docs/badges/license.svg" alt="License: MIT" /></a>
 </p>
 <!-- /aicom-readme-badges -->
 
