@@ -52,8 +52,4 @@ servers:
       # a root-owned file on the host at install time.
       docker_log_containers:
         - metis-nginx
-    apache:
-      enabled: true
-      access_log_paths:
-        - /opt/metis/deploy/apache-test/logs/access_log
-      auto_discover_logs: false
+    # No apache-test fixture in production — only real nginx/docker log sources.

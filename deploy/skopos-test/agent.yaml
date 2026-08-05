@@ -1,4 +1,4 @@
-default_provider: openrouter
+default_provider: deepseek
 briefing_provider: deepseek
 
 system_prompt: |
@@ -25,9 +25,4 @@ providers:
     kind: openai_compatible
     base_url: https://api.deepseek.com/v1
     api_key_env: DEEPSEEK_API_KEY
-    model: deepseek-chat
-
-  ollama:
-    kind: ollama
-    base_url: http://host.docker.internal:11434
-    model: llama3.2
+    model: deepseek-v4-flash

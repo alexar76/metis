@@ -67,9 +67,10 @@ services:
       SKOPOS_UI_PREFS_PATH: /app/.skopos/ui_prefs.json
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      # Optional: pin the floating-agent HMAC secret. If unset, SKOPOS generates
-      # one and persists it in the DB (shared by the UI and API processes).
+      # Pin the floating-agent HMAC secret (required in prod multi-process).
       SKOPOS_AGENT_TOKEN_SECRET: ${SKOPOS_AGENT_TOKEN_SECRET:-}
+      SKOPOS_AGENT_CORS_ORIGINS: ${SKOPOS_AGENT_CORS_ORIGINS:-https://skopos.modelmarket.dev}
+      SKOPOS_REQUIRE_DASHBOARD_AUTH: ${SKOPOS_REQUIRE_DASHBOARD_AUTH:-1}
     networks:
       - default
       - metisnet
