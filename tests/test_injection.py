@@ -19,6 +19,11 @@ def test_injection_pattern_detected():
     assert len(result.warnings) > 0
 
 
+def test_topic_jailbreak_alone_passes():
+    result = sanitize_user_input("Explain what a jailbreak is in security research")
+    assert not result.injection_detected
+
+
 def test_clean_input_passes():
     result = sanitize_user_input("What is the capital of France?")
     assert not result.injection_detected

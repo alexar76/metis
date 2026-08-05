@@ -1,4 +1,8 @@
-"""Prompt injection defense — sanitization, canaries, untrusted boundaries."""
+"""Prompt injection defense — AEGIS-calibrated sanitization, canaries, untrusted boundaries.
+
+Hard-block policy (Metis exoskeleton): CRITICAL ≥1 or STRONG ≥2 ⇒ refuse the run.
+Escalate-only depth gating is no longer used for injection — the request stops.
+"""
 
 from __future__ import annotations
 
@@ -7,27 +11,42 @@ import secrets
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
-# Patterns commonly used in prompt injection attacks
-_INJECTION_PATTERNS = [
-    re.compile(r"ignore\s+(all\s+)?(previous|prior|above)\s+instructions?", re.I),
-    re.compile(r"disregard\s+(all\s+)?(previous|prior|system)", re.I),
+_CRITICAL_RES = [
+    re.compile(r"ignore\s+all\s+(previous|prior|above)\s+instructions?", re.I),
+    re.compile(r"disregard\s+all\s+(previous|prior|above)\s+instructions?", re.I),
+    re.compile(r"override\s+(the\s+)?(above|prior|previous)\s+instructions?", re.I),
+    re.compile(r"forget\s+(everything|all)\s+(you|above|prior|previous)", re.I),
+    re.compile(r"<\s*/?\s*system\s*>", re.I),
+    re.compile(r"\[\s*INST\s*\]", re.I),
+    re.compile(r"<\s*\|\s*im_(start|end)\s*\|>", re.I),
+    re.compile(r"\bDAN\s+mode\b", re.I),
+    re.compile(r"\bdeveloper\s+mode\b.*\b(enabled|on)\b", re.I | re.S),
+    re.compile(r"ADMIN\s*OVERRIDE", re.I),
+    re.compile(r"игнорируй\s+(все\s+)?(предыдущ|вышеуказан)", re.I),
+    re.compile(r"забудь\s+(все\s+)?(инструкц|правил)", re.I),
+    re.compile(r"раскрой\s+системн", re.I),
+]
+
+_STRONG_RES = [
+    re.compile(r"\bjailbreak\b", re.I),
     re.compile(r"you\s+are\s+now\s+", re.I),
     re.compile(r"new\s+instructions?\s*:", re.I),
-    re.compile(r"system\s*:\s*", re.I),
-    re.compile(r"<\s*/?\s*system\s*>", re.I),
     re.compile(r"```\s*system", re.I),
-    re.compile(r"ADMIN\s*OVERRIDE", re.I),
     re.compile(r"DO\s+NOT\s+FOLLOW", re.I),
-    re.compile(r"jailbreak", re.I),
+    re.compile(r"\bact\s+as\s+(if\s+you\s+are|a|an)\b", re.I),
+    re.compile(r"\bpretend\s+(to\s+be|you\s+are)\b", re.I),
+    re.compile(r"ignore\s+the\s+above", re.I),
+    re.compile(r"disregard\s+the\s+above", re.I),
 ]
+
+# Kept for backwards-compatible imports in older tests / callers.
+_INJECTION_PATTERNS = _CRITICAL_RES + _STRONG_RES
 
 _ROLE_MARKERS = re.compile(
     r"^(system|assistant|user|human|ai)\s*:\s*",
     re.I | re.MULTILINE,
 )
 
-# Bracket role markers: [assistant], [system], [user] — used by messages_to_query().
-# Allow optional internal whitespace ([ system ]) so spacing can't smuggle a marker.
 _BRACKET_ROLE_MARKERS = re.compile(
     r"\[\s*(system|assistant|user|human|ai)\s*\]\s*",
     re.I,
@@ -35,13 +54,8 @@ _BRACKET_ROLE_MARKERS = re.compile(
 
 
 def _strip_role_markers(text: str) -> str:
-    """Remove leading/bracket role markers, re-scanning until stable.
-
-    A single pass is defeatable by nesting — `[sy[system]stem]` collapses to a fresh
-    `[system]` after the inner match is removed. Loop to a fixpoint (bounded) so the
-    reconstructed marker is also stripped.
-    """
-    for _ in range(16):  # bounded — each pass strictly shrinks or stops
+    """Remove leading/bracket role markers, re-scanning until stable."""
+    for _ in range(16):
         stripped = _BRACKET_ROLE_MARKERS.sub("", _ROLE_MARKERS.sub("", text))
         if stripped == text:
             return stripped
@@ -50,6 +64,11 @@ def _strip_role_markers(text: str) -> str:
 
 _MAX_USER_INPUT = 100_000
 _MAX_TOOL_OUTPUT = 50_000
+
+INJECTION_REFUSAL = (
+    "Request refused by the Metis prompt firewall. "
+    "Rewrite as a plain question without model-control or role-hijack instructions."
+)
 
 
 @dataclass
@@ -64,20 +83,26 @@ def generate_canary() -> str:
     return f"SB-CANARY-{secrets.token_hex(8)}"
 
 
+def _match_count(patterns: list[re.Pattern[str]], text: str) -> int:
+    return sum(1 for p in patterns if p.search(text))
+
+
 def sanitize_user_input(text: str, *, max_length: int = _MAX_USER_INPUT) -> SanitizeResult:
-    """Sanitize user input before LLM calls."""
+    """Sanitize user input before LLM calls. Flags AEGIS-calibrated injection."""
     warnings: List[str] = []
-    injection_detected = False
     cleaned = text.strip()
 
     if len(cleaned) > max_length:
         cleaned = cleaned[:max_length]
         warnings.append(f"Input truncated to {max_length} chars")
 
-    for pattern in _INJECTION_PATTERNS:
-        if pattern.search(cleaned):
-            injection_detected = True
-            warnings.append(f"Injection pattern detected: {pattern.pattern[:40]}")
+    critical = _match_count(_CRITICAL_RES, cleaned)
+    strong = _match_count(_STRONG_RES, cleaned)
+    injection_detected = critical >= 1 or strong >= 2
+    if critical:
+        warnings.append(f"Critical injection patterns: {critical}")
+    if strong:
+        warnings.append(f"Strong injection patterns: {strong}")
 
     cleaned = _strip_role_markers(cleaned)
     canary = generate_canary()

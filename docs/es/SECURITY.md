@@ -29,7 +29,7 @@
 3. Eliminar role markers
 4. Generar canary (`SB-CANARY-<hex>`)
 
-Con `injection_detected: true` → DGPD fuerza **L3_FULL**.
+Con `injection_detected: true` → Metis **rechaza de forma dura** la petición (`INJECTION_REFUSAL`), sin MoA / verifier.
 
 ### Capa de prompt
 

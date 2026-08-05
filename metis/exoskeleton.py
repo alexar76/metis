@@ -241,6 +241,23 @@ class Metis:
             audit_event("injection_detected", severity="warning", details={"reason": security_reason})
             if _OBS_AVAILABLE:
                 emit_pipeline_event(PipelineEventKind.INJECTION_BLOCKED, {"reason": security_reason})
+            # Hard deny — do not escalate into the council / agent loop.
+            from metis.security.injection import INJECTION_REFUSAL
+
+            mode = route or self.config.default_route
+            return ExoskeletonResult(
+                answer=INJECTION_REFUSAL,
+                status=RunStatus.ERROR,
+                route=mode,
+                depth=sec_depth,
+                metadata={
+                    "phase": "prompt_firewall",
+                    "firewall": "prompt_injection",
+                    "blocked": True,
+                    "reason": security_reason,
+                    "trace_id": trace_ctx.trace_id if trace_ctx else None,
+                },
+            )
         query = sanitized_query
         self._canary = sanitize_user_input(query).canary_token
 

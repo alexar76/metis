@@ -49,6 +49,7 @@ class DepthGate:
         sanitized = result.text
 
         if result.injection_detected and self.config.security.enforce_injection_scan:
+            # Signal hard-block to Metis.run (exoskeleton refuses — no L3 escalate).
             return sanitized, DepthLevel.L3_FULL, "injection_detected"
 
         if _CODE_PATTERNS.search(sanitized):

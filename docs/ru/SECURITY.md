@@ -29,7 +29,7 @@
 3. Удаление role markers
 4. Генерация canary (`SB-CANARY-<hex>`)
 
-При `injection_detected: true` → DGPD принудительно включает **L3_FULL**.
+При `injection_detected: true` → Metis **жёстко отказывает** в запросе (`INJECTION_REFUSAL`), без MoA / verifier.
 
 ### Промпт-слой
 

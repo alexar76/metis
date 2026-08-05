@@ -119,7 +119,7 @@ Called on every query before LLM execution (including via `OpenAIMetisBridge`):
 
 Returns `SanitizeResult` with `text`, `injection_detected`, `warnings`, and `canary_token`.
 
-When `injection_detected: true` and `enforce_injection_scan: true`, DGPD forces **L3_FULL** depth — never skipped.
+When `injection_detected: true` and `enforce_injection_scan: true`, Metis **hard-refuses** the run (no MoA / no verifier) and returns `INJECTION_REFUSAL`.
 
 ### Sensitive keyword gates
 
@@ -244,7 +244,7 @@ Cross-node RPC security (see [DISTRIBUTED.md](DISTRIBUTED.md)):
 | Anti-follow | `DO NOT FOLLOW` |
 | Jailbreak marker | `jailbreak` |
 
-Detection sets `injection_detected: true` and logs a warning with the matched pattern prefix. Combined with DGPD, this **forces L3_FULL** — full MoA + verifier retries.
+Detection sets `injection_detected: true` and logs a warning with the matched pattern prefix. The Metis exoskeleton then **hard-refuses** the request (`INJECTION_REFUSAL`) — no MoA and no verifier retries.
 
 ### Role marker stripping
 
