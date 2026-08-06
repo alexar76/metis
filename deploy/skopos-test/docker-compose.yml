@@ -71,6 +71,8 @@ services:
       SKOPOS_AGENT_TOKEN_SECRET: ${SKOPOS_AGENT_TOKEN_SECRET:-}
       SKOPOS_AGENT_CORS_ORIGINS: ${SKOPOS_AGENT_CORS_ORIGINS:-https://skopos.modelmarket.dev}
       SKOPOS_REQUIRE_DASHBOARD_AUTH: ${SKOPOS_REQUIRE_DASHBOARD_AUTH:-1}
+      # Factory Prometheus (PromQL). Unset → demo fallback charts.
+      SKOPOS_PROMETHEUS_URL: ${SKOPOS_PROMETHEUS_URL:-}
     networks:
       - default
       - metisnet
