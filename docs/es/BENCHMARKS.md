@@ -2,82 +2,114 @@
 
 Comparación de **una llamada directa al LLM** frente al **exoesqueleto completo de Metis** (consejo de comprensión, confidence gate, MoA, verificador) con los mismos modelos y prompts.
 
-## Inicio rápido
+> [!IMPORTANT]
+> **Metis es una puerta de riesgo / confianza — no un motor más rápido para trivia.**
+> En tareas comprobables un modelo raw fuerte a menudo empata a Metis en precisión y gana en latencia.
+> Usa Metis cuando necesitas un `verify_score` legible por máquina, captura de trampas, o un gate fail-closed antes de un paso autónomo.
+> → [Dónde gana Metis](#dónde-gana-metis--leer-primero).
+
+Motor canónico: **`deepseek-v4-pro`** (no el alias legado `deepseek-chat`).
+Diversificadores OpenRouter: **MiniMax-M3**, **Kimi-K3**.
+
+| Informe | Qué demuestra |
+|---------|---------------|
+| [`HEAD-TO-HEAD-2026-07-11.md`](../benchmarks/HEAD-TO-HEAD-2026-07-11.md) | Council Metis vs raw — **dónde gana Metis** |
+| [`HEAD-TO-HEAD-2026-08-08.md`](../benchmarks/HEAD-TO-HEAD-2026-08-08.md) | Bake-off raw fresco: V4-Pro · MiniMax · Kimi-K3 |
+| [`BENCHMARK-2026-07-11.md`](../benchmarks/BENCHMARK-2026-07-11.md) | Latencia por ruta + señal de confianza |
+
+---
+
+## Dónde gana Metis — leer primero
+
+> Fuente: [HEAD-TO-HEAD-2026-07-11 § When to use](../benchmarks/HEAD-TO-HEAD-2026-07-11.md#when-to-use-metis--and-when-not) · [`bench-headtohead-2026-07-11.json`](../benchmarks/bench-headtohead-2026-07-11.json)
+
+### Victoria de precisión medida (misma base)
+
+24 ítems comprobables. HTTP real, sin mocks.
+
+| Sistema | Overall | Trampas (6) | Latencia mediana |
+|---------|:-------:|:-----------:|-----------------:|
+| DeepSeek-V4-Pro **(raw)** | **96%** | 5/6 | ~0.3 s |
+| MiniMax-M3 **(raw)** | 100% | **6/6** | ~6.6 s |
+| **Metis (council sobre V4-Pro)** | **100%** | **6/6** | ~90 s |
+
+**Ventaja de Metis:** el mismo V4-Pro pasó de **96% → 100%** al atrapar la trampa System-1
+*«¿cuántos meses tienen exactamente 28 días?»* (**12**) que cuatro modelos frontier raw fallaron.
+Además emite una señal de confianza que una llamada raw no tiene.
+
+### Victoria all-star (olympiad duro)
+
+| Config | Score |
+|--------|:-----:|
+| Mejor modelo fuerte en solitario | **90%** |
+| **Council all-star Metis** | **100%** (resolvió el ítem que **ninguno** solo resolvió) |
+
+### Lo que raw nunca emite
+
+| Señal | Raw LLM | Metis |
+|-------|:-------:|:-----:|
+| Texto de respuesta | ✓ | ✓ |
+| **`verify_score` / `verified`** | ✗ | ✓ |
+| **`needs_clarification`** | ✗ | ✓ |
+
+### Cuándo Metis **no** gana
+
+| Situación | Resultado |
+|-----------|-----------|
+| Modelo ya fuerte en tareas comprobables | Misma precisión, **~15× más lento** |
+| Modelos débiles en el council | Puede quedar **por debajo** del mejor débil solo (60% vs 90%) |
+
+**Una línea:** Metis = **verificador + lift para un motor mid-tier — no un amplificador de basura.**
+
+---
+
+## Frontier bake-off 2026-08-08 (corrida real)
+
+> HTTP en vivo 2026-08-08. 8 ítems de calibración. Solo **raw** (sin council en este refresh).
+> [`HEAD-TO-HEAD-2026-08-08.md`](../benchmarks/HEAD-TO-HEAD-2026-08-08.md) · [`bench-frontier-2026-08-08.json`](../benchmarks/bench-frontier-2026-08-08.json)
+
+| Sistema | Acc | trap | math | logic | Latencia mediana |
+|---------|:---:|:---:|:---:|:---:|-----------------:|
+| **MiniMax-M3** | **87.5%** (7/8) | **3/3** | 3/4 | 1/1 | 4.9 s |
+| DeepSeek-V4-Pro | **87.5%** (7/8) | 2/3 | **4/4** | 1/1 | 5.0 s |
+| Kimi-K3 | **87.5%** (7/8) | 2/3 | **4/4** | 1/1 | 11.8 s |
+| DeepSeek-V4-Flash | 75.0% (6/8) | 2/3 | 3/4 | 1/1 | 2.5 s |
+| Kimi-K2.6 | 75.0% (6/8) | 2/3 | 3/4 | 1/1 | 15.2 s |
+
+Puntos ciegos complementarios: MiniMax atrapa la trampa de los meses; V4-Pro/Kimi el coin-change **242**.
+Prod: **V4-Pro** + **MiniMax skeptic** + **V4-Flash** en asientos baratos.
+
+```bash
+export DEEPSEEK_API_KEY=...
+export OPENROUTER_API_KEY=...
+python3 metis/scripts/bench_frontier_bakeoff.py
+```
+
+---
+
+## Inicio rápido (harness)
 
 ```bash
 cd metis
 pip install -e ".[dev]"
-
-# Sin conexión (CI, proveedor mock)
 metis-benchmark run --mock --dataset simple --compare direct,metis
 
-# DeepSeek en vivo
 export DEEPSEEK_API_KEY=sk-...
-metis-benchmark run --models deepseek-chat --dataset all --compare direct,metis \
+metis-benchmark run --models deepseek-v4-pro --dataset all --compare direct,metis \
   --output reports/bench-$(date +%Y%m%d).md
 
-metis-benchmark list-models
-metis-benchmark list-datasets
+export OPENROUTER_API_KEY=sk-or-...
+metis-benchmark run --models deepseek-v4-pro,minimax-m3,kimi-k3 --dataset reasoning --compare direct
 ```
-
-## Qué medimos
-
-| Métrica | Descripción |
-|---------|-------------|
-| **Latencia (ms)** | Tiempo por caso |
-| **Tokens in/out** | Del usage de la API o estimación |
-| **Coste (USD)** | Vía `CostCalculator` del módulo economy |
-| **Nº de llamadas** | Direct = 1; Metis = eventos UsageMeter |
-| **Profundidad** | Estimación de ruta (fast=1 … council=12) |
-| **Pass rate** | Casos que pasan los checkers |
-
-## Datasets
-
-| Archivo | Categoría | Casos | Objetivo |
-|---------|-----------|------:|----------|
-| `task_understanding.jsonl` | trap, ambiguous | 12 | Metis debe aclarar |
-| `reasoning.jsonl` | reasoning | 12 | Matemáticas/lógica verificables |
-| `factual.jsonl` | factual | 10 | Conocimiento estático |
-| `simple.jsonl` | simple | 10 | Trivial — Direct más rápido |
-
-## Informe de ejemplo
-
-| Model | Runner | Cases | Pass rate | Avg latency (ms) | Avg cost (USD) | Avg calls |
-|-------|--------|------:|----------:|-----------------:|---------------:|----------:|
-| deepseek-chat | direct | 44 | 82% | 890 | 0.000120 | 1.0 |
-| deepseek-chat | metis | 44 | 91% | 12400 | 0.001450 | 8.2 |
-
-## Flujo del benchmark
-
-```mermaid
-flowchart LR
-    DS[Datasets] --> CASE[BenchmarkCase]
-    CASE --> DIR[DirectProvider]
-    CASE --> MET[MetisPipeline]
-    DIR --> CHK[Checkers]
-    MET --> ECO[Economy meter] --> CHK
-    CHK --> RPT[Markdown + JSON]
-```
-
-## Cuándo Metis debería ganar
-
-- **Prompts ambiguos / trampas** — pedir aclaración en lugar de adivinar.
-- **Razonamiento multi-paso** — consejo y verificador detectan errores.
-- **Tareas de agente** — `TaskSpec` estructurado.
-
-## Cuándo Direct debería ganar
-
-- **FAQ simples** — una llamada basta.
-- **SLO estricto de latencia** — Metis hace varias llamadas LLM.
-- **Presupuesto ajustado** — la mejora de calidad puede no compensar 5–12× tokens.
 
 ## Variables de entorno
 
 | Variable | Proveedor |
 |----------|-----------|
-| `DEEPSEEK_API_KEY` | deepseek-chat |
-| `OPENAI_API_KEY` | gpt-4o-mini |
-| _(ninguna)_ | qwen3:8b vía Ollama |
+| `DEEPSEEK_API_KEY` | `deepseek-v4-pro`, `deepseek-v4-flash` |
+| `OPENROUTER_API_KEY` | `minimax-m3`, `kimi-k3`, `kimi-k2.6` |
+| `OPENAI_API_KEY` | `gpt-4o-mini` |
+| _(ninguna)_ | `qwen3:8b` vía Ollama |
 
 ## CI
 

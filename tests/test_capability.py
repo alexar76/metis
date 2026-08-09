@@ -22,6 +22,8 @@ def _slot(model, name="x"):
 def test_capability_lookup_known_fuzzy_default():
     assert cap.capability_of("deepseek-v4-pro") == 97.0
     assert cap.capability_of("moonshotai/kimi-k2.6") == 90.0      # provider prefix stripped
+    assert cap.capability_of("moonshotai/kimi-k3") == 93.0
+    assert cap.capability_of("minimax/minimax-m3") == 92.0
     assert cap.capability_of("nvidia/nemotron-nano-12b-v2-vl:free") == 44.0  # ":free" stripped
     assert cap.capability_of("some-unknown-model-xyz") == cap.DEFAULT_CAPABILITY
     assert cap.tier_of(cap.capability_of("llama-3.1-8b-instruct")) == cap.Tier.WEAK

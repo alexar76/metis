@@ -25,7 +25,31 @@ class ModelSpec:
 
 
 # Default pricing hints for cost comparison (USD per 1M tokens).
+# Canonical Metis engines: deepseek-v4-pro / v4-flash (native API) + OpenRouter
+# diversifiers (MiniMax-M3, Kimi-K3). deepseek-chat is a legacy alias — do not use
+# it in new benchmarks (see docs/benchmarks/HEAD-TO-HEAD-*.md).
 _CATALOG: Dict[str, Dict[str, object]] = {
+    "deepseek-v4-pro": {
+        "model": "deepseek-v4-pro",
+        "provider": ProviderKind.OPENAI_COMPAT,
+        "base_url": "https://api.deepseek.com/v1",
+        "env_key": "DEEPSEEK_API_KEY",
+        "input_per_1m": 0.435,
+        "output_per_1m": 0.87,
+        "provider_label": "deepseek",
+        "requires_key": True,
+    },
+    "deepseek-v4-flash": {
+        "model": "deepseek-v4-flash",
+        "provider": ProviderKind.OPENAI_COMPAT,
+        "base_url": "https://api.deepseek.com/v1",
+        "env_key": "DEEPSEEK_API_KEY",
+        "input_per_1m": 0.14,
+        "output_per_1m": 0.28,
+        "provider_label": "deepseek",
+        "requires_key": True,
+    },
+    # Legacy alias kept so old scripts don't explode; prefer v4-pro.
     "deepseek-chat": {
         "model": "deepseek-chat",
         "provider": ProviderKind.OPENAI_COMPAT,
@@ -34,6 +58,36 @@ _CATALOG: Dict[str, Dict[str, object]] = {
         "input_per_1m": 0.27,
         "output_per_1m": 1.10,
         "provider_label": "deepseek",
+        "requires_key": True,
+    },
+    "minimax-m3": {
+        "model": "minimax/minimax-m3",
+        "provider": ProviderKind.OPENAI_COMPAT,
+        "base_url": "https://openrouter.ai/api/v1",
+        "env_key": "OPENROUTER_API_KEY",
+        "input_per_1m": 0.30,
+        "output_per_1m": 1.20,
+        "provider_label": "openrouter",
+        "requires_key": True,
+    },
+    "kimi-k3": {
+        "model": "moonshotai/kimi-k3",
+        "provider": ProviderKind.OPENAI_COMPAT,
+        "base_url": "https://openrouter.ai/api/v1",
+        "env_key": "OPENROUTER_API_KEY",
+        "input_per_1m": 0.40,
+        "output_per_1m": 1.60,
+        "provider_label": "openrouter",
+        "requires_key": True,
+    },
+    "kimi-k2.6": {
+        "model": "moonshotai/kimi-k2.6",
+        "provider": ProviderKind.OPENAI_COMPAT,
+        "base_url": "https://openrouter.ai/api/v1",
+        "env_key": "OPENROUTER_API_KEY",
+        "input_per_1m": 0.40,
+        "output_per_1m": 1.60,
+        "provider_label": "openrouter",
         "requires_key": True,
     },
     "gpt-4o-mini": {

@@ -1,10 +1,12 @@
-# Metis — production config
+# Metis — production config template (canonical engines as of 2026-08).
+# Live secrets live only on the host: /opt/metis/deploy/prod.yaml + /opt/metis/.env
 production: true
 
 provider: openai_compat
-base_model: gpt-4o
-base_url: https://api.openai.com/v1
-# Set METIS_API_KEY env var — never in this file
+base_model: deepseek-v4-pro
+base_url: https://api.deepseek.com/v1
+api_key_env: DEEPSEEK_API_KEY
+# Never put real keys in this file.
 
 default_route: council
 confidence_threshold: 0.7
@@ -15,18 +17,22 @@ economy:
   currency: USD
   session_budget_usd: 5.0
   models:
-    gpt-4o:
-      input_per_1m: 2.50
-      output_per_1m: 10.00
-      provider_label: openai
-    deepseek-chat:
+    deepseek-v4-pro:
+      input_per_1m: 0.435
+      output_per_1m: 0.87
+      provider_label: deepseek
+    deepseek-v4-flash:
       input_per_1m: 0.14
       output_per_1m: 0.28
       provider_label: deepseek
-    qwen3:8b:
-      input_per_1m: 0
-      output_per_1m: 0
-      provider_label: local
+    minimax/minimax-m3:
+      input_per_1m: 0.30
+      output_per_1m: 1.20
+      provider_label: openrouter
+    moonshotai/kimi-k3:
+      input_per_1m: 0.40
+      output_per_1m: 1.60
+      provider_label: openrouter
 
 security:
   enforce_injection_scan: true

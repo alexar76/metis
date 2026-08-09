@@ -35,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
 
     run = sub.add_parser("run", help="Run benchmark suite")
-    run.add_argument("--models", default="qwen3:8b", help="Comma-separated model ids")
+    run.add_argument("--models", default="deepseek-v4-pro", help="Comma-separated model ids")
     run.add_argument("--dataset", default="all", help="Dataset name or 'all'")
     run.add_argument(
         "--compare",

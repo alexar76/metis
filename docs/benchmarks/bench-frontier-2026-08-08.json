@@ -1,0 +1,491 @@
+{
+  "date": "2026-08-08",
+  "n": 8,
+  "systems": [
+    {
+      "name": "DeepSeek-V4-Pro",
+      "model": "deepseek-v4-pro",
+      "skipped": false,
+      "correct": 7,
+      "total": 8,
+      "accuracy": 87.5,
+      "median_latency_s": 4.96,
+      "by_cat": {
+        "trap": [
+          2,
+          3
+        ],
+        "math": [
+          4,
+          4
+        ],
+        "logic": [
+          1,
+          1
+        ]
+      },
+      "cases": [
+        {
+          "q": "A bat and a ball cost $1.10 total. The bat costs $1.00 more than the ball. How m",
+          "expected": 5,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 4.93,
+          "answer_tail": "s: \\[ 2b + 1.00 = 1.10 \\]  Subtract 1.00 from both sides: \\[ 2b = 0.10 \\]  Divide by 2: \\[ b = 0.05 \\]  Thus, the ball costs $0.05, which is 5 cents.  Answer: 5",
+          "error": ""
+        },
+        {
+          "q": "How many months of the year have exactly 28 days?",
+          "expected": 12,
+          "category": "trap",
+          "ok": false,
+          "latency_s": 20.67,
+          "answer_tail": "ys?\" 3. \"Exactly 28 days\" means the month has 28 days, no more and no less. 4. Only February ever has 28 days. In common years, February has exactly 28 days. In",
+          "error": ""
+        },
+        {
+          "q": "A store had 120 apples; it sold 3/8 in the morning and 40 more later. How many a",
+          "expected": 35,
+          "category": "math",
+          "ok": true,
+          "latency_s": 3.87,
+          "answer_tail": "8) \u00d7 120 = 45 apples. Later, it sold an additional 40 apples, making the total sold 45 + 40 = 85 apples. The number of apples left is 120 \u2013 85 = 35.  Answer: 35",
+          "error": ""
+        },
+        {
+          "q": "What are the last two digits of 7^2023? Give a two-digit integer.",
+          "expected": 43,
+          "category": "math",
+          "ok": true,
+          "latency_s": 9.07,
+          "answer_tail": "505 + 3\\), we have: \\[ 7^{2023} = (7^4)^{505} \\times 7^3 \\equiv 1^{505} \\times 7^3 = 343 \\equiv 43 \\pmod{100}. \\]  Thus, the last two digits are 43.  Answer: 43",
+          "error": ""
+        },
+        {
+          "q": "In how many ways can you make change for one dollar with pennies, nickels, dimes",
+          "expected": 242,
+          "category": "math",
+          "ok": true,
+          "latency_s": 14.41,
+          "answer_tail": "\u2192 72 ways - \\( q=2 \\): \\( R=50 \\) \u2192 36 ways - \\( q=3 \\): \\( R=25 \\) \u2192 12 ways - \\( q=4 \\): \\( R=0 \\) \u2192 1 way  Total = 121 + 72 + 36 + 12 + 1 = 242.  Answer: 242",
+          "error": ""
+        },
+        {
+          "q": "How many trailing zeros does 100! have?",
+          "expected": 24,
+          "category": "math",
+          "ok": true,
+          "latency_s": 4.96,
+          "answer_tail": "100/5 \\rfloor = 20 \\) - \\( \\lfloor 100/25 \\rfloor = 4 \\) - \\( \\lfloor 100/125 \\rfloor = 0 \\) (and all higher powers give 0)  Sum: \\( 20 + 4 = 24 \\).  Answer: 24",
+          "error": ""
+        },
+        {
+          "q": "At exactly 3:00 what is the angle in degrees between a clock's hands?",
+          "expected": 90,
+          "category": "logic",
+          "ok": true,
+          "latency_s": 4.28,
+          "answer_tail": "lock represents 30 degrees (360\u00b0 \u00f7 12), the hour hand is at 3 \u00d7 30\u00b0 = 90\u00b0. The angle between the hands is the absolute difference: |90\u00b0 \u2212 0\u00b0| = 90\u00b0.  Answer: 90",
+          "error": ""
+        },
+        {
+          "q": "If you overtake the person in 2nd place in a race, what place are you in? Give t",
+          "expected": 2,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 4.25,
+          "answer_tail": "ou overtake them, you take their position, moving into 2nd place. The person you passed drops to 3rd (or lower), and the person in 1st remains ahead.  Answer: 2",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "name": "DeepSeek-V4-Flash",
+      "model": "deepseek-v4-flash",
+      "skipped": false,
+      "correct": 6,
+      "total": 8,
+      "accuracy": 75.0,
+      "median_latency_s": 2.45,
+      "by_cat": {
+        "trap": [
+          2,
+          3
+        ],
+        "math": [
+          3,
+          4
+        ],
+        "logic": [
+          1,
+          1
+        ]
+      },
+      "cases": [
+        {
+          "q": "A bat and a ball cost $1.10 total. The bat costs $1.00 more than the ball. How m",
+          "expected": 5,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 2.14,
+          "answer_tail": "ince it costs $1.00 more.  Together they cost $1.10, which is 110 cents:  \\[ x + (x + 100) = 110 \\]  \\[ 2x + 100 = 110 \\]  \\[ 2x = 10 \\]  \\[ x = 5 \\]  Answer: 5",
+          "error": ""
+        },
+        {
+          "q": "How many months of the year have exactly 28 days?",
+          "expected": 12,
+          "category": "trap",
+          "ok": false,
+          "latency_s": 5.33,
+          "answer_tail": "30 - October: 31 - November: 30 - December: 31  Step 2: Identify which month has exactly 28 days. Only February has exactly 28 days in a common year.  Answer: 1",
+          "error": ""
+        },
+        {
+          "q": "A store had 120 apples; it sold 3/8 in the morning and 40 more later. How many a",
+          "expected": 35,
+          "category": "math",
+          "ok": true,
+          "latency_s": 2.19,
+          "answer_tail": "Morning: \\( \\frac{3}{8} \\times 120 = 45 \\) apples sold.  Later: 40 more apples sold.  Total sold: \\(45 + 40 = 85\\).  Apples left: \\(120 - 85 = 35\\).  Answer: 35",
+          "error": ""
+        },
+        {
+          "q": "What are the last two digits of 7^2023? Give a two-digit integer.",
+          "expected": 43,
+          "category": "math",
+          "ok": true,
+          "latency_s": 3.84,
+          "answer_tail": "its:   7^1 = 07, 7^2 = 49, 7^3 = 43, 7^4 = 01.    2023 \u00f7 4 = 505 remainder 3, so 7^2023 has the same last two digits as 7^3 = 343, which ends in 43.  Answer: 43",
+          "error": ""
+        },
+        {
+          "q": "In how many ways can you make change for one dollar with pennies, nickels, dimes",
+          "expected": 242,
+          "category": "math",
+          "ok": false,
+          "latency_s": 8.93,
+          "answer_tail": "arrow d = 0,\\dots,10 \\] For each \\(d\\), nickels can be \\(0,\\dots,\\frac{100-10d}{5}\\), giving: \\[ \\frac{100-10d}{5}+1 = 21 - 2d + 1?  \\] Actually: \\[ 100 - 10d =",
+          "error": ""
+        },
+        {
+          "q": "How many trailing zeros does 100! have?",
+          "expected": 24,
+          "category": "math",
+          "ok": true,
+          "latency_s": 2.0,
+          "answer_tail": "rfloor = 20 \\]  \\[ \\left\\lfloor \\frac{100}{25} \\right\\rfloor = 4 \\]  \\[ \\left\\lfloor \\frac{100}{125} \\right\\rfloor = 0 \\]  Total:  \\[ 20 + 4 = 24 \\]  Answer: 24",
+          "error": ""
+        },
+        {
+          "q": "At exactly 3:00 what is the angle in degrees between a clock's hands?",
+          "expected": 90,
+          "category": "logic",
+          "ok": true,
+          "latency_s": 2.08,
+          "answer_tail": " hour hand points at 3.  The clock face is divided into 12 hours, so each hour mark is: 360\u00b0 \u00f7 12 = 30\u00b0  From 12 to 3 is 3 hour marks: 3 \u00d7 30\u00b0 = 90\u00b0  Answer: 90",
+          "error": ""
+        },
+        {
+          "q": "If you overtake the person in 2nd place in a race, what place are you in? Give t",
+          "expected": 2,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 2.45,
+          "answer_tail": "If you overtake the person in 2nd place, you move into the position they were in, which is 2nd place.  Answer: 2",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "name": "MiniMax-M3",
+      "model": "minimax/minimax-m3",
+      "skipped": false,
+      "correct": 7,
+      "total": 8,
+      "accuracy": 87.5,
+      "median_latency_s": 4.87,
+      "by_cat": {
+        "trap": [
+          3,
+          3
+        ],
+        "math": [
+          3,
+          4
+        ],
+        "logic": [
+          1,
+          1
+        ]
+      },
+      "cases": [
+        {
+          "q": "A bat and a ball cost $1.10 total. The bat costs $1.00 more than the ball. How m",
+          "expected": 5,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 4.31,
+          "answer_tail": " $$2b = 10$$ $$b = 5$$  **Step 4: Verify** - Ball: 5\u00a2 - Bat: 5\u00a2 + 100\u00a2 = $1.05 - Total: $1.05 + $0.05 = $1.10 \u2713 - Difference: $1.05 \u2212 $0.05 = $1.00 \u2713  Answer: 5",
+          "error": ""
+        },
+        {
+          "q": "How many months of the year have exactly 28 days?",
+          "expected": 12,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 17.6,
+          "answer_tail": "ugust 28 \u2713 - September 28 \u2713 - October 28 \u2713 - November 28 \u2713 - December 28 \u2713  Every month has a 28th day, so all 12 months \"have\" 28 days within them.  Answer: 12",
+          "error": ""
+        },
+        {
+          "q": "A store had 120 apples; it sold 3/8 in the morning and 40 more later. How many a",
+          "expected": 35,
+          "category": "math",
+          "ok": true,
+          "latency_s": 1.86,
+          "answer_tail": " morning = (3/8) \u00d7 120 = 45 Step 2: Apples remaining after morning = 120 \u2212 45 = 75 Step 3: Apples sold later = 40 Step 4: Apples left = 75 \u2212 40 = 35  Answer: 35",
+          "error": ""
+        },
+        {
+          "q": "What are the last two digits of 7^2023? Give a two-digit integer.",
+          "expected": 43,
+          "category": "math",
+          "ok": true,
+          "latency_s": 13.26,
+          "answer_tail": "ying the Pattern  Since 2023 \u2261 3 (mod 4), the last two digits of 7^2023 match those of 7^3:  $$7^{2023} \\equiv 7^3 \\equiv 343 \\equiv 43 \\pmod{100}$$  Answer: 43",
+          "error": ""
+        },
+        {
+          "q": "In how many ways can you make change for one dollar with pennies, nickels, dimes",
+          "expected": 242,
+          "category": "math",
+          "ok": false,
+          "latency_s": 12.72,
+          "answer_tail": "",
+          "error": ""
+        },
+        {
+          "q": "How many trailing zeros does 100! have?",
+          "expected": 24,
+          "category": "math",
+          "ok": true,
+          "latency_s": 2.98,
+          "answer_tail": "ount multiples of 125 (no contribution since 125 > 100): $$\\left\\lfloor \\frac{100}{125} \\right\\rfloor = 0$$  **Total factors of 5:** 20 + 4 + 0 = 24  Answer: 24",
+          "error": ""
+        },
+        {
+          "q": "At exactly 3:00 what is the angle in degrees between a clock's hands?",
+          "expected": 90,
+          "category": "logic",
+          "ok": true,
+          "latency_s": 3.43,
+          "answer_tail": "ur hand:** Points at 3  ## Step 3: Calculate the Angle The hour hand is 3 markings away from the minute hand.  $$\\text{Angle} = 3 \\times 30\u00b0 = 90\u00b0$$  Answer: 90",
+          "error": ""
+        },
+        {
+          "q": "If you overtake the person in 2nd place in a race, what place are you in? Give t",
+          "expected": 2,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 4.87,
+          "answer_tail": "sition that was just vacated \u2014 **2nd place**.  (Note: A common trick is to answer \"1st,\" but you would still have the 1st-place runner ahead of you.)  Answer: 2",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "name": "Kimi-K3",
+      "model": "moonshotai/kimi-k3",
+      "skipped": false,
+      "correct": 7,
+      "total": 8,
+      "accuracy": 87.5,
+      "median_latency_s": 11.76,
+      "by_cat": {
+        "trap": [
+          2,
+          3
+        ],
+        "math": [
+          4,
+          4
+        ],
+        "logic": [
+          1,
+          1
+        ]
+      },
+      "cases": [
+        {
+          "q": "A bat and a ball cost $1.10 total. The bat costs $1.00 more than the ball. How m",
+          "expected": 5,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 2.63,
+          "answer_tail": " the bat costs \\(x + 100\\) cents.  Together they cost $1.10 = 110 cents:  \\[ x + (x + 100) = 110 \\]  \\[ 2x + 100 = 110 \\]  \\[ 2x = 10 \\]  \\[ x = 5 \\]  Answer: 5",
+          "error": ""
+        },
+        {
+          "q": "How many months of the year have exactly 28 days?",
+          "expected": 12,
+          "category": "trap",
+          "ok": false,
+          "latency_s": 30.74,
+          "answer_tail": "",
+          "error": ""
+        },
+        {
+          "q": "A store had 120 apples; it sold 3/8 in the morning and 40 more later. How many a",
+          "expected": 35,
+          "category": "math",
+          "ok": true,
+          "latency_s": 9.13,
+          "answer_tail": "ales: \\( \\frac{3}{8} \\times 120 = 45 \\) apples.  Later sales: 40 more apples.  Total sold: \\(45 + 40 = 85\\) apples.  Apples left: \\(120 - 85 = 35\\).  Answer: 35",
+          "error": ""
+        },
+        {
+          "q": "What are the last two digits of 7^2023? Give a two-digit integer.",
+          "expected": 43,
+          "category": "math",
+          "ok": true,
+          "latency_s": 5.07,
+          "answer_tail": "1 \\pmod{100}\\)  So the last two digits repeat every 4 powers. Since  \\[ 2023 \\equiv 3 \\pmod 4, \\]  we use \\(7^3\\), whose last two digits are \\(43\\).  Answer: 43",
+          "error": ""
+        },
+        {
+          "q": "In how many ways can you make change for one dollar with pennies, nickels, dimes",
+          "expected": 242,
+          "category": "math",
+          "ok": true,
+          "latency_s": 34.16,
+          "answer_tail": "d\\le 10 & 121\\\\ 1 & 0\\le d\\le 7 & 72\\\\ 2 & 0\\le d\\le 5 & 36\\\\ 3 & 0\\le d\\le 2 & 12\\\\ 4 & d=0 & 1 \\end{array} \\]  Adding:  \\[ 121+72+36+12+1=242. \\]  Answer: 242",
+          "error": ""
+        },
+        {
+          "q": "How many trailing zeros does 100! have?",
+          "expected": 24,
+          "category": "math",
+          "ok": true,
+          "latency_s": 11.55,
+          "answer_tail": " contribute one extra factor of 5: \u230a100/25\u230b = 4 - Multiples of 125: \u230a100/125\u230b = 0  Total factors of 5 = 20 + 4 = 24.  So 100! has 24 trailing zeros.  Answer: 24",
+          "error": ""
+        },
+        {
+          "q": "At exactly 3:00 what is the angle in degrees between a clock's hands?",
+          "expected": 90,
+          "category": "logic",
+          "ok": true,
+          "latency_s": 26.03,
+          "answer_tail": "ctly 3:00, the minute hand points at 12, and the hour hand points at 3.  Step 4: From 12 to 3 there are 3 hour marks, so the angle is 3 \u00d7 30\u00b0 = 90\u00b0.  Answer: 90",
+          "error": ""
+        },
+        {
+          "q": "If you overtake the person in 2nd place in a race, what place are you in? Give t",
+          "expected": 2,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 11.76,
+          "answer_tail": "e the 2nd-place runner, you move into the position they occupied. You have passed only that one runner, not the leader.  So you are now in 2nd place.  Answer: 2",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "name": "Kimi-K2.6",
+      "model": "moonshotai/kimi-k2.6",
+      "skipped": false,
+      "correct": 6,
+      "total": 8,
+      "accuracy": 75.0,
+      "median_latency_s": 15.21,
+      "by_cat": {
+        "trap": [
+          2,
+          3
+        ],
+        "math": [
+          3,
+          4
+        ],
+        "logic": [
+          1,
+          1
+        ]
+      },
+      "cases": [
+        {
+          "q": "A bat and a ball cost $1.10 total. The bat costs $1.00 more than the ball. How m",
+          "expected": 5,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 16.82,
+          "answer_tail": "the ball costs $\\$0.05$, which is $5$ cents.  Checking: The bat costs $\\$1.05$, and indeed $\\$1.05 + \\$0.05 = \\$1.10$ and $\\$1.05 - \\$0.05 = \\$1.00$.  Answer: 5",
+          "error": ""
+        },
+        {
+          "q": "How many months of the year have exactly 28 days?",
+          "expected": 12,
+          "category": "trap",
+          "ok": false,
+          "latency_s": 19.92,
+          "answer_tail": "",
+          "error": ""
+        },
+        {
+          "q": "A store had 120 apples; it sold 3/8 in the morning and 40 more later. How many a",
+          "expected": 35,
+          "category": "math",
+          "ok": true,
+          "latency_s": 9.78,
+          "answer_tail": " 45\\) apples  Step 2: Find the total number of apples sold. \\(45 + 40 = 85\\) apples  Step 3: Find how many apples are left. \\(120 - 85 = 35\\) apples  Answer: 35",
+          "error": ""
+        },
+        {
+          "q": "What are the last two digits of 7^2023? Give a two-digit integer.",
+          "expected": 43,
+          "category": "math",
+          "ok": true,
+          "latency_s": 11.55,
+          "answer_tail": "3\\), so \\(2023 \\equiv 3 \\pmod{4}\\).  3. **Compute the residue:**    - \\(7^{2023} \\equiv 7^3 \\equiv 43 \\pmod{100}\\).  The last two digits are \\(43\\).  Answer: 43",
+          "error": ""
+        },
+        {
+          "q": "In how many ways can you make change for one dollar with pennies, nickels, dimes",
+          "expected": 242,
+          "category": "math",
+          "ok": false,
+          "latency_s": 24.14,
+          "answer_tail": "",
+          "error": ""
+        },
+        {
+          "q": "How many trailing zeros does 100! have?",
+          "expected": 24,
+          "category": "math",
+          "ok": true,
+          "latency_s": 15.21,
+          "answer_tail": "ons. $$20 + 4 + 0 = 24$$  There are more than enough factors of 2 to pair with these 24 factors of 5, so the number of trailing zeros is exactly 24.  Answer: 24",
+          "error": ""
+        },
+        {
+          "q": "At exactly 3:00 what is the angle in degrees between a clock's hands?",
+          "expected": 90,
+          "category": "logic",
+          "ok": true,
+          "latency_s": 11.25,
+          "answer_tail": "r hour mark.  Step 3: The number of hour marks between the 12 and the 3 is 3. 3 \u00d7 30\u00b0 = 90\u00b0.  The smaller angle between the two hands is 90 degrees.  Answer: 90",
+          "error": ""
+        },
+        {
+          "q": "If you overtake the person in 2nd place in a race, what place are you in? Give t",
+          "expected": 2,
+          "category": "trap",
+          "ok": true,
+          "latency_s": 2.99,
+          "answer_tail": " of you. The person you passed drops to 3rd place (or behind you). Therefore, you are now in the position previously held by the person you overtook.  Answer: 2",
+          "error": ""
+        }
+      ]
+    }
+  ]
+}

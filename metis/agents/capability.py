@@ -46,8 +46,9 @@ MODEL_CAPABILITY: Dict[str, float] = {
     # --- frontier / strong: open + Chinese labs (tested live) ---
     "deepseek-v4-pro": 97.0, "deepseek-v4-flash": 84.0,
     "qwen3-max": 92.0, "qwen3-max-thinking": 93.0,
+    "kimi-k3": 93.0, "kimi-k2.7-code": 91.0,
     "kimi-k2.6": 90.0, "kimi-k2-thinking": 91.0, "kimi-k2.5": 88.0,
-    "minimax-m3": 90.0, "minimax-m2": 78.0,
+    "minimax-m3": 92.0, "minimax-m2.7": 88.0, "minimax-m2": 78.0,
     "glm-5.2": 88.0, "glm-5": 86.0, "glm-4.6": 82.0,
     "deepseek-chat": 80.0, "deepseek-v3.2": 80.0,
     # mid
@@ -103,8 +104,8 @@ FAMILY_PRIORS: List[tuple] = [
     ("claude-opus", 94.0), ("claude-sonnet", 86.0), ("claude-haiku", 76.0), ("claude-", 85.0),
     ("grok-4", 88.0), ("grok-", 80.0),
     ("deepseek-v4", 90.0), ("deepseek-", 78.0),
-    ("qwen3-max", 92.0), ("qwen3", 85.0), ("kimi-k2", 88.0), ("kimi", 84.0),
-    ("glm-5", 85.0), ("glm-4", 80.0), ("minimax-m", 82.0),
+    ("qwen3-max", 92.0), ("qwen3", 85.0), ("kimi-k3", 93.0), ("kimi-k2", 88.0), ("kimi", 84.0),
+    ("glm-5", 85.0), ("glm-4", 80.0), ("minimax-m3", 92.0), ("minimax-m", 82.0),
     ("llama-3.1-8b", 55.0), ("llama-3.2", 42.0), ("llama-4", 78.0), ("llama-", 62.0),
 ]
 

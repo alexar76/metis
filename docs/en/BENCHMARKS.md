@@ -2,7 +2,108 @@
 
 Compare **single direct LLM calls** against the full **Metis exoskeleton** (understanding council, confidence gate, MoA, verifier) on the same models and prompts.
 
-## Quick start
+> [!IMPORTANT]
+> **Metis is a risk / confidence gate — not a faster trivia engine.**
+> On checkable tasks a strong raw model often ties Metis on accuracy and wins on latency.
+> Use Metis when you need a machine-readable `verify_score`, trap catching, or a fail-closed
+> gate before an autonomous step compounds. Details below → [Where Metis wins](#where-metis-wins--read-this-first).
+
+Canonical engine: **`deepseek-v4-pro`** (not the legacy `deepseek-chat` alias).
+Diversifiers on OpenRouter: **MiniMax-M3**, **Kimi-K3**.
+
+Live evidence:
+
+| Report | What it proves |
+|--------|----------------|
+| [`HEAD-TO-HEAD-2026-07-11.md`](../benchmarks/HEAD-TO-HEAD-2026-07-11.md) | Metis council vs raw frontier — **where Metis wins** |
+| [`HEAD-TO-HEAD-2026-08-08.md`](../benchmarks/HEAD-TO-HEAD-2026-08-08.md) | Fresh raw bake-off: V4-Pro · MiniMax-M3 · Kimi-K3 |
+| [`BENCHMARK-2026-07-11.md`](../benchmarks/BENCHMARK-2026-07-11.md) | Latency by route + confidence signal |
+
+---
+
+## Where Metis wins — read this first
+
+> Source: [HEAD-TO-HEAD-2026-07-11 § When to use Metis](../benchmarks/HEAD-TO-HEAD-2026-07-11.md#when-to-use-metis--and-when-not) · raw JSON [`bench-headtohead-2026-07-11.json`](../benchmarks/bench-headtohead-2026-07-11.json)
+
+### Measured accuracy win (same base model)
+
+24 checkable items (math / logic / science / deduction / **6 traps**). Real HTTP, no mocks.
+
+| System | Overall | Traps (6) | Median latency |
+|--------|:-------:|:---------:|---------------:|
+| DeepSeek-V4-Pro **(raw)** | **96%** | 5/6 | ~0.3 s |
+| Kimi K2.6 / Qwen3-Max / GLM-5.2 **(raw)** | 96% | 5/6 | ~1–1.5 s |
+| MiniMax-M3 **(raw)** | 100% | **6/6** | ~6.6 s |
+| **Metis (V4-Pro council)** | **100%** | **6/6** | ~90 s |
+
+**Metis advantage here:** same engine (V4-Pro) went **96% → 100%** by catching the
+System-1 trap *“how many months have exactly 28 days?”* (answer **12**) that four raw
+frontier models missed. MiniMax raw also aced traps alone — so Metis is not “smarter than
+every model”; it **lifts its own base** and emits a confidence signal no raw call has.
+
+### All-star diversity win (hard olympiad set)
+
+| Config | Score | Note |
+|--------|:-----:|------|
+| Best single strong model | **90%** | — |
+| **Metis all-star council** (DeepSeek + Kimi + Qwen-Max + GLM + MiniMax) | **100%** | Solved the one item **no solo model** cracked |
+
+→ [`bench-extravariants-2026-07-11.json`](../benchmarks/bench-extravariants-2026-07-11.json) · Exp D in the July write-up.
+
+### What raw models never emit
+
+| Signal | Raw LLM | Metis |
+|--------|:-------:|:-----:|
+| Answer text | ✓ | ✓ |
+| Machine-readable **`verify_score` / `verified`** | ✗ | ✓ |
+| Fail-closed **`needs_clarification`** | ✗ | ✓ |
+
+That gate is why the factory calls Metis on high-stakes stages — see [`docs/metis-integration.md`](../../../docs/metis-integration.md).
+
+### When Metis does **not** win (honest)
+
+| Situation | Result |
+|-----------|--------|
+| Already-strong model on checkable / easy tasks | Same accuracy, **~15× slower** — use the model raw |
+| Weak models in council (esp. weak aggregator) | Can score **below** the best weak model alone (60% vs 90%) |
+
+**One line:** Metis = **verifier + lift for a mid-tier engine — not a garbage amplifier.**
+
+---
+
+## Frontier bake-off 2026-08-08 (actual run)
+
+> Live HTTP on 2026-08-08. Calibration set (8 items). **Raw calls only** (no council in this refresh).
+> Full write-up: [`HEAD-TO-HEAD-2026-08-08.md`](../benchmarks/HEAD-TO-HEAD-2026-08-08.md) · JSON [`bench-frontier-2026-08-08.json`](../benchmarks/bench-frontier-2026-08-08.json)
+
+| System | Acc | trap | math | logic | Median latency |
+|--------|:---:|:---:|:---:|:---:|---------------:|
+| **MiniMax-M3** | **87.5%** (7/8) | **3/3** | 3/4 | 1/1 | 4.9 s |
+| DeepSeek-V4-Pro | **87.5%** (7/8) | 2/3 | **4/4** | 1/1 | 5.0 s |
+| Kimi-K3 | **87.5%** (7/8) | 2/3 | **4/4** | 1/1 | 11.8 s |
+| DeepSeek-V4-Flash | 75.0% (6/8) | 2/3 | 3/4 | 1/1 | 2.5 s |
+| Kimi-K2.6 | 75.0% (6/8) | 2/3 | 3/4 | 1/1 | 15.2 s |
+
+**Complementary blind spots (why prod mixes them):**
+
+| Item | V4-Pro | MiniMax-M3 | Kimi-K3 |
+|------|:---:|:---:|:---:|
+| Months with exactly 28 days? (**12**) | ✗ | **✓** | ✗ |
+| Coin-change for $1 (**242**) | **✓** | ✗ | **✓** |
+
+Prod architecture (already live): **V4-Pro** in high-leverage seats + **MiniMax-M3** as skeptic / `intent_parser_b` + **V4-Flash** on cheap seats. Optional: Kimi-K3 as a third diversifier for open-ended work.
+
+Re-run:
+
+```bash
+export DEEPSEEK_API_KEY=...
+export OPENROUTER_API_KEY=...
+python3 metis/scripts/bench_frontier_bakeoff.py
+```
+
+---
+
+## Quick start (harness)
 
 ```bash
 cd metis
@@ -11,15 +112,15 @@ pip install -e ".[dev]"
 # Offline (CI-safe, mock provider)
 metis-benchmark run --mock --dataset simple --compare direct,metis
 
-# DeepSeek live comparison
+# DeepSeek live (canonical engine)
 export DEEPSEEK_API_KEY=sk-...
-metis-benchmark run --models deepseek-chat --dataset all --compare direct,metis \
+metis-benchmark run --models deepseek-v4-pro --dataset all --compare direct,metis \
   --output reports/bench-$(date +%Y%m%d).md
 
-# Multiple models
-metis-benchmark run --models deepseek-chat,gpt-4o-mini,qwen3:8b --dataset all
+# Frontier diversifiers via OpenRouter
+export OPENROUTER_API_KEY=sk-or-...
+metis-benchmark run --models deepseek-v4-pro,minimax-m3,kimi-k3 --dataset reasoning --compare direct
 
-# List what's available
 metis-benchmark list-models
 metis-benchmark list-datasets
 ```
@@ -35,8 +136,6 @@ metis-benchmark list-datasets
 | **Depth level** | Route estimate (fast=1 … council=12) |
 | **Pass rate** | Per-case checkers (see datasets) |
 
-Checkers include `must_ask_clarification`, `answer_contains`, `answer_regex`, `status_success`, and `min_answer_length`.
-
 ## Datasets
 
 | File | Category | Cases | Intent |
@@ -46,102 +145,13 @@ Checkers include `must_ask_clarification`, `answer_contains`, `answer_regex`, `s
 | `factual.jsonl` | factual | 10 | Static world knowledge |
 | `simple.jsonl` | simple | 10 | Trivial — Direct should be faster |
 
-## Example report
-
-| Model | Runner | Cases | Pass rate | Avg latency (ms) | Avg cost (USD) | Avg calls |
-|-------|--------|------:|----------:|-----------------:|---------------:|----------:|
-| deepseek-chat | direct | 44 | 82% | 890 | 0.000120 | 1.0 |
-| deepseek-chat | metis | 44 | 91% | 12400 | 0.001450 | 8.2 |
-| qwen3:8b | direct | 44 | 80% | 210 | 0.000000 | 1.0 |
-| qwen3:8b | metis | 44 | 88% | 3200 | 0.000000 | 7.5 |
-
-Reports also include **Where Metis wins** and **Where Direct wins** sections — computed honestly from pass rates and latency by category.
-
-## Benchmark flow
-
-```mermaid
-flowchart LR
-    subgraph datasets [Datasets]
-        TU[task_understanding]
-        RS[reasoning]
-        FC[factual]
-        SM[simple]
-    end
-
-    subgraph harness [BenchmarkRunner]
-        CASE[BenchmarkCase]
-        CHK[Checkers]
-    end
-
-    subgraph runners [Backends]
-        DIR[DirectProvider\n1 API call]
-        MET[MetisPipeline\ncouncil / agent / fast]
-    end
-
-    subgraph economy [Economy]
-        METER[UsageMeter]
-        COST[CostCalculator]
-    end
-
-    datasets --> CASE
-    CASE --> DIR
-    CASE --> MET
-    DIR --> CHK
-    MET --> METER --> COST --> CHK
-    CHK --> RPT[Markdown + JSON report]
-```
-
-## Interpretation guide
-
-### When Metis should beat Direct
-
-- **Ambiguous / trap prompts** — confidence gate should ask clarifying questions instead of guessing.
-- **Multi-step reasoning** — council + verifier can catch errors a single shot misses.
-- **Code / agent tasks** (future datasets) — tool loop benefits from structured `TaskSpec`.
-
-### When Direct should beat Metis
-
-- **Simple FAQ** — one call is enough; council overhead adds latency and cost without quality gain.
-- **Tight latency SLOs** — Metis makes multiple sequential LLM calls by design.
-- **Cost-sensitive batch** — pass rate gains may not justify 5–12× token spend.
-
-### Honest expectations
-
-- Metis will **not** win every category. The report highlights real deltas.
-- Factual cases run with **web search disabled** in the default benchmark config; both runners rely on model knowledge.
-- Missing API keys skip models gracefully — CI mock tests never require secrets.
-
-## Hybrid model diversity (`config/test-hybrid.yaml`)
-
-Compare single-model benchmarks against the heterogeneous module config:
-
-| Tier | Model | Example roles | Input $/1M | Output $/1M |
-|------|-------|---------------|----------:|------------:|
-| Flash | `deepseek-v4-flash` | router, judge, fast parsers | 0.14 | 0.28 |
-| Pro | `deepseek-v4-pro` | synthesizer, red_team, logician | 0.435 | 0.87 |
-| Local | `phi-4-reasoning-plus` | `intent_parser_b` (LM Studio) | 0 | 0 |
-
-```bash
-export METIS_BASE_URL=https://api.deepseek.com/v1
-
-# Single-tier baselines (simple dataset)
-metis-benchmark run --models deepseek-v4-flash --dataset simple --compare direct
-metis-benchmark run --models deepseek-v4-pro --dataset simple --compare direct
-
-# Full hybrid stack (per-module routing)
-metis config show-modules -c config/test-hybrid.yaml
-metis --route council -c config/test-hybrid.yaml "Your query"
-```
-
-See `config/TEST_SETUP.md` for smoke tests and LM Studio prerequisites.
-
 ## Environment variables
 
 | Variable | Provider |
 |----------|----------|
-| `DEEPSEEK_API_KEY` | `deepseek-chat`, `deepseek-v4-pro`, `deepseek-v4-flash` @ `api.deepseek.com` |
+| `DEEPSEEK_API_KEY` | `deepseek-v4-pro`, `deepseek-v4-flash` @ `api.deepseek.com` |
+| `OPENROUTER_API_KEY` | `minimax-m3`, `kimi-k3`, `kimi-k2.6` @ `openrouter.ai` |
 | `OPENAI_API_KEY` | `gpt-4o-mini` @ `api.openai.com` |
-| `METIS_BASE_URL` | Override base URL for ad-hoc benchmark model ids (e.g. `https://api.deepseek.com/v1`) |
 | _(none)_ | `qwen3:8b` via local Ollama |
 
 ## CI
