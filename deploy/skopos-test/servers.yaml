@@ -53,3 +53,16 @@ servers:
       docker_log_containers:
         - metis-nginx
     # No apache-test fixture in production — only real nginx/docker log sources.
+
+  - name: competing-lab
+    source: ssh_nginx_access_log
+    transport: agent-push
+    address: hub.modelmarket.dev
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: false
+      docker_log_containers:
+        - modelmarket-hub
+        - signal-hunt-hub-1
+        - signal-hunt-game-1
