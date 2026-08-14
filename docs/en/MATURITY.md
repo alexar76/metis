@@ -3,7 +3,7 @@
 Metis is one of the **strongest** ecosystem components (external reviews ~8/10). This doc states
 what is production-grade today vs what still needs soak testing and adversarial benchmarks.
 
-**Related:** Factory [KI-8](../../../docs/known-issues.md#ki-8--metis-distributed-mode--adversarial-verification-gap) · [DISTRIBUTED.md](./DISTRIBUTED.md) · [benchmarks/](../../benchmarks/)
+**Related:** Factory [KI-8](https://github.com/alexar76/aicom/blob/main/docs/known-issues.md#ki-8--metis-distributed-mode--adversarial-verification-gap) · [DISTRIBUTED.md](./DISTRIBUTED.md) · [benchmarks/](../../benchmarks/)
 
 ---
 
@@ -72,4 +72,4 @@ consumer ignores budgets.
 2. Distributed mode **beta** label removed after soak green
 3. Document high-stakes preset: `enforce_confidence_gate: true` + mandatory verify
 
-**Russian:** see ecosystem [maturity review RU](../../../docs/ecosystem-maturity-review.ru.md)
+**Russian:** see ecosystem [maturity review RU](https://github.com/alexar76/aicom/blob/main/docs/ecosystem-maturity-review.ru.md)

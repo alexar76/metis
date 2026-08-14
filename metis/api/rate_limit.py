@@ -20,6 +20,7 @@ class RateLimiter:
     def __init__(self, limit_per_minute: int = 60) -> None:
         self.limit = limit_per_minute
         self._windows: DefaultDict[str, Deque[float]] = defaultdict(deque)
+        self._calls = 0
 
     def _key(self, request: Request, api_key: Optional[str]) -> str:
         if api_key:
@@ -35,10 +36,6 @@ class RateLimiter:
         while window and now - window[0] > 60.0:
             window.popleft()
 
-        if not window:
-            # Stale entry — clean up so the dict doesn't grow unbounded.
-            del self._windows[key]
-
         if len(window) >= self.limit:
             raise HTTPException(
                 status_code=429,
@@ -46,6 +43,21 @@ class RateLimiter:
             )
 
         window.append(now)
+        self._evict_idle(now)
+
+    def _evict_idle(self, now: float) -> None:
+        """Drop fully drained windows so the dict stays bounded.
+
+        This used to happen inline in check(): an empty window was deleted from the
+        dict and then appended to, so the very next request re-created an empty one
+        and the count never reached the limit. Evicting AFTER the append — and only
+        keys other than the one just touched — keeps memory bounded and still counts.
+        """
+        self._calls += 1
+        if self._calls % 1000:
+            return
+        for k in [k for k, w in self._windows.items() if not w or now - w[-1] > 60.0]:
+            del self._windows[k]
 
     def reset(self) -> None:
         self._windows.clear()

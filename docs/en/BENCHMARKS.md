@@ -58,7 +58,7 @@ every model”; it **lifts its own base** and emits a confidence signal no raw c
 | Machine-readable **`verify_score` / `verified`** | ✗ | ✓ |
 | Fail-closed **`needs_clarification`** | ✗ | ✓ |
 
-That gate is why the factory calls Metis on high-stakes stages — see [`docs/metis-integration.md`](../../../docs/metis-integration.md).
+That gate is why the factory calls Metis on high-stakes stages — see [`docs/metis-integration.md`](https://github.com/alexar76/aicom/blob/main/docs/metis-integration.md).
 
 ### When Metis does **not** win (honest)
 

@@ -29,7 +29,7 @@ Full docs below: [Architecture](ARCHITECTURE.md) · [API](API.md) · [Research e
 
 **Metis is API-only** — no bundled chat UI. Serve with `metis-serve` and integrate via VS Code Continue, Cursor, or `curl` (`POST /v1/chat/completions`).
 
-Per-module model config (`modules:` in YAML) — see [ARCHITECTURE.md](ARCHITECTURE.md#per-module-model-configuration):
+Per-module model config (`modules:` in YAML) — see [ARCHITECTURE.md](ARCHITECTURE.md#per-module-config-modules):
 
 ```bash
 metis config validate -c config.yaml

@@ -13,8 +13,8 @@ Versión completa en inglés: [RESEARCH.md (en)](../en/RESEARCH.md)
 | [Self-MoA](#3-self-moa-contraargumento) | arXiv 2025 | Un solo modelo fuerte a menudo supera MoA heterogéneo | La diversidad **no** siempre gana |
 | [When Agents Disagree](#4-cuello-de-botella-de-selección) | arXiv 2026 | Diversidad ayuda con **juez**; síntesis MoA puede perder vs un modelo | Verificador + reintento |
 | [MMAD](#5-mmad-deriva-sicofántica) | OpenReview | Debate ingenuo en SLM 3–8B → deriva, hasta ~10% precisión | Consejo paralelo, no debate |
-| [CONSENSAGENT](#6-consensagent) | ACL Findings 2025 | Sicofancia en MAD aumenta coste | Prompts estructurados |
-| [Peacemaker or Troublemaker](#7-peacemaker-or-troublemaker) | arXiv 2025 | Sicofancia colapsa el debate | Rol escéptico, red-team |
+| [CONSENSAGENT](#67-consensagent-y-peacemaker-or-troublemaker) | ACL Findings 2025 | Sicofancia en MAD aumenta coste | Prompts estructurados |
+| [Peacemaker or Troublemaker](#67-consensagent-y-peacemaker-or-troublemaker) | arXiv 2025 | Sicofancia colapsa el debate | Rol escéptico, red-team |
 
 ---
 
