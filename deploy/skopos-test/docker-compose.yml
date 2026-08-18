@@ -73,6 +73,7 @@ services:
       SKOPOS_REQUIRE_DASHBOARD_AUTH: ${SKOPOS_REQUIRE_DASHBOARD_AUTH:-1}
       # Factory Prometheus (PromQL). Unset → demo fallback charts.
       SKOPOS_PROMETHEUS_URL: ${SKOPOS_PROMETHEUS_URL:-}
+      SKOPOS_SIGNING_KEY_PATH: ${SKOPOS_SIGNING_KEY_PATH:-/app/.skopos/aimarket_signing_key}
     networks:
       - default
       - metisnet
