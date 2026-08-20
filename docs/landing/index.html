@@ -873,8 +873,8 @@ function onDone(env){ setNode('answer','done'); setEdge('verify','answer','done'
 async function askStream(msgs, deep){
   buildGraph(); buildGauge(); cogReset(); cogIgnite(); cogTimerStart();
   const url=cfg.url.replace(/\/+$/,'')+'/v1/verify/stream';
-  // Council (Deep think) routinely runs 2–4+ minutes; 120s abort caused false "demo mode".
-  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(), deep ? 420000 : 180000);
+  // Council (Deep think) can approach the 600s server ceiling; keep client headroom.
+  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(), deep ? 620000 : 180000);
   let res;
   try{ res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...(cfg.key?{'Authorization':'Bearer '+cfg.key}:{})},
     body:JSON.stringify({input:{messages:withLang(msgs)}, route:deep?'council':undefined}), signal:ctrl.signal}); }

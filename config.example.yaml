@@ -23,6 +23,11 @@ enable_long_term_memory: true
 memory_dir: data/memory
 rag_top_k: 5
 
+security:
+  # Council can legitimately approach five minutes on reasoning providers.
+  # This is a hard server ceiling; reverse proxies must allow slightly more.
+  request_timeout_seconds: 600
+
 # --- Observability (v0.2) ---
 observability:
   log_level: INFO

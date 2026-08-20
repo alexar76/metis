@@ -185,6 +185,7 @@ security:
   enforce_injection_scan: true
   max_user_input_chars: 100000
   max_request_body_bytes: 512000
+  request_timeout_seconds: 600  # hard server ceiling; proxy uses 630s
   rate_limit:
     requests_per_minute: 60
     burst: 10

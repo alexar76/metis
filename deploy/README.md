@@ -140,7 +140,9 @@ Test it without touching the live cert: append `--dry-run` to the `renew` call.
   `reasoning_content`. The provider handles this transparently: it keeps a token-budget
   floor for reasoning models and retries with a larger budget if a tight cap starves the
   answer, so `content` is reliably clean and complete (never empty, never raw CoT). Council
-  on v4-pro runs ~60–70s (under the 120s API / 300s stream timeouts).
+  can vary from about a minute to several minutes. Metis enforces a configurable
+  `security.request_timeout_seconds` ceiling (600s in production), while nginx and the
+  landing allow 630s and 620s respectively so the server remains the authoritative limit.
 - **Self-knowledge (identity)** — set `identity:` in `prod.yaml` (or `METIS_IDENTITY` env) to a
   block describing what Metis is, its ecosystem, services, tools and use-cases. It is prepended to
   the system prompt of **every** route (fast/thinking/council/agent/vision) via one provider-layer

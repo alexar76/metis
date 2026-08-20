@@ -53,6 +53,7 @@ docker compose --profile redis up -d
 - `enforce_confidence_gate: true`
 - `economy.session_budget_usd: 5.0`
 - `security.enforce_injection_scan: true`
+- `security.request_timeout_seconds: 600` — жёсткий предел сервера; proxy использует 630 с
 - `security.rate_limit`: 60 req/мин, burst 10
 
 ```bash

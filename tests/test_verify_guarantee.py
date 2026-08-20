@@ -457,7 +457,7 @@ def test_the_endpoint_reports_an_exhausted_budget_as_unverified(client, calls, m
     """End to end: a run that overruns the request deadline returns the work with an
     honest `verify_performed: false` rather than a late, invented verdict."""
     # Only the endpoint module's clock is faked (a stand-in for `time`, not a patch of
-    # the real module), so the run appears to have consumed 10_000s of a 300s budget —
+    # the real module), so the run appears to have consumed 10_000s of a 600s budget —
     # far past both the deadline and the overrun allowance.
     class _FakeTime:
         @staticmethod

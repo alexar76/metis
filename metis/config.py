@@ -21,6 +21,9 @@ from metis.observability.config import ObservabilityConfig
 from metis.security.ratelimit import RateLimitConfig
 
 
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 600.0
+
+
 class ProviderKind(str, Enum):
     OPENAI_COMPAT = "openai_compat"
     OLLAMA = "ollama"
@@ -85,6 +88,11 @@ class SecurityConfig(BaseModel):
     max_user_input_chars: int = 100_000
     max_tool_output_chars: int = 50_000
     max_request_body_bytes: int = 512_000
+    request_timeout_seconds: float = Field(
+        default=DEFAULT_REQUEST_TIMEOUT_SECONDS,
+        ge=10.0,
+        le=DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    )
     enforce_injection_scan: bool = True
     rate_limit: RateLimitConfig = Field(default_factory=RateLimitConfig)
     cors_origins: List[str] = Field(default_factory=list)

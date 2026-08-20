@@ -49,7 +49,7 @@ from pydantic import BaseModel, Field
 
 from metis.api.auth import verify_api_key
 from metis.api.bridge import messages_to_query
-from metis.config import RouteMode, RuntimeConfig
+from metis.config import DEFAULT_REQUEST_TIMEOUT_SECONDS, RouteMode, RuntimeConfig
 from metis.exoskeleton import ExoskeletonResult, Metis, RunStatus
 from metis.schemas.task_spec import TaskSpec
 from metis.verify.critic import clamp_score, verify_answer
@@ -68,7 +68,9 @@ DEFAULT_VERIFY_PASS = 0.7
 _MAX_INPUT_CHARS = 200_000
 
 # Server-side wall-clock cap so a client disconnect can't orphan expensive work.
-_RUN_TIMEOUT = 300.0
+# SecurityConfig may lower this per deployment, but never raise it beyond the
+# canonical ceiling without a code/config review of every upstream proxy.
+_RUN_TIMEOUT = DEFAULT_REQUEST_TIMEOUT_SECONDS
 
 # Floor for the guaranteed-verification pass when the main run already ate most
 # of the request budget: a judge call that is refused for lack of time reports

@@ -9,9 +9,15 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from metis.api.app import create_app
-from metis.config import ProviderKind, RuntimeConfig
+from metis.config import (
+    DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    ProviderKind,
+    RuntimeConfig,
+    SecurityConfig,
+)
 
 ENVELOPE_KEYS = {
     "answer",
@@ -42,6 +48,17 @@ def cfg(tmp_path):
 @pytest.fixture
 def client(cfg):
     return TestClient(create_app(cfg))
+
+
+def test_request_timeout_defaults_to_600_seconds_and_can_be_lowered():
+    assert DEFAULT_REQUEST_TIMEOUT_SECONDS == 600.0
+    assert SecurityConfig().request_timeout_seconds == 600.0
+    assert SecurityConfig(request_timeout_seconds=120).request_timeout_seconds == 120.0
+
+
+def test_request_timeout_cannot_exceed_reviewed_proxy_budget():
+    with pytest.raises(ValidationError):
+        SecurityConfig(request_timeout_seconds=601)
 
 
 def test_verify_envelope_shape(client):
