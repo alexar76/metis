@@ -862,6 +862,7 @@ flowchart TB
 
     subgraph marketplace [AIMarket]
         HUB[aimarket_hub]
+        THEMIS[themis admission]
         ORACLES[aimarket_oracle_gateway]
         PLUGINS[aimarket_plugins]
     end
@@ -871,6 +872,7 @@ flowchart TB
     METIS -->|"инструменты MCP"| ORACLES
     METIS -->|"инструменты MCP"| PLUGINS
     METIS -->|"события использования"| HUB
+    THEMIS -->|"approve / review / reject"| HUB
     ORACLES -->|"оплата за вызов"| HUB
     ARGUS --> HUB
 ```

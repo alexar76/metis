@@ -13,6 +13,7 @@ flowchart TB
 
     subgraph marketplace [AIMarket]
         HUB[aimarket-hub]
+        THEMIS[themis admission]
         ORACLE_GW[aimarket-oracle-gateway MCP]
         MCP_GW[aimarket-mcp MCP]
         PLUGINS[aimarket-plugins MCP]
@@ -35,6 +36,7 @@ flowchart TB
     end
 
     AICOM --> HUB
+    THEMIS -->|"approve / review / reject"| HUB
     SB -->|MCP tools| ORACLE_GW
     SB -->|MCP tools| MCP_GW
     SB -->|MCP tools| PLUGINS

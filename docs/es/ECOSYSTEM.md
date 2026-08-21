@@ -7,7 +7,7 @@
 | Capa | Repos | Rol |
 |------|-------|-----|
 | **Fábrica** | `aicom`, `helios`, `aicom-landing` | Producción de productos |
-| **AIMarket** | `aimarket-protocol`, `aimarket-hub`, `aimarket-agent` | Catálogo, invoke, pagos |
+| **AIMarket** | `aimarket-protocol`, `aimarket-hub`, `aimarket-agent`, `themis` | Catálogo, invoke, pagos, admisión al publicar |
 | **Oráculos** | `oracles`, `aimarket-oracle-gateway` | Matemática verificable |
 | **Demanda** | `argus`, `dioscuri` | Clientes de referencia |
 | **Capital** | `acex`, `pulse-terminal` | Mercado de agentes |

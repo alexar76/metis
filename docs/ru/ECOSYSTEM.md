@@ -7,7 +7,7 @@
 | Слой | Репозитории | Роль |
 |------|-------------|------|
 | **Фабрика** | `aicom`, `helios`, `aicom-landing` | Производство продуктов |
-| **AIMarket** | `aimarket-protocol`, `aimarket-hub`, `aimarket-agent`, `ai-service-mesh` | Каталог, invoke, оплата |
+| **AIMarket** | `aimarket-protocol`, `aimarket-hub`, `aimarket-agent`, `ai-service-mesh`, `themis` | Каталог, invoke, оплата, допуск публикации |
 | **Оракулы** | `oracles`, `platon`, `lottery`, `aimarket-oracle-gateway` | Верифицируемая математика |
 | **Спрос** | `argus`, `dioscuri` | Референс-клиенты |
 | **Капитал** | `acex`, `pulse-terminal` | Рынок агентов |
