@@ -2,7 +2,7 @@
 
 **Metis** (μῆτις) — распределённый когнитивный слой поверх любой LLM.
 
-🌐 Язык: [English](README.md) · **Русский** · [Español](README.es.md)
+> 🌐 [English](README.md) · **Русский** · [Español](README.es.md) · [Français](README.fr.md) · [中文](README.zh.md) · [Глоссарий](https://github.com/alexar76/aicom/blob/main/docs/localization-glossary.md)
 
 ## Живое демо
 

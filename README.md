@@ -36,8 +36,7 @@
   <sub>Grab the star · watch it pulse and think · chat with Metis — <a href="https://metis.modelmarket.dev/"><b>open the live demo →</b></a></sub>
 </p>
 
-🌐 **Language:** **English** · [Русский](README.ru.md) · [Español](README.es.md)  
-Guides: [EN](docs/en/README.md) · [RU](docs/ru/README.md) · [ES](docs/es/README.md)
+> 🌐 **English** · [Русский](README.ru.md) · [Español](README.es.md) · [Français](README.fr.md) · [中文](README.zh.md) · [Glossary](https://github.com/alexar76/aicom/blob/main/docs/localization-glossary.md)
 
 **Multi-agent reasoning orchestrator** — Understanding Council, DGPD depth gating, layered MoA, verifier, memory, search, economy metering, distributed cluster, MCP tools, and OpenAI-compatible API.
 
