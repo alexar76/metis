@@ -110,6 +110,15 @@ class RuntimeConfig(BaseSettings):
     base_model: str = "qwen3:8b"
     base_url: str = "http://localhost:11434/v1"
     api_key: str = "ollama"
+    #: Read the base slot's key from the environment instead of writing it into the config.
+    #:
+    #: Per-MODULE slots have always had `api_key_env`; the top level did not, so a deployment
+    #: that wrote it here got a silently ignored line and fell back to `api_key` — which
+    #: defaults to the literal "ollama". A live prod.yaml carried BOTH: an ignored
+    #: `api_key_env: OPENROUTER_API_KEY` and a pasted DeepSeek key pointed at openrouter.ai.
+    #: Every module that fell through to the base slot answered 401, while modules with their
+    #: own `api_key_env` worked — so /health was green and every completion failed.
+    api_key_env: Optional[str] = None
     provider: ProviderKind = ProviderKind.OLLAMA
 
     default_route: RouteMode = RouteMode.COUNCIL
@@ -117,6 +126,23 @@ class RuntimeConfig(BaseSettings):
     thinking_temperature: float = 0.8
     max_agent_iterations: int = 5
     max_verify_retries: int = 3
+    #: Wall-clock cap on a single council member's generation, in seconds.
+    #:
+    #: Layer 1 runs its proposers concurrently, so the layer costs whatever its SLOWEST
+    #: member costs. One skeptic once took 400s while the logician and the pragmatist
+    #: finished in 33s — the layer billed 400s of the caller's budget for a proposal that
+    #: was not better for having taken twelve times longer. Past this cap the straggler is
+    #: dropped and the layer proceeds on whoever answered.
+    role_timeout_seconds: float = 150.0
+    #: Wall-clock budget for a whole council run, in seconds. None = no budget (run to
+    #: completion), which is only safe when the caller waits forever.
+    #:
+    #: The council retries up to `max_verify_retries` times. Without a budget it starts a
+    #: round it cannot finish and the caller's deadline kills it mid-round — so a run that
+    #: HAD an aggregated answer at minute 14 handed back nothing at minute 20. With a budget
+    #: it stops starting rounds it cannot finish and returns its best answer so far, marked
+    #: unverified. Set this BELOW the caller's timeout, not equal to it.
+    council_budget_seconds: Optional[float] = None
     enable_grounded_verify: bool = True  # execute answer code to ground verify_score
     enable_multimodal: bool = True       # pass images to a vision-capable slot when present
     max_images: int = 5                  # hard cap on images accepted per request
@@ -176,6 +202,26 @@ class RuntimeConfig(BaseSettings):
         if self.production and not self.api_key_env_set():
             pass  # api_key from env in production via METIS_API_KEY
 
+    def resolved_api_key(self) -> str:
+        """The base slot's key: the environment first, the literal only as a fallback.
+
+        A key in a config file is a key in a backup, a bind mount and a git history. The env
+        wins so a deployment never has to paste one — and when `api_key_env` names a variable
+        that is empty, that is said out loud rather than silently becoming "ollama".
+        """
+        import logging
+        import os
+
+        if self.api_key_env:
+            value = os.environ.get(self.api_key_env, "").strip()
+            if value:
+                return value
+            logging.getLogger(__name__).error(
+                "api_key_env names %s but it is empty — falling back to the literal api_key, "
+                "which defaults to 'ollama' and will be refused by any real provider",
+                self.api_key_env)
+        return self.api_key
+
     def api_key_env_set(self) -> bool:
         import os
         return bool(
@@ -218,11 +264,11 @@ class RuntimeConfig(BaseSettings):
             slots = [registry.resolve_slot(role) for role in COUNCIL_ROLES]
         else:
             slots = [
-                ModelSlot(name="parser_a", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.api_key, temperature=0.5),
-                ModelSlot(name="parser_b", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.api_key, temperature=0.7),
-                ModelSlot(name="parser_c", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.api_key, temperature=0.9),
-                ModelSlot(name="red_team", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.api_key, temperature=0.6),
-                ModelSlot(name="synthesizer", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.api_key, temperature=0.3),
+                ModelSlot(name="parser_a", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.resolved_api_key(), temperature=0.5),
+                ModelSlot(name="parser_b", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.resolved_api_key(), temperature=0.7),
+                ModelSlot(name="parser_c", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.resolved_api_key(), temperature=0.9),
+                ModelSlot(name="red_team", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.resolved_api_key(), temperature=0.6),
+                ModelSlot(name="synthesizer", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.resolved_api_key(), temperature=0.3),
             ]
         check_council_diversity(slots, enforce=self.enforce_heterogeneous_agents, min_unique_models=self.min_unique_council_models)
         if not self.enforce_heterogeneous_agents:
@@ -230,4 +276,5 @@ class RuntimeConfig(BaseSettings):
         return slots
 
     def base_slot(self) -> ModelSlot:
-        return ModelSlot(name="base", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.api_key)
+        return ModelSlot(name="base", provider=self.provider, model=self.base_model,
+                         base_url=self.base_url, api_key=self.resolved_api_key())

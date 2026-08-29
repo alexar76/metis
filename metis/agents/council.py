@@ -82,11 +82,19 @@ async def run_understanding_council(
         "agents": list(PARSER_ROLES) + ["constraint_extractor", "ambiguity_hunter", "red_team"],
     })
 
+    # Concurrent, but bounded: the gather costs whatever its SLOWEST member costs, and one
+    # role that thinks for minutes would spend the caller's budget before the real council
+    # has started. A straggler times out into the per-label error branch below, which the
+    # synthesizer already knows how to read — six interpretations minus one still parses.
+    def _bounded(coro):
+        cap = config.role_timeout_seconds
+        return asyncio.wait_for(coro, timeout=cap) if cap and cap > 0 else coro
+
     results = await asyncio.gather(
-        *intent_tasks,
-        _safe_json_call(constraint_prov, CONSTRAINT_SYSTEM, query_block),
-        _safe_json_call(ambiguity_prov, AMBIGUITY_SYSTEM, query_block),
-        _safe_json_call(redteam_prov, REDTEAM_SYSTEM, query_block),
+        *[_bounded(t) for t in intent_tasks],
+        _bounded(_safe_json_call(constraint_prov, CONSTRAINT_SYSTEM, query_block)),
+        _bounded(_safe_json_call(ambiguity_prov, AMBIGUITY_SYSTEM, query_block)),
+        _bounded(_safe_json_call(redteam_prov, REDTEAM_SYSTEM, query_block)),
         return_exceptions=True,
     )
 
@@ -94,7 +102,10 @@ async def run_understanding_council(
     labels = ["intent_a", "intent_b", "intent_c", "constraints", "ambiguity", "redteam"]
     for label, res in zip(labels, results):
         if isinstance(res, Exception):
-            interpretations[label] = json.dumps({"error": str(res)})
+            # str(TimeoutError()) is the empty string — a label reading `{"error": ""}` tells
+            # the synthesizer nothing about why that voice is missing.
+            detail = str(res) or type(res).__name__
+            interpretations[label] = json.dumps({"error": detail})
         else:
             interpretations[label] = json.dumps(res, ensure_ascii=False)
 

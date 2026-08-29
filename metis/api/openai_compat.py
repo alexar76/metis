@@ -46,6 +46,7 @@ def _openai_response(
     content: str,
     model: str,
     usage: Dict[str, int],
+    finish_reason: str = "stop",
 ) -> ChatCompletionResponse:
     return ChatCompletionResponse(
         id=f"chatcmpl-{uuid.uuid4().hex[:24]}",
@@ -54,6 +55,7 @@ def _openai_response(
         choices=[
             ChatCompletionChoice(
                 message={"role": "assistant", "content": content},
+                finish_reason=finish_reason,
             )
         ],
         usage=usage,
@@ -135,4 +137,20 @@ async def chat_completions(
         model=body.model,
         forced_route=forced,
     )
+    if not (result.content or "").strip():
+        # An empty assistant message is indistinguishable from "the brain had nothing to add",
+        # and that is not what happened: the confidence gate declined to answer, or a route
+        # ended without one. The bridge already carries the status and the verify score and
+        # `_openai_response` dropped them, so a caller that deliberated for seventeen minutes
+        # was told only "no content". Say what happened, in the field a caller actually reads.
+        meta = result.metadata or {}
+        reason = json.dumps({
+            "abstained": True,
+            "status": meta.get("status"),
+            "route": meta.get("route"),
+            "verify_score": meta.get("verify_score"),
+            "detail": "Metis produced no answer for this query — most often the confidence "
+                      "gate refusing to emit one below its threshold.",
+        }, ensure_ascii=False)
+        return _openai_response(reason, body.model, result.usage, finish_reason="abstained")
     return _openai_response(result.content, body.model, result.usage)

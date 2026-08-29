@@ -47,7 +47,7 @@ class MCPServerConfig(BaseModel):
             "aimarket-web": {
                 "name": "aimarket-web",
                 "transport": MCPTransport.SSE,
-                "url": os.environ.get("AIMARKET_MCP_URL", "https://mcp.modelmarket.dev/mcp"),
+                "url": os.environ.get("AIMARKET_MCP_URL", "https://modelmarket.dev/mcp"),
                 "tool_prefix": "web",
             },
         }

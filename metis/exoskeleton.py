@@ -593,8 +593,25 @@ class Metis:
         answer = ""
         score = 0.0
         proposer_agreement = 1.0
+        budget = self.config.council_budget_seconds
+        loop = asyncio.get_running_loop()
+        deadline = (loop.time() + budget) if budget and budget > 0 else None
+        round_costs: list[float] = []
+        out_of_budget = False
 
         for attempt in range(self.config.max_verify_retries):
+            if deadline is not None and round_costs:
+                # Only start a round we can finish. A round killed halfway returns nothing;
+                # the answer we already hold is worth more than a round we cannot complete.
+                remaining = deadline - loop.time()
+                if remaining < max(round_costs):
+                    out_of_budget = True
+                    logger.info(
+                        "council stopping after %d round(s): %.0fs left, last round cost %.0fs",
+                        attempt, remaining, max(round_costs),
+                    )
+                    break
+            round_started = loop.time()
             # Optional RAG enrichment
             rag_context = memory_ctx
             if self.config.enable_long_term_memory:
@@ -654,6 +671,7 @@ class Metis:
                 answer, moa_meta = await moa_coro
                 verdict = await self._verify(task_spec, answer, query)
 
+            round_costs.append(loop.time() - round_started)
             proposer_agreement = moa_meta.get("agreement", 1.0)
             if (
                 depth == DepthLevel.L2_STANDARD
@@ -690,8 +708,16 @@ class Metis:
         return ExoskeletonResult(
             answer=answer, status=RunStatus.ERROR, route=mode,
             task_spec=task_spec, verify_score=score, depth=depth,
-            iterations=self.config.max_verify_retries,
-            metadata={"phase": "council_moa", "verify_warning": "max retries reached", "proposer_agreement": proposer_agreement},
+            iterations=len(round_costs) or self.config.max_verify_retries,
+            metadata={
+                "phase": "council_moa",
+                "verify_warning": (
+                    "wall-clock budget exhausted" if out_of_budget else "max retries reached"
+                ),
+                "best_effort": True,
+                "rounds_completed": len(round_costs),
+                "proposer_agreement": proposer_agreement,
+            },
         )
 
     async def _run_agent(

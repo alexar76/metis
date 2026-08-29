@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from metis.config import RuntimeConfig
 from metis.modules.registry import ModuleRegistry
@@ -11,6 +12,8 @@ from metis.pipeline.agreement import compute_proposer_agreement
 from metis.pipeline.depth import requires_full_depth
 from metis.schemas.task_spec import TaskSpec
 from metis.agents.diversity import check_council_diversity
+
+logger = logging.getLogger(__name__)
 
 PROPOSER_ROLES = [
     ("moa_proposer_logician", "logician", "You reason formally. Find logical structure and edge cases."),
@@ -35,6 +38,52 @@ def _should_skip_refiner(query: str, config: RuntimeConfig, agreement: float) ->
     if requires_full_depth(query, config):
         return False
     return agreement >= config.dgpd.agreement_threshold
+
+
+async def _layer_within_budget(
+    coros: list,
+    role_names: list[str],
+    timeout: float | None,
+) -> tuple[list[int], list[str], list[str]]:
+    """Run proposers concurrently and refuse to let one slow generation hold the layer.
+
+    ``gather`` waits for the slowest member. In production one skeptic ran 400s while its
+    two peers finished in 33s, so a layer worth 33s of wall clock cost 400s — a third of
+    the caller's whole budget for a single proposal that was not better than the others.
+
+    We keep whoever answered inside ``timeout`` and drop the stragglers. If nobody made
+    the budget we wait for the first one however long it takes, because a layer with no
+    proposals has nothing to refine.
+
+    Returns (kept indices, kept outputs, dropped role names).
+    """
+    tasks = [asyncio.ensure_future(c) for c in coros]
+    if timeout and timeout > 0:
+        done, pending = await asyncio.wait(tasks, timeout=timeout)
+        if not done and pending:
+            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+    else:
+        done, pending = await asyncio.wait(tasks), set()
+
+    kept_idx: list[int] = []
+    kept_out: list[str] = []
+    dropped: list[str] = []
+    stragglers = []
+    for i, task in enumerate(tasks):
+        if task.done() and not task.cancelled() and task.exception() is None:
+            kept_idx.append(i)
+            kept_out.append(task.result())
+            continue
+        if not task.done():
+            task.cancel()
+            stragglers.append(task)
+        dropped.append(role_names[i])
+    if stragglers:
+        # Await the cancellations so the loop does not log "task was destroyed but is pending".
+        await asyncio.gather(*stragglers, return_exceptions=True)
+    if dropped:
+        logger.info("MoA layer 1 dropped %s after %ss", ", ".join(dropped), timeout)
+    return kept_idx, kept_out, dropped
 
 
 async def run_layered_moa(
@@ -67,13 +116,21 @@ async def run_layered_moa(
         user = _build_moa_prompt(task_spec, user_query, feedback)
         layer1_tasks.append(prov.complete_text(system, user, temperature=0.7))
 
-    layer1_outputs = await asyncio.gather(*layer1_tasks)
+    kept_idx, layer1_outputs, dropped = await _layer_within_budget(
+        layer1_tasks,
+        [name for _key, name, _desc in PROPOSER_ROLES],
+        config.role_timeout_seconds,
+    )
     agreement = compute_proposer_agreement(list(layer1_outputs))
     meta = {"agreement": agreement, "skip_refiner": False}
+    if dropped:
+        meta["dropped_proposers"] = dropped
 
+    # Label each proposal with the role that actually wrote it: a dropped straggler shifts
+    # every later index, so enumerate() over the survivors would misattribute the rest.
     layer1_block = "\n\n".join(
-        f"--- Proposal {i+1} ({PROPOSER_ROLES[i][1]}) ---\n{out}"
-        for i, out in enumerate(layer1_outputs)
+        f"--- Proposal {n+1} ({PROPOSER_ROLES[idx][1]}) ---\n{out}"
+        for n, (idx, out) in enumerate(zip(kept_idx, layer1_outputs))
     )
 
     if skip_refiner or _should_skip_refiner(user_query, config, agreement):

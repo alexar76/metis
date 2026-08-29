@@ -71,3 +71,11 @@ def test_mcp_server_config_from_preset():
     cfg = MCPServerConfig.from_ecosystem_preset("aimarket-oracle-gateway")
     assert cfg.transport == MCPTransport.STDIO
     assert "aimarket_oracle_gateway" in " ".join(cfg.args)
+
+
+def test_aimarket_web_preset_uses_the_live_hosted_hub_mcp(monkeypatch):
+    """mcp.modelmarket.dev never had DNS. The hosted gateway is the Hub at /mcp."""
+    monkeypatch.delenv("AIMARKET_MCP_URL", raising=False)
+    cfg = MCPServerConfig.from_ecosystem_preset("aimarket-web")
+    assert cfg.url == "https://modelmarket.dev/mcp"
+    assert "mcp.modelmarket.dev" not in (cfg.url or "")
