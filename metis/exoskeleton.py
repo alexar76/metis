@@ -207,6 +207,7 @@ class Metis:
         route: RouteMode | None = None,
         images: list[str] | None = None,
         on_event: Callable[[dict], None] | None = None,
+        autonomous_caller: bool = False,
     ) -> ExoskeletonResult:
         """Main entry: wrap any model query through the cognitive stack.
 
@@ -288,7 +289,9 @@ class Metis:
         set_current_meter(meter)
         result = None
         try:
-            result = await self._execute(query, mode, depth, security_reason, vision_context=vision_context)
+            result = await self._execute(query, mode, depth, security_reason,
+                                     vision_context=vision_context,
+                                     autonomous_caller=autonomous_caller)
             # Output guard: multi-agent routes can occasionally leak an internal
             # TaskSpec/JSON blob as the "answer" (weak base models echo the
             # structured context). Never show that to a user — regenerate a clean
@@ -427,6 +430,7 @@ class Metis:
         depth: DepthLevel = DepthLevel.L3_FULL,
         security_reason: str | None = None,
         vision_context: str = "",
+        autonomous_caller: bool = False,
     ) -> ExoskeletonResult:
         memory_ctx = ""
         if self.config.enable_long_term_memory:
@@ -476,7 +480,21 @@ class Metis:
                 "enforced": self.config.enforce_confidence_gate,
             })
         if self.config.enforce_confidence_gate:
-            if gate.action == GateAction.CLARIFY:
+            if gate.action == GateAction.CLARIFY and autonomous_caller:
+                # A clarification question needs somebody to answer it. This caller has
+                # nobody, so returning one is not caution — it is a dead end dressed as one,
+                # and it throws away the six council roles already paid for. Proceed with what
+                # was understood and hand the confidence back, so the caller (which has a hard
+                # gate of its own) can decide what a weak answer is worth.
+                logger.info("confidence gate scored %.2f (%s) — proceeding anyway: the caller "
+                            "has no human to ask", gate.composite_score, gate.reason)
+                if _OBS_AVAILABLE:
+                    emit_pipeline_event(PipelineEventKind.CONFIDENCE_GATE, {
+                        "action": "proceed_autonomous",
+                        "composite_score": gate.composite_score,
+                        "reason": gate.reason,
+                    })
+            elif gate.action == GateAction.CLARIFY:
                 questions = task_spec.clarification_questions() or [gate.reason]
                 return ExoskeletonResult(
                     answer="",
@@ -490,7 +508,7 @@ class Metis:
                         "reason": gate.reason,
                     },
                 )
-        elif task_spec.needs_clarification(self.config.confidence_threshold):
+        elif task_spec.needs_clarification(self.config.confidence_threshold) and not autonomous_caller:
             return ExoskeletonResult(
                 answer="",
                 status=RunStatus.NEEDS_CLARIFICATION,
@@ -581,6 +599,19 @@ class Metis:
             return await grounded_verify(self.config, task_spec, answer, query, self.tools)
         return await verify_answer(self.config, task_spec, answer, query)
 
+    #: How many capped roles a single council round runs back to back:
+    #: the concurrent proposer layer, the refiner, the aggregator, and the verifier.
+    _ROUND_ROLE_HOPS = 4
+
+    def _round_ceiling(self) -> float:
+        """The longest a single council round can take, by construction.
+
+        Zero when roles are uncapped — then there is no ceiling to reason about and the
+        budget falls back to what previous rounds actually cost.
+        """
+        cap = self.config.role_timeout_seconds
+        return cap * self._ROUND_ROLE_HOPS if cap and cap > 0 else 0.0
+
     async def _run_council(
         self,
         task_spec: TaskSpec,
@@ -604,11 +635,19 @@ class Metis:
                 # Only start a round we can finish. A round killed halfway returns nothing;
                 # the answer we already hold is worth more than a round we cannot complete.
                 remaining = deadline - loop.time()
-                if remaining < max(round_costs):
+                # Budget against the round's WORST case, not its observed average. Every
+                # council role is capped, so a round's ceiling is arithmetic: the concurrent
+                # proposer layer, the refiner, the aggregator and the verifier, each bounded
+                # by role_timeout_seconds. Estimating from history under-predicts badly — two
+                # rounds at 250s once taught it to expect 250s and the third took 660s, which
+                # is how a run finished 40 seconds inside the caller's deadline instead of
+                # comfortably within its own budget.
+                ceiling = max(max(round_costs), self._round_ceiling())
+                if remaining < ceiling:
                     out_of_budget = True
                     logger.info(
-                        "council stopping after %d round(s): %.0fs left, last round cost %.0fs",
-                        attempt, remaining, max(round_costs),
+                        "council stopping after %d round(s): %.0fs left, a round needs up to %.0fs",
+                        attempt, remaining, ceiling,
                     )
                     break
             round_started = loop.time()

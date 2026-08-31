@@ -86,6 +86,29 @@ async def _layer_within_budget(
     return kept_idx, kept_out, dropped
 
 
+async def _role_within_budget(coro, timeout: float | None, *, fallback: str, role: str) -> str:
+    """Await one serial council role, falling back rather than spending the whole budget.
+
+    Layer 1 is capped because it runs concurrently and waits for its slowest member. The
+    refiner, the aggregator and the judge are single serial calls and were capped by
+    nothing at all — so a round had no computable ceiling, and the wall-clock budget could
+    only ESTIMATE a round's cost from previous rounds. That estimate failed exactly as you
+    would expect: two rounds at 250s taught it to expect 250s, and the third took 660s.
+
+    With every role capped, a round's worst case is arithmetic instead of a guess.
+    """
+    if not timeout or timeout <= 0:
+        return await coro
+    task = asyncio.ensure_future(coro)
+    try:
+        return await asyncio.wait_for(asyncio.shield(task), timeout=timeout)
+    except asyncio.TimeoutError:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        logger.info("%s exceeded %ss — falling back to its input", role, timeout)
+        return fallback
+
+
 async def run_layered_moa(
     config: RuntimeConfig,
     task_spec: TaskSpec,
@@ -141,7 +164,16 @@ async def run_layered_moa(
         emit_pipeline_event(PipelineEventKind.MOA_LAYER2, {"skip_refiner": False, "agreement": agreement})
         refiner = registry.get_provider_for_role("moa_refiner")
         layer2_input = f"TaskSpec:\n{task_spec.to_context()}\n\nProposals:\n{layer1_block}"
-        layer2_output = await refiner.complete_text(REFINER_SYSTEM, layer2_input, temperature=0.5)
+        layer2_output = await _role_within_budget(
+            refiner.complete_text(REFINER_SYSTEM, layer2_input, temperature=0.5),
+            config.role_timeout_seconds,
+            # Refining is an improvement pass, not a source of content: if it runs long the
+            # raw proposals are still a complete input for the aggregator.
+            fallback=layer1_block,
+            role="moa_refiner",
+        )
+        if layer2_output is layer1_block:
+            meta["refiner_timed_out"] = True
 
     emit_pipeline_event(PipelineEventKind.MOA_LAYER3, {})
     aggregator = registry.get_provider_for_role("moa_aggregator")
@@ -153,7 +185,16 @@ async def run_layered_moa(
     if feedback:
         layer3_input += f"\n\nJudge feedback (fix these issues):\n{feedback}"
 
-    answer = await aggregator.complete_text(AGGREGATOR_SYSTEM, layer3_input, temperature=0.3)
+    answer = await _role_within_budget(
+        aggregator.complete_text(AGGREGATOR_SYSTEM, layer3_input, temperature=0.3),
+        config.role_timeout_seconds,
+        # The aggregator writes the final text, so its fallback is the refined synthesis —
+        # a real answer that simply was not given its last polish. Better than none.
+        fallback=layer2_output,
+        role="moa_aggregator",
+    )
+    if answer is layer2_output:
+        meta["aggregator_timed_out"] = True
     return answer, meta
 
 

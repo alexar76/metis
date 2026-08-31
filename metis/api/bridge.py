@@ -18,15 +18,43 @@ MODEL_ROUTE_MAP: Dict[str, RouteMode] = {
     "superbrain-thinking": RouteMode.THINKING,
     "superbrain-council": RouteMode.COUNCIL,
     "superbrain-agent": RouteMode.AGENT,
+    "metis-council-autonomous": RouteMode.COUNCIL,
+    "metis-thinking-autonomous": RouteMode.THINKING,
+    "superbrain-council-autonomous": RouteMode.COUNCIL,
 }
+
+#: Model ids whose caller has NO HUMAN to answer a clarification.
+#:
+#: The confidence gate is code; the "you are answering an autonomous caller" note in a prompt
+#: is prose, and a gate does not read prose. Measured: a remediation run spent six council
+#: roles and 37k tokens building a TaskSpec, the gate scored it under threshold, and the whole
+#: run was discarded as "no content" — the caller then escalated to the human it was supposed
+#: to spare.
+#:
+#: These ids say, in the one place the gate can see, that a clarification question has nowhere
+#: to go. Metis answers with what it understood and reports its confidence; deciding what to do
+#: with a low-confidence answer becomes the caller's job, which is right when the caller has a
+#: hard gate of its own — the remediation loop re-runs the probe against the candidate build
+#: before anything ships, so a poor draft costs a build and cannot reach production.
+AUTONOMOUS_MODELS: frozenset[str] = frozenset({
+    "metis-council-autonomous",
+    "metis-thinking-autonomous",
+    "superbrain-council-autonomous",
+})
 
 AVAILABLE_MODELS = [
     "metis",
     "metis-fast",
     "metis-thinking",
     "metis-council",
+    "metis-council-autonomous",
     "metis-agent",
 ]
+
+
+def caller_is_autonomous(model: str) -> bool:
+    """Does this caller have a human who could answer a clarification?"""
+    return (model or "").lower().strip() in AUTONOMOUS_MODELS
 
 
 def model_to_route(model: str) -> Optional[RouteMode]:
@@ -110,6 +138,7 @@ class OpenAIMetisBridge:
             sanitized,
             route=forced_route if forced_route is not None else model_to_route(model),
             images=images or None,
+            autonomous_caller=caller_is_autonomous(model),
         )
         calls = int(result.metadata.get("llm_calls", 1))
         usage = {
