@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import sys
+import tempfile
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -24,6 +26,32 @@ class ToolResult:
     success: bool
     output: str
     error: str = ""
+
+
+def _child_rlimits() -> None:
+    """Best-effort POSIX resource limits for the sandbox child (runs in the forked child).
+
+    Each limit is set independently and failures are swallowed: platforms differ on which
+    RLIMIT_* they honour (macOS quietly ignores RLIMIT_AS), and a limit we cannot set must
+    never stop the sandbox from running — it just means one layer fewer on that host. These
+    bound a screen escape's blast radius (CPU burn, a multi-gigabyte allocation, writing a
+    huge file); they are containment, not the boundary.
+    """
+    try:
+        import resource
+    except Exception:
+        return
+    for what, soft, hard in (
+        (getattr(resource, "RLIMIT_CPU", None), 30, 30),               # seconds of CPU
+        (getattr(resource, "RLIMIT_FSIZE", None), 16 << 20, 16 << 20),  # 16 MiB max write
+        (getattr(resource, "RLIMIT_AS", None), 2048 << 20, 2048 << 20), # 2 GiB address space
+    ):
+        if what is None:
+            continue
+        try:
+            resource.setrlimit(what, (soft, hard))
+        except (ValueError, OSError):
+            pass
 
 
 class Tool(ABC):
@@ -48,19 +76,43 @@ class CodeInterpreterTool(Tool):
             code = re.sub(r"^```(?:python)?\s*", "", code)
             code = re.sub(r"\s*```$", "", code)
 
+        # This code is UNTRUSTED and the in-process screen in metis.tools.sandbox is NOT a
+        # boundary (three escapes past it were demonstrated in the 2026-09 re-audit). The
+        # containment is here: a scrubbed environment so an escape finds no credentials, an
+        # isolated working directory, POSIX resource limits, and a hard kill on timeout.
+        from metis.security.child_env import scrub_child_env
+
+        child_env = scrub_child_env(os.environ)
+        child_env["PYTHONDONTWRITEBYTECODE"] = "1"
+        # cwd is an empty temp dir (FS hygiene: a relative path in a payload lands nowhere
+        # useful), so the child must not depend on the parent's cwd to import `metis`. Pin the
+        # parent's resolved import path explicitly — this works whether METIS is an installed
+        # wheel or a source checkout on PYTHONPATH, and it is not sensitive so the scrub keeps
+        # it. (`-I`/`-E` were tried and rejected: they drop exactly this path and broke the
+        # source-run deployment.)
+        # An empty sys.path entry MEANS "the current directory". Dropping it loses exactly
+        # the entry a source checkout is found through, so resolve it instead of filtering it.
+        child_env["PYTHONPATH"] = os.pathsep.join(
+            dict.fromkeys(part or os.getcwd() for part in sys.path)
+        )
+        proc = None
         try:
-            proc = await asyncio.create_subprocess_exec(
-                sys.executable,
-                "-m",
-                "metis.tools.sandbox",
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(input=code.encode("utf-8")),
-                timeout=self.timeout,
-            )
+            with tempfile.TemporaryDirectory(prefix="metis-sandbox-") as workdir:
+                proc = await asyncio.create_subprocess_exec(
+                    sys.executable,
+                    "-m",
+                    "metis.tools.sandbox",
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=child_env,
+                    cwd=workdir,
+                    preexec_fn=_child_rlimits if os.name == "posix" else None,
+                )
+                stdout, stderr = await asyncio.wait_for(
+                    proc.communicate(input=code.encode("utf-8")),
+                    timeout=self.timeout,
+                )
             ok = proc.returncode == 0
             return ToolResult(
                 name=self.name,
@@ -69,8 +121,22 @@ class CodeInterpreterTool(Tool):
                 error=stderr.decode()[:2000],
             )
         except asyncio.TimeoutError:
+            # communicate() timing out leaves the child ALIVE; without this a payload that
+            # spins or blocks would leak a process on every call. Kill it, then reap it.
+            if proc is not None and proc.returncode is None:
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except ProcessLookupError:
+                    pass
             return ToolResult(self.name, False, "", f"Timeout after {self.timeout}s")
         except Exception as e:
+            if proc is not None and proc.returncode is None:
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except ProcessLookupError:
+                    pass
             return ToolResult(self.name, False, "", str(e))
 
 

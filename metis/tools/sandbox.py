@@ -1,4 +1,21 @@
-"""Restricted Python code execution for the code interpreter tool."""
+"""Restricted Python execution for the code interpreter tool.
+
+SECURITY MODEL — read this before trusting the screen below.
+
+`_screen_code()` (AST + substring denylist + restricted builtins) is DEFENCE IN DEPTH, not the
+security boundary. A screen around `exec` in the same interpreter cannot be made sound: any
+allowlisted primitive that performs attribute access, imports, or file I/O from a
+RUNTIME-BUILT string sidesteps a scan of the SOURCE text. The 2026-09 re-audit executed three
+such escapes against this very function — operator.attrgetter, str.format field access, and
+io.FileIO — none of which the screen saw. Each has since been closed here, but the class has
+not: assume a determined caller can still escape the screen.
+
+The boundary that actually contains a caller therefore lives one level up, in
+`metis.tools.registry.CodeInterpreterTool`, which runs this module as a SUBPROCESS with a
+scrubbed environment (no API keys / signing seeds / DOCKER_HOST — see
+`metis.security.child_env`), resource limits, and an isolated working directory. Harden BOTH
+layers when you touch either, and never move a secret back into the child's environment.
+"""
 
 from __future__ import annotations
 
@@ -63,12 +80,10 @@ _ALLOWED_MODULES = frozenset({
     "numbers",
     "enum",
     "dataclasses",
-    "operator",
     "bisect",
     "heapq",
     "array",
     "csv",
-    "io",
 })
 
 
@@ -151,6 +166,10 @@ _FORBIDDEN_ATTRS = frozenset({
     "f_back", "f_globals", "f_locals", "f_builtins", "f_code", "f_frame", "f_trace",
     "tb_frame", "tb_next", "gi_frame", "gi_code", "cr_frame", "cr_code", "ag_frame",
     "ag_code", "gi_yieldfrom", "cr_await", "func_globals", "func_code",
+    # str.format / string.Formatter resolve an attribute chain from a runtime-built field
+    # string, so "{0." + "__cl" + "ass__}" walks to type() while the source shows no dunder.
+    # f-strings and % remain for formatting; the sandbox runs verification code, not templates.
+    "format", "format_map", "vformat", "get_field", "format_field",
 })
 # Builtin-ish names that enable escape/introspection even though most are already
 # absent from _SAFE_BUILTINS (defense-in-depth + a clear error).

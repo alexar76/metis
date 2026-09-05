@@ -9,6 +9,10 @@ import pytest
 from metis.distributed.security import verify_request_signature
 from metis.security import validate_public_http_url
 from metis.tools.registry import CodeInterpreterTool, WebSearchTool
+import asyncio
+import os
+import subprocess
+
 from metis.tools.sandbox import execute_sandboxed
 
 
@@ -102,6 +106,23 @@ _SANDBOX_ESCAPES = {
     "generator_frame": "g = (x for x in [1])\nprint(g.gi_frame.f_globals)",
     "getattr_indirection": "print(getattr(1, 'real'))",
     "import_os": "import os\nprint(os.getcwd())",
+    # --- concatenation-built escapes found in the 2026-09 re-audit -----------------
+    # Each defeats BOTH screen layers: the AST never sees a dunder Attribute node, and the
+    # lowercased substring denylist never sees a whole dunder because it is split across
+    # string fragments. All three were executed against the real sandbox before this landed.
+    "operator_attrgetter_rce": (
+        "import operator as o\n"
+        "subs = o.attrgetter('__cl'+'ass__.'+'__ba'+'se__.'+'__subcl'+'asses__')(())()\n"
+        "print(len(subs))"
+    ),
+    "str_format_getattr": (
+        "field = '{0.'+'__cl'+'ass__.'+'__ba'+'se__.'+'__subcl'+'asses__}'\n"
+        "print(field.format(()))"
+    ),
+    "io_fileio_read": (
+        "import io\n"
+        "print(io.FileIO('/etc/passwd','r').read()[:4])"
+    ),
 }
 
 
@@ -115,3 +136,105 @@ def test_sandbox_escape_blocked(name, code):
 def test_sandbox_allows_legit_compute():
     ok, out, err = execute_sandboxed("import math\nprint(math.sqrt(16) + sum(range(5)))")
     assert ok is True and out.strip() == "14.0", (out, err)
+
+
+# --- 2026-09 re-audit: containment, because the screen is not a boundary -------------
+#
+# Three escapes past _screen_code() were executed against the real sandbox (operator
+# .attrgetter, str.format field access, io.FileIO). All three are blocked above now, but the
+# CLASS is not closed: any allowlisted primitive that resolves a runtime-built string into an
+# attribute, import or file handle defeats a scan of the source. So what these tests pin is
+# the layer that holds when the screen does not.
+
+def test_scrub_child_env_drops_credentials_and_keeps_what_python_needs():
+    from metis.security.child_env import scrub_child_env
+
+    source = {
+        "ANTHROPIC_API_KEY": "sk-secret",
+        "OPENROUTER_API_KEY": "or-secret",
+        "METIS_SIGNING_SEED_B64": "seed",
+        "ORACLE_SIGNING_SEED_B64": "seed",
+        "METIS_ADMIN_TOKEN": "tok",
+        "AIMARKET_HUB_TOKEN": "tok",
+        "DATABASE_URL": "postgres://u:p@h/db",
+        "DOCKER_HOST": "tcp://127.0.0.1:2375",
+        "SSH_AUTH_SOCK": "/tmp/agent.sock",
+        "AWS_SECRET_ACCESS_KEY": "aws",
+        "PATH": "/usr/bin",
+        "PYTHONPATH": "/srv/metis",
+        "HOME": "/home/metis",
+        "LANG": "C.UTF-8",
+    }
+    scrubbed = scrub_child_env(source)
+
+    for leaked in ("ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "METIS_SIGNING_SEED_B64",
+                   "ORACLE_SIGNING_SEED_B64", "METIS_ADMIN_TOKEN", "AIMARKET_HUB_TOKEN",
+                   "DATABASE_URL", "DOCKER_HOST", "SSH_AUTH_SOCK", "AWS_SECRET_ACCESS_KEY"):
+        assert leaked not in scrubbed, f"{leaked} reached untrusted code"
+    # ...and the child must still be able to start and import METIS.
+    for needed in ("PATH", "PYTHONPATH", "HOME", "LANG"):
+        assert scrubbed[needed] == source[needed]
+
+
+def test_scrub_child_env_denies_unknown_secrets_by_default():
+    """A credential added to the deployment next month must be dropped without a code edit."""
+    from metis.security.child_env import scrub_child_env
+
+    invented = {
+        "SOME_FUTURE_PROVIDER_API_KEY": "x",
+        "BRAND_NEW_SERVICE_TOKEN": "x",
+        "WHATEVER_PRIVATE_KEY": "x",
+        "NEW_SIGNING_SEED": "x",
+    }
+    assert scrub_child_env(invented) == {}
+
+
+@pytest.mark.asyncio
+async def test_code_interpreter_child_gets_no_credentials(monkeypatch):
+    """The wiring, not just the helper: capture the env actually handed to the subprocess."""
+    from metis.tools.registry import CodeInterpreterTool
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-must-not-travel")
+    monkeypatch.setenv("METIS_SIGNING_SEED_B64", "seed-must-not-travel")
+    monkeypatch.setenv("DOCKER_HOST", "tcp://127.0.0.1:2375")
+
+    captured = {}
+    real = asyncio.create_subprocess_exec
+
+    async def spy(*args, **kwargs):
+        captured["env"] = kwargs.get("env")
+        captured["cwd"] = kwargs.get("cwd")
+        return await real(*args, **kwargs)
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", spy)
+
+    result = await CodeInterpreterTool(timeout=20).run("print(1 + 1)")
+    assert result.success is True and result.output.strip() == "2", (result.output, result.error)
+
+    env = captured["env"]
+    assert env is not None, "the child still inherits os.environ wholesale"
+    assert "ANTHROPIC_API_KEY" not in env
+    assert "METIS_SIGNING_SEED_B64" not in env
+    assert "DOCKER_HOST" not in env
+    # The child has to remain able to import metis, or the sandbox silently stops running at
+    # all — which is how an over-tight isolation flag turns into an outage rather than a fix.
+    assert env.get("PYTHONPATH"), "the child cannot resolve `metis` without an import path"
+    assert captured["cwd"] and captured["cwd"] != os.getcwd()
+
+
+@pytest.mark.asyncio
+async def test_code_interpreter_kills_the_child_on_timeout():
+    """communicate() timing out leaves the process alive; a spinning payload must not leak one."""
+    from metis.tools.registry import CodeInterpreterTool
+
+    spinner = "while True:\n    pass"
+    tool = CodeInterpreterTool(timeout=2)
+    result = await tool.run(spinner)
+    assert result.success is False
+    assert "Timeout" in result.error
+    # If the child were merely abandoned it would still be burning a core here.
+    await asyncio.sleep(0.2)
+    leaked = subprocess.run(
+        ["pgrep", "-f", "metis.tools.sandbox"], capture_output=True, text=True
+    )
+    assert leaked.stdout.strip() == "", f"leaked sandbox pids: {leaked.stdout!r}"
