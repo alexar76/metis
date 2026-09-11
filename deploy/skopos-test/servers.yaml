@@ -66,3 +66,14 @@ servers:
         - modelmarket-hub
         - signal-hunt-hub-1
         - signal-hunt-game-1
+
+  - name: attested
+    source: ssh_nginx_access_log
+    transport: agent-push
+    address: attestedmemory.net
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: true
+      docker_log_containers:
+        - aicom-edge-1

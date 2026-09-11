@@ -74,6 +74,14 @@ services:
       # Factory Prometheus (PromQL). Unset → demo fallback charts.
       SKOPOS_PROMETHEUS_URL: ${SKOPOS_PROMETHEUS_URL:-}
       SKOPOS_SIGNING_KEY_PATH: ${SKOPOS_SIGNING_KEY_PATH:-/app/.skopos/aimarket_signing_key}
+      # Phase 2 of the PQC migration: sign hybrid Ed25519 + ML-DSA-65. SKOPOS keeps its
+      # own signer (its canonical form is the HUB's, with by_hub) but imports the PQ half
+      # from oracle_core, so the field names and the key convention are the fleet's.
+      #
+      # Safe here: pyproject pins aimarket-oracle-core[pqc], and /app/.skopos is the
+      # skopos_ui_data volume — the ML-DSA key written beside the classical one as
+      # *_mldsa persists with it, and the Ed25519 identity peers pinned is untouched.
+      ORACLE_PQC: ${ORACLE_PQC:-1}
     networks:
       - default
       - metisnet
