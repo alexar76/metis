@@ -71,6 +71,9 @@ services:
       SKOPOS_AGENT_TOKEN_SECRET: ${SKOPOS_AGENT_TOKEN_SECRET:-}
       SKOPOS_AGENT_CORS_ORIGINS: ${SKOPOS_AGENT_CORS_ORIGINS:-https://skopos.modelmarket.dev}
       SKOPOS_REQUIRE_DASHBOARD_AUTH: ${SKOPOS_REQUIRE_DASHBOARD_AUTH:-1}
+      # Read-only findings export for the MOMUS host's puller. Unset → GET
+      # /security/export answers 404 and publishes nothing.
+      SKOPOS_EXPORT_TOKEN: ${SKOPOS_EXPORT_TOKEN:-}
       # Factory Prometheus (PromQL). Unset → demo fallback charts.
       SKOPOS_PROMETHEUS_URL: ${SKOPOS_PROMETHEUS_URL:-}
       SKOPOS_SIGNING_KEY_PATH: ${SKOPOS_SIGNING_KEY_PATH:-/app/.skopos/aimarket_signing_key}
