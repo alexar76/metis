@@ -42,8 +42,8 @@ First admin password: interactive TTY (`docker compose run --rm -it app`) or one
 
 ## Development workflow
 
-1. Fork the repo and branch from `main` (`feat/…`, `fix/…`).
-2. Keep pull requests **focused** — one behavioral change per PR when possible.
+1. Fork [`alexar76/aicom`](https://github.com/alexar76/aicom) and branch from `main` (`feat/…`, `fix/…`). **PRs are welcome** — GitHub factory history is append-only (same as `metis`). Merged PRs are imported back into this monorepo.
+2. Keep pull requests **focused** — one behavioral change per PR when possible. Factory PRs should not add satellite folders (`metis/`, `aimarket-hub/`, …); those have their own repos.
 3. Change **code, tests, and docs** together when behavior or env vars change.
 4. Run the relevant checks locally (below) before opening a PR.
 5. Do **not** commit secrets, wallet keys, or production hostnames unless they are public examples.
@@ -139,6 +139,24 @@ Open an issue with:
 2. **Reproduction steps** (commands, env, product id if pipeline-related)  
 3. **Logs** or screenshots (redact secrets)  
 4. **Version** — commit hash or image tag  
+
+## Good First Issues
+
+New here? Start with issues labeled [`good first issue`](https://github.com/alexar76/aicom/labels/good%20first%20issue).
+
+**Quickstart:**
+
+```bash
+git clone https://github.com/<you>/aicom.git && cd aicom
+pip install -r requirements.txt
+USE_SQLITE=true .venv/bin/pytest tests/test_metis_gate.py -q
+```
+
+**Explore these first:**
+
+- [Metis](https://github.com/alexar76/metis) — confidence gate
+- [aimarket-mcp](https://github.com/alexar76/aimarket-mcp) — shared MCP tools
+- [Try it](README.md#try-it--prompts-demosh-packaging) — prompts and demo
 
 ## Good first contributions
 
