@@ -1,0 +1,54 @@
+# Metis #2 — the Pay-on-Verified APPEAL COURT (aimarket-hub docs/pay-on-verified.md "Appeals").
+# A separate instance on a separate host from Metis #1 (metis.modelmarket.dev). Every /v1/verify
+# is decided by the jury below. Owner's choice (2026-09-26): Chinese vendors only, the same
+# OpenRouter key as Metis #1 plus DeepSeek through its own API, and none of Metis #1's council
+# vendors (MiniMax, GLM, Kimi).
+# Five seats, five vendors: one dissent still settles a confident majority (4/5 × ≥0.875 ≥ 0.7).
+production: false
+provider: openai_compat
+base_model: deepseek-v4-pro
+base_url: https://api.deepseek.com/v1
+api_key_env: DEEPSEEK_API_KEY
+default_route: fast
+confidence_threshold: 0.7
+enforce_confidence_gate: true
+# A court judges what it is shown: no tools, no web, no memory of earlier cases.
+enable_code_interpreter: false
+enable_web_search: false
+enable_long_term_memory: false
+enable_mcp_tools: false
+knowledge:
+  enabled: false
+security:
+  enforce_injection_scan: true
+  max_user_input_chars: 100000
+  max_request_body_bytes: 512000
+  cors_origins: []
+  rate_limit:
+    requests_per_minute: 30
+    burst: 5
+jury_default_for_verify: true
+jury_min_vendors: 5
+jury_temperature: 0.1
+jury_timeout_seconds: 150
+jury_models:
+  - model: qwen/qwen3.8-max-prime             # Alibaba — $4 / $12 per 1M
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    extra_headers: {HTTP-Referer: "https://attestedmemory.net/metis-appeal", X-Title: "Metis appeal court"}
+  - model: xiaomi/mimo-v2.6-pro               # Xiaomi — $0.44 / $0.87
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    extra_headers: {HTTP-Referer: "https://attestedmemory.net/metis-appeal", X-Title: "Metis appeal court"}
+  - model: bytedance-seed/seed-2-1-turbo      # ByteDance — $0.50 / $2.50
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    extra_headers: {HTTP-Referer: "https://attestedmemory.net/metis-appeal", X-Title: "Metis appeal court"}
+  # tencent/hy4-preview answered empty after 81 s on the first live case; LongCat instead.
+  - model: meituan/longcat-2.0                # Meituan — $0.30 / $1.20
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    extra_headers: {HTTP-Referer: "https://attestedmemory.net/metis-appeal", X-Title: "Metis appeal court"}
+  - model: deepseek-v4-pro                    # DeepSeek direct — its own API, not OpenRouter
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY

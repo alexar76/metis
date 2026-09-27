@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Jury verification** — `jury_models` roster (one seat per vendor, `jury_min_vendors`), `route: "jury"` on `/v1/verify`, and `jury_default_for_verify` to decide every verify request by a cross-vendor vote. Envelope gains `jury`, `jury_outcome`, `jury_agreement`, `input_flags`; `VerifyRequest.audit_id` makes a vote count only when it echoes the caller's per-attempt id. See README "Jury verification" and `deploy/prod.jury.example.yaml`.
+- `omit_temperature` on model slots, for reasoning models that refuse the parameter.
+- `min_unique_council_vendors` — the diversity check counts vendors, and covers the MoA seats as well as the council.
+
+### Changed
+
+- The capability gate honours an explicit high-leverage seat that clears `min_aggregator_capability`, and (with `judge_distinct_vendor`, default on) seats the judge on a vendor other than the base model's and the MoA aggregator's, so one model no longer writes and audits the same verdict. `metis validate` warns when that could not be achieved.
+
 ## [0.2.0] - 2026-07-09
 
 ### Added

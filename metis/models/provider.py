@@ -124,6 +124,8 @@ class OpenAICompatProvider(LLMProvider):
             "temperature": temperature if temperature is not None else self.slot.temperature,
             "max_tokens": requested,
         }
+        if getattr(self.slot, "omit_temperature", False):
+            payload.pop("temperature")
         data = await self._post(payload)
         choice = data["choices"][0]
         msg = choice["message"]

@@ -1,0 +1,95 @@
+# Jury rosters for the two Metis instances behind the hub's Pay-on-Verified settlement.
+#
+# NOT DEPLOYED BY THE CHANGE THAT ADDED IT. This file is two fragments, not a config:
+#   * copy the keys under `metis_1:` into the first-instance Metis config
+#     (/opt/metis/deploy/prod.yaml on the Metis host, mounted as /app/config/prod.yaml);
+#   * copy the keys under `metis_2:` into the APPEAL COURT's own config, on its own host,
+#     with its own METIS_API_KEY and its own OpenRouter key (see README "Jury verification").
+# tests/test_jury_example_config.py loads both fragments, so a roster edited here that is
+# not a jury (two seats from one vendor, too few vendors) fails CI instead of production.
+#
+# Model ids were checked against the public OpenRouter model list
+# (GET https://openrouter.ai/api/v1/models, 2026-09-26). The DeepSeek-direct id is the one
+# ATLAS runs in production against api.deepseek.com/v1; confirm it with
+# `curl -H "Authorization: Bearer $DEEPSEEK_API_KEY" https://api.deepseek.com/v1/models`.
+# Prices per 1M tokens in/out on that date are noted per seat. A Pay-on-Verified audit
+# prompt is ~5k tokens in and ~200 out, so a 3-seat jury costs about $0.006 per verdict on
+# Metis #1 and $0.036 on Metis #2 — before hidden reasoning tokens, which are billed as
+# output and can easily double it.
+#
+# Arithmetic to know before choosing a roster size: verify_score = agreement × median
+# confidence, and the hub's bar is 0.7. A 3-seat jury therefore only settles UNANIMOUSLY —
+# one dissent (2/3 = 0.667) makes the verdict indeterminate (fail-closed: refund, no fault
+# on the provider). Five seats tolerate one dissent when the majority is confident
+# (4/5 × ≥0.875). Even rosters buy nothing: 2–2 is a split.
+
+metis_1:
+  # First instance. Every /v1/verify from the hub is decided by the jury, whatever route
+  # the hub asked for; chat traffic still uses the council.
+  jury_default_for_verify: true
+  jury_min_vendors: 3
+  jury_temperature: 0.1
+  # Per-seat cap. The whole jury runs in parallel, so a verdict costs at most this plus
+  # overhead — well under the hub's AIMARKET_VERIFY_ATTEMPT_TIMEOUT_S (330 s default).
+  jury_timeout_seconds: 120
+  jury_models:
+    # DeepSeek DIRECT, not through OpenRouter: the one seat that survives an OpenRouter
+    # outage, and a different gateway from the other two. $0.35 / $0.70.
+    - model: deepseek-v4-pro
+      base_url: https://api.deepseek.com/v1
+      api_key_env: DEEPSEEK_API_KEY
+    # $0.30 / $1.20
+    - model: minimax/minimax-m3
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      extra_headers: {HTTP-Referer: "https://metis.modelmarket.dev", X-Title: "Metis jury"}
+    # $0.38 / $1.19
+    - model: z-ai/glm-5.3
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      extra_headers: {HTTP-Referer: "https://metis.modelmarket.dev", X-Title: "Metis jury"}
+    # Optional 4th and 5th seats — add BOTH (an even roster only adds splits):
+    # - model: xiaomi/mimo-v2.6-pro            # $0.44 / $0.87
+    #   base_url: https://openrouter.ai/api/v1
+    #   api_key_env: OPENROUTER_API_KEY
+    # - model: moonshotai/kimi-k3              # $3 / $15 — the expensive one
+    #   base_url: https://openrouter.ai/api/v1
+    #   api_key_env: OPENROUTER_API_KEY
+  # The council itself (chat traffic, and /v1/verify if the jury is ever switched off):
+  # keep the judge off the vendors that write the answer it audits, and count vendors.
+  judge_distinct_vendor: true
+  min_unique_council_vendors: 2
+
+metis_2:
+  # Appeal court. A DISJOINT vendor set from Metis #1 — a seller who can steer one family
+  # of models must not meet the same family on appeal. The hub reaches it through
+  # AIMARKET_APPEAL_METIS_URL / AIMARKET_APPEAL_METIS_KEY and names it with
+  # AIMARKET_APPEAL_VERIFIER_ID. Its OPENROUTER_API_KEY should be a SECOND key with its own
+  # spend cap: vendor disjointness does not make the shared gateway disjoint.
+  jury_default_for_verify: true
+  jury_min_vendors: 3
+  jury_temperature: 0.1
+  jury_timeout_seconds: 150
+  jury_models:
+    # OpenRouter lists no `temperature` parameter for these two, so it is not sent.
+    - model: anthropic/claude-sonnet-5         # $2 / $10
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      omit_temperature: true
+      extra_headers: {HTTP-Referer: "https://verify.attestedmemory.net", X-Title: "Metis appeal court"}
+    - model: openai/gpt-6-sol                  # $2 / $10
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      omit_temperature: true
+      extra_headers: {HTTP-Referer: "https://verify.attestedmemory.net", X-Title: "Metis appeal court"}
+    - model: google/gemini-3.1-pro-preview     # $2 / $12
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      extra_headers: {HTTP-Referer: "https://verify.attestedmemory.net", X-Title: "Metis appeal court"}
+    # Optional 4th and 5th seats — add both:
+    # - model: x-ai/grok-4.7                   # $1.60 / $4.80
+    #   base_url: https://openrouter.ai/api/v1
+    #   api_key_env: OPENROUTER_API_KEY
+    # - model: mistralai/mistral-medium-3-5    # $1.50 / $7.50
+    #   base_url: https://openrouter.ai/api/v1
+    #   api_key_env: OPENROUTER_API_KEY

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from metis.economy.config import EconomyConfig
@@ -42,6 +42,34 @@ class ModelSlot(BaseModel):
     node_id: Optional[str] = None
     supports_vision: Optional[bool] = None  # None → auto-detect from model name
     extra_headers: dict = {}  # extra HTTP headers (e.g. OpenRouter HTTP-Referer / X-Title)
+    #: Leave `temperature` out of the request entirely. Some reasoning models refuse the
+    #: parameter (OpenRouter's model list does not advertise `temperature` for
+    #: openai/gpt-6-sol or anthropic/claude-sonnet-5), and a juror whose every call 400s
+    #: is a juror that silently abstains on every verdict.
+    omit_temperature: bool = False
+
+
+class JurorSlot(BaseModel):
+    """One seat on the /v1/verify jury (see metis/verify/jury.py).
+
+    A juror is an explicit, operator-chosen model: it is never capability-gated (the gate
+    would promote every seat to the strongest model and collapse the vendor diversity
+    that is the whole point of a jury), never given the operator identity block (jurors
+    answer in strict JSON), and its key comes from the environment like a module seat's.
+    """
+
+    model: str
+    provider: ProviderKind = ProviderKind.OPENAI_COMPAT
+    base_url: Optional[str] = None      # None → the runtime's base_url
+    api_key_env: Optional[str] = None
+    api_key: Optional[str] = None
+    #: Who made the model, when the id itself does not say (an unprefixed id such as
+    #: `deepseek-v4-pro` on a vendor's own endpoint is inferred from its family name).
+    vendor: Optional[str] = None
+    temperature: Optional[float] = None  # None → RuntimeConfig.jury_temperature
+    omit_temperature: bool = False
+    max_tokens: Optional[int] = None
+    extra_headers: Optional[dict] = None
 
 
 class ModuleSlotConfig(BaseModel):
@@ -159,6 +187,10 @@ class RuntimeConfig(BaseSettings):
     modules: Dict[str, ModuleSlotConfig] = Field(default_factory=dict)
     enforce_heterogeneous_agents: bool = False
     min_unique_council_models: int = 2
+    #: Distinct VENDORS (the prefix of `vendor/model`, or the family of an unprefixed id)
+    #: the council and the MoA seats must span. Counting (model, endpoint) pairs alone let
+    #: three sizes of one lineage pass as a diverse council. 1 = no vendor requirement.
+    min_unique_council_vendors: int = 1
 
     # Capability gate — keep a randomly-plugged-in weak model from dragging the council down.
     # High-leverage roles (aggregator/verifier/synthesizer) go to the strongest configured
@@ -168,6 +200,23 @@ class RuntimeConfig(BaseSettings):
     council_capability_floor: float = 60.0     # below this a model can't be a proposer/parser
     min_aggregator_capability: float = 75.0    # advisory: warn if the strongest is still below this
     capability_file: Path = Path("data/capability.json")  # measured scores from `metis calibrate`
+    #: Seat the judge on a different vendor than the models that WRITE the answer it
+    #: audits (the base model on fast/thinking, the MoA aggregator on the council). The
+    #: gate used to promote the judge and the aggregator to the same strongest model, so on
+    #: the council route one model wrote the Pay-on-Verified verdict and then audited it.
+    judge_distinct_vendor: bool = True
+
+    # Jury — /v1/verify as a vote across vendors (metis/verify/jury.py). Empty roster = off.
+    jury_models: List[JurorSlot] = Field(default_factory=list)
+    #: Every juror must come from a different vendor, and there must be at least this many.
+    jury_min_vendors: int = Field(default=3, ge=2)
+    #: Route EVERY /v1/verify request through the jury when a roster is configured, whatever
+    #: `route` the caller sent (the hub sends fast/council by price). Off: only an explicit
+    #: `route: "jury"` convenes it.
+    jury_default_for_verify: bool = False
+    jury_temperature: float = Field(default=0.1, ge=0.0, le=2.0)
+    #: Wall-clock cap per juror. A juror that misses it abstains; it does not hold the jury.
+    jury_timeout_seconds: float = Field(default=120.0, gt=0.0)
 
     memory_dir: Path = Path("data/memory")
     enable_long_term_memory: bool = True
@@ -201,6 +250,23 @@ class RuntimeConfig(BaseSettings):
         self.web_search_url = validate_url(self.web_search_url)
         if self.production and not self.api_key_env_set():
             pass  # api_key from env in production via METIS_API_KEY
+
+    @model_validator(mode="after")
+    def _jury_roster_is_a_jury(self) -> "RuntimeConfig":
+        """Refuse to start with a roster that is not a jury.
+
+        Two seats from one vendor are that vendor voting twice, and a roster below the
+        vendor minimum cannot produce the independence a verdict is sold on. Both are
+        configuration errors, and a verifier that moves money must fail at startup rather
+        than serve verdicts that look like a vote and are not one.
+        """
+        if self.jury_models:
+            from metis.verify.jury import roster_problems
+
+            problems = roster_problems(self.jury_models, self.jury_min_vendors)
+            if problems:
+                raise ValueError("jury_models: " + "; ".join(problems))
+        return self
 
     def resolved_api_key(self) -> str:
         """The base slot's key: the environment first, the literal only as a fallback.
@@ -270,7 +336,11 @@ class RuntimeConfig(BaseSettings):
                 ModelSlot(name="red_team", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.resolved_api_key(), temperature=0.6),
                 ModelSlot(name="synthesizer", provider=self.provider, model=self.base_model, base_url=self.base_url, api_key=self.resolved_api_key(), temperature=0.3),
             ]
-        check_council_diversity(slots, enforce=self.enforce_heterogeneous_agents, min_unique_models=self.min_unique_council_models)
+        check_council_diversity(
+            slots, enforce=self.enforce_heterogeneous_agents,
+            min_unique_models=self.min_unique_council_models,
+            min_unique_vendors=self.min_unique_council_vendors,
+        )
         if not self.enforce_heterogeneous_agents:
             slots = diversify_temperatures(slots)
         return slots

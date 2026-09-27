@@ -110,7 +110,7 @@ docker compose exec -T skopos python skoposctl.py collect || true
 docker compose exec -T skopos python skoposctl.py security-scan || true
 
 log "LLM smoke (OpenRouter + DeepSeek briefing chain)…"
-docker compose exec -T skopos python3 - <<'PY' || log "LLM smoke failed — check OPENROUTER/DEEPSEEK keys in ${ENV_FILE}"
+docker compose exec -T skopos python3 - <<'PY' || log "LLM smoke failed — a briefing call returned no usable text (see error above; not necessarily a key problem)"
 from skopos.config import load_app_env
 load_app_env()
 from skopos.agent.config import load_agent_config
@@ -122,7 +122,11 @@ text, provider, model = chat_completion_with_fallback(
     cfg,
     [ChatMessage("user", "Reply with exactly: LLM_OK")],
     _briefing_attempt_chain(cfg),
-    max_tokens=32,
+    # Reasoning models (minimax-m3, deepseek *-flash) spend hidden tokens before
+    # any content, so a tiny budget returns finish_reason=length with no text and
+    # the smoke fails on a model that works fine in real briefings (max_tokens=4096).
+    # Keep this realistic; it only needs room for the reasoning preamble + "LLM_OK".
+    max_tokens=512,
 )
 assert "LLM_OK" in text.upper(), (provider, model, text)
 print(f"LLM smoke OK via {provider}/{model}")

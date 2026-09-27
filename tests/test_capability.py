@@ -30,6 +30,19 @@ def test_capability_lookup_known_fuzzy_default():
     assert cap.tier_of(cap.capability_of("deepseek-v4-pro")) == cap.Tier.FRONTIER
 
 
+def test_the_appeal_courts_jurors_have_measured_scores_not_the_default():
+    """Measured 2026-09-26 (capability.py). Before that three of the five jurors read as the
+    65 default, so a council built from them would have ranked them as unknowns."""
+    measured = {"qwen/qwen3.8-max-prime": 87.5, "xiaomi/mimo-v2.6-pro": 87.5,
+                "bytedance-seed/seed-2-1-turbo": 75.0, "meituan/longcat-2.0": 100.0,
+                "z-ai/glm-5.3": 87.5}
+    for model, score in measured.items():
+        assert cap.capability_of(model) == score, model
+    # the next release in each family is not an unknown either
+    for model in ("xiaomi/mimo-v3-pro", "bytedance-seed/seed-3-pro", "meituan/longcat-3.0"):
+        assert cap.capability_of(model) != cap.DEFAULT_CAPABILITY, model
+
+
 # --- gate_role unit behaviour ----------------------------------------------------------
 
 def test_high_leverage_roles_get_the_strongest():

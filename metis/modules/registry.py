@@ -116,8 +116,30 @@ class ModuleRegistry:
                 role, slot, self._reasoning_pool(),
                 self.config.council_capability_floor,
                 self.config.min_aggregator_capability,
+                explicit=mod is not None and bool(mod.model),
+                avoid_vendors=self._writer_vendors() if role == "judge" else (),
             )
         return slot
+
+    def _writer_vendors(self) -> Tuple[str, ...]:
+        """Vendors whose models WRITE the answers the judge audits, most important first.
+
+        The base model writes on every route the hub's Pay-on-Verified traffic takes
+        (fast/thinking outright, and the council's self-consistency candidate), so it comes
+        first; the MoA aggregator writes the council's own answer. Empty when the knob is
+        off, which restores the old "judge = strongest, whoever wrote the answer" rule.
+        """
+        if not getattr(self.config, "judge_distinct_vendor", False):
+            return ()
+        from metis.agents.diversity import vendor_of
+
+        base = vendor_of(self.config.base_model)
+        aggregator = vendor_of(self.resolve_slot("moa_aggregator").model)
+        return tuple(dict.fromkeys(v for v in (base, aggregator) if v))
+
+    def resolved_moa_slots(self) -> List[ModelSlot]:
+        """MoA seats in pipeline order (proposers, refiner, aggregator)."""
+        return [self.resolve_slot(role) for role in MOA_ROLES]
 
     def _reasoning_pool(self) -> List[ModelSlot]:
         """Distinct models available for REASONING roles (base + council_models + non-vision
@@ -210,6 +232,7 @@ class ModuleRegistry:
                         warnings.append(msg)
 
         warnings.extend(check_parser_diversity_warning(self))
+        warnings.extend(check_seat_independence_warnings(self))
 
         return ModuleValidationResult(
             valid=len(errors) == 0,
@@ -253,6 +276,39 @@ def check_parser_diversity_warning(registry: ModuleRegistry) -> List[str]:
                 f"and endpoint={endpoint!r}; use different models or endpoints "
                 "for reliable council diversity."
             )
+    return warnings
+
+
+def check_seat_independence_warnings(registry: ModuleRegistry) -> List[str]:
+    """Warn when the seats that decide a verdict are not independent of each other.
+
+    Two checks the parser warning above cannot see: the judge sharing a vendor with a
+    model whose answer it audits, and MoA seats spanning fewer vendors than the council
+    minimum. Warnings, not errors — a single-vendor deployment is legitimate, it is just
+    not an independent audit, and `metis validate` should say so.
+    """
+    from metis.agents.diversity import check_council_diversity, vendor_of
+
+    warnings: List[str] = []
+    judge = vendor_of(registry.resolve_slot("judge").model)
+    writers = {
+        "base model": vendor_of(registry.config.base_model),
+        "moa_aggregator": vendor_of(registry.resolve_slot("moa_aggregator").model),
+    }
+    shared = [seat for seat, vendor in writers.items() if vendor == judge]
+    pool_vendors = {vendor_of(s.model) for s in registry._reasoning_pool()}
+    if shared and len(pool_vendors) > 1:
+        warnings.append(
+            f"judge ({judge}) shares a vendor with the {', '.join(shared)} whose answer it "
+            "audits; add a model from another vendor or set judge_distinct_vendor: true."
+        )
+    report = check_council_diversity(
+        registry.resolved_moa_slots(), enforce=False,
+        min_unique_models=registry.config.min_unique_council_models,
+        min_unique_vendors=registry.config.min_unique_council_vendors,
+        label="MoA seats",
+    )
+    warnings.extend(report.warnings)
     return warnings
 
 

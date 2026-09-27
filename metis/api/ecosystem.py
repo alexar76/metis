@@ -22,6 +22,11 @@ Two routes, one handler, zero coupling:
   ``verify_guarantee_enabled``); switched off, the endpoint reports the unscored run
   honestly rather than inventing a number.
 
+  With a ``jury_models`` roster configured, ``route: "jury"`` (or every request, when
+  ``jury_default_for_verify`` is on) is decided by a vote across vendors instead of by
+  the pipeline — same envelope, plus ``jury`` / ``jury_outcome`` / ``jury_agreement``.
+  See ``metis/verify/jury.py``.
+
 * ``POST /aimarket/invoke`` — the AIMarket Hub capability contract. The hub
   POSTs ``{input, product_id, capability_id}`` to a capability's ``invoke_url``
   and reads ``payload["result"]`` back (see aimarket-hub api.py). This route
@@ -52,6 +57,7 @@ from metis.api.bridge import messages_to_query
 from metis.config import DEFAULT_REQUEST_TIMEOUT_SECONDS, RouteMode, RuntimeConfig
 from metis.exoskeleton import ExoskeletonResult, Metis, RunStatus
 from metis.schemas.task_spec import TaskSpec
+from metis.verify import jury
 from metis.verify.critic import clamp_score, verify_answer
 
 logger = logging.getLogger("metis.api.ecosystem")
@@ -161,10 +167,17 @@ class VerifyRequest(BaseModel):
     """Generic verified-cognition request (consumer side, e.g. factory gate)."""
 
     input: Any = Field(..., description="A string, or {messages|query|prompt|text}, or any JSON.")
-    route: Optional[str] = Field(None, description="fast|thinking|council|agent — omit to auto-route.")
+    route: Optional[str] = Field(
+        None, description="fast|thinking|council|agent|jury — omit to auto-route."
+    )
     min_verify_score: Optional[float] = Field(
         None, ge=0.0, le=1.0, description="Threshold for the convenience `verified` flag."
     )
+    # The per-attempt nonce the caller's prompt asks the verdict to echo. Optional and
+    # only read by the jury, which then counts a juror's vote only when its verdict echoes
+    # it: a juror that parroted a verdict planted in the audited text has not voted. The
+    # id is already inside the prompt, so sending it again tells the verifier nothing new.
+    audit_id: Optional[str] = Field(None, max_length=128)
 
 
 class InvokeRequest(BaseModel):
@@ -359,6 +372,7 @@ async def _run_envelope(
     min_score: float,
     api_key: str | None = None,
     ensure_verified: bool = False,
+    audit_id: str | None = None,
 ) -> Dict[str, Any]:
     """Shared handler: run one stateless Metis pass and build the envelope.
 
@@ -369,6 +383,10 @@ async def _run_envelope(
     verifier, score the answer with the real critic before answering. It is an
     explicit parameter (not the default) because this handler is shared with
     ``POST /aimarket/invoke``, whose billed cost profile must stay one pass.
+
+    A request the jury decides (``route: "jury"``, or every /v1/verify request once
+    ``jury_default_for_verify`` is on for a configured roster) never enters the
+    cognition pipeline: see metis/verify/jury.py.
     """
     query = _coerce_query(raw_input)
     if not query.strip():
@@ -376,8 +394,21 @@ async def _run_envelope(
     if len(query) > _MAX_INPUT_CHARS:
         raise HTTPException(status_code=413, detail="input too large")
 
-    mode = _parse_route(route)
     cfg = _config(request)
+    if jury.jury_selected(cfg, route, for_verify=ensure_verified):
+        if not ensure_verified:
+            # /aimarket/invoke is a billed capability priced at one cognition pass; a
+            # jury is N passes the hub never priced.
+            raise HTTPException(status_code=400, detail="the jury route is only served on /v1/verify")
+        if not jury.jury_configured(cfg):
+            raise HTTPException(status_code=400, detail="jury route requested but no jury_models are configured")
+        _rate_limit(request, api_key)
+        timeout_s = float(getattr(cfg.security, "request_timeout_seconds", 0) or _RUN_TIMEOUT)
+        return await jury.run_jury(
+            cfg, query, min_score=min_score, audit_id=audit_id, timeout_s=timeout_s,
+        )
+
+    mode = _parse_route(route)
     _rate_limit(request, api_key)  # cheap DoS guard on the expensive cognition routes
     images = _extract_images(raw_input, cfg)
     # Fresh, stateless instance per request (no cross-request working-memory
@@ -466,7 +497,7 @@ async def verify_endpoint(
     min_score = body.min_verify_score if body.min_verify_score is not None else DEFAULT_VERIFY_PASS
     return await _run_envelope(
         request, raw_input=body.input, route=body.route, min_score=min_score,
-        api_key=_api_key, ensure_verified=True,
+        api_key=_api_key, ensure_verified=True, audit_id=body.audit_id,
     )
 
 

@@ -128,8 +128,20 @@ async def run_layered_moa(
         slots,
         enforce=config.enforce_heterogeneous_agents,
         min_unique_models=config.min_unique_council_models,
+        min_unique_vendors=config.min_unique_council_vendors,
     )
     _ = diversity  # warnings logged when enforce=False
+    # The MoA seats write the answer itself, so they are held to the same bar as the
+    # council that only parses the question. Checking the council alone let a
+    # deployment with seven diverse parsers route every proposal, the refinement and the
+    # final aggregation through one model and still pass `enforce_heterogeneous_agents`.
+    check_council_diversity(
+        registry.resolved_moa_slots(),
+        enforce=config.enforce_heterogeneous_agents,
+        min_unique_models=config.min_unique_council_models,
+        min_unique_vendors=config.min_unique_council_vendors,
+        label="MoA seats",
+    )
 
     # Layer 1 — parallel proposers with different roles
     layer1_tasks = []

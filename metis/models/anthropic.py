@@ -53,6 +53,8 @@ class AnthropicProvider(LLMProvider):
         }
         if system_parts:
             payload["system"] = "\n\n".join(system_parts)
+        if getattr(self.slot, "omit_temperature", False):
+            payload.pop("temperature")
 
         r = await self._client.post(self._url, json=payload)
         r.raise_for_status()

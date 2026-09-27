@@ -18,7 +18,7 @@ above the floor), so it only ever helps.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, List, Optional, Sequence, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from metis.config import ModelSlot
@@ -50,6 +50,11 @@ MODEL_CAPABILITY: Dict[str, float] = {
     "kimi-k2.6": 90.0, "kimi-k2-thinking": 91.0, "kimi-k2.5": 88.0,
     "minimax-m3": 92.0, "minimax-m2.7": 88.0, "minimax-m2": 78.0,
     "glm-5.2": 88.0, "glm-5": 86.0, "glm-4.6": 82.0,
+    # measured 2026-09-26 with `calibrate_model` (the 8-question set below, 7/8 = 87.5) through
+    # OpenRouter from the appeal court's host — the jurors of Metis #2 and Metis #1's GLM seat.
+    # Eight questions separate "strong" from "weak", not one strong model from another.
+    "qwen3.8-max-prime": 87.5, "glm-5.3": 87.5,
+    "mimo-v2.6-pro": 87.5, "seed-2-1-turbo": 75.0, "longcat-2.0": 100.0,
     "deepseek-chat": 80.0, "deepseek-v3.2": 80.0,
     # mid
     "qwen-2.5-7b-instruct": 63.0, "qwen2.5-7b-instruct": 63.0,
@@ -106,6 +111,7 @@ FAMILY_PRIORS: List[tuple] = [
     ("deepseek-v4", 90.0), ("deepseek-", 78.0),
     ("qwen3-max", 92.0), ("qwen3", 85.0), ("kimi-k3", 93.0), ("kimi-k2", 88.0), ("kimi", 84.0),
     ("glm-5", 85.0), ("glm-4", 80.0), ("minimax-m3", 92.0), ("minimax-m", 82.0),
+    ("mimo-", 85.0), ("seed-", 75.0), ("longcat-", 85.0),
     ("llama-3.1-8b", 55.0), ("llama-3.2", 42.0), ("llama-4", 78.0), ("llama-", 62.0),
 ]
 
@@ -147,26 +153,68 @@ def _reslot(src: "ModelSlot", role: str, temperature: float) -> "ModelSlot":
     return src.model_copy(update={"name": role, "temperature": temperature})
 
 
+def _vendor_candidates(
+    pool: List["ModelSlot"], avoid_vendors: Sequence[str],
+) -> tuple[List["ModelSlot"], frozenset]:
+    """The pool minus the vendors to avoid, relaxing the avoid list from its tail.
+
+    `avoid_vendors` is in priority order. With a two-vendor pool it is impossible to
+    avoid both writers of an answer, so the least important exclusion is dropped first
+    rather than giving up on distinctness altogether. Returns (candidates, what was
+    actually avoided); with nothing avoidable the whole pool comes back.
+    """
+    from metis.agents.diversity import vendor_of
+
+    wanted = [v for v in avoid_vendors if v]
+    for keep in range(len(wanted), 0, -1):
+        avoided = frozenset(wanted[:keep])
+        left = [s for s in pool if vendor_of(s.model) not in avoided]
+        if left:
+            return left, avoided
+    return list(pool), frozenset()
+
+
 def gate_role(
     role: str,
     resolved: "ModelSlot",
     pool: List["ModelSlot"],
     floor: float,
     min_aggregator: float,
+    *,
+    explicit: bool = False,
+    avoid_vendors: Sequence[str] = (),
 ) -> "ModelSlot":
     """Return the model that *should* serve `role` under the capability policy.
 
     Never returns None / never empties a role: if nothing clears the floor it falls back to
     the strongest available model.
+
+    Two refinements for the high-leverage seats, both because the gate used to override
+    the operator silently — a live `judge: minimax-m3` was served by kimi-k3, the same
+    model the gate had also put in the aggregator seat:
+
+      * `explicit` — the operator named this seat's model in `modules`. That choice is
+        honoured when the model clears `min_aggregator`; the gate exists to stop a weak
+        model landing in a high-leverage seat by accident, not to overrule a deliberate one.
+      * `avoid_vendors` — vendors this seat must not share (the judge must not come from
+        the lab that wrote the answer it audits). Relaxed from the tail when the pool is
+        too small to honour all of it; see `_vendor_candidates`.
     """
     if role in UNGATED_ROLES or not pool:
         return resolved
     top = strongest(pool)
     if role in HIGH_LEVERAGE_ROLES:
-        # the aggregator/verifier/synthesizer must be the strongest we have
-        if resolved.model == top.model:
+        from metis.agents.diversity import vendor_of
+
+        candidates, avoided = _vendor_candidates(pool, avoid_vendors)
+        if explicit and capability_of(resolved.model) >= min_aggregator \
+                and vendor_of(resolved.model) not in avoided:
             return resolved
-        return _reslot(top, role, resolved.temperature)
+        # the aggregator/verifier/synthesizer must be the strongest we have
+        best = strongest(candidates)
+        if resolved.model == best.model:
+            return resolved
+        return _reslot(best, role, resolved.temperature)
     # proposer / parser: a below-floor model loses its vote
     if capability_of(resolved.model) >= floor:
         return resolved

@@ -87,6 +87,35 @@ Miss any of these and the symptoms are: `metis-coordinator` default → `/v1/ver
 404s; `METIS_PRODUCTION=true` + no key → every call 401s; no data mount → a recreate
 silently resets `knowledge_entries` to 0.
 
+## Appeal court (Metis #2)
+
+[`prod.appeal.yaml`](prod.appeal.yaml) is the second verifier the hub's Pay-on-Verified appeals
+go to (`AIMARKET_APPEAL_METIS_URL` / `_KEY` / `_VERIFIER_ID` on the hub; aimarket-hub
+`docs/pay-on-verified.md`, "Appeals"). It must be independent of Metis #1: another host, and a
+jury with none of Metis #1's council vendors (MiniMax, GLM, Kimi). The owner chose Chinese
+vendors only: Qwen, Xiaomi MiMo, ByteDance Seed and Meituan LongCat through OpenRouter, and
+DeepSeek through its own API. Five seats from five vendors, so one dissent still settles a
+confident majority.
+
+It runs on the attested host behind `https://attestedmemory.net/metis-appeal/` (nginx
+`location ^~ /metis-appeal/` → `127.0.0.1:9510`, `proxy_read_timeout 360s`). The keys live in a
+root-only env file; unlike the public demo, the court requires `METIS_API_KEY`:
+
+```bash
+# /etc/metis-appeal.env (0600): OPENROUTER_API_KEY, DEEPSEEK_API_KEY, METIS_API_KEY,
+#                               METIS_PRODUCTION=false, METIS_COORDINATOR_PORT=8080
+docker run -d --name metis-appeal --restart unless-stopped --env-file /etc/metis-appeal.env \
+  -v /opt/metis-appeal/config/prod.yaml:/app/config/prod.yaml:ro \
+  -v /opt/metis-appeal/data:/app/data \
+  -p 127.0.0.1:9510:8080 metis:<tag> \
+  metis-serve --host 0.0.0.0 --port 8080 --config /app/config/prod.yaml
+```
+
+OpenRouter refuses Anthropic, OpenAI and Google models from that host's region (403, "violation
+of provider Terms Of Service"), so a roster change there must be tried with one live
+`/v1/verify` before it is kept. `tencent/hy4-preview` was dropped that way: it answered empty
+after 81 s on the first case.
+
 ## First-time setup
 
 1. **DNS** — point an `A` record at the node (e.g. `metis.modelmarket.dev → <metis-host-ip>`).
