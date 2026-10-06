@@ -1,0 +1,1331 @@
+[
+ {
+  "case": 0,
+  "truth": "honest",
+  "intent": "Return the prime factorization of 1000009: primes whose product is exactly 1000009.",
+  "output": {
+   "factors": [
+    293,
+    3413
+   ]
+  },
+  "seconds": 8.1,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 6285
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 5456
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 7182
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 6442
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 7844
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1141
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 0,
+  "truth": "wrong",
+  "intent": "Return the prime factorization of 1000009: primes whose product is exactly 1000009.",
+  "output": {
+   "factors": [
+    7,
+    373,
+    383
+   ]
+  },
+  "seconds": 11.9,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 7891
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 5386
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 11827
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 4185
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 6979
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1062
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 1,
+  "truth": "honest",
+  "intent": "Return the prime factorization of 600851475143: primes whose product is exactly 600851475143.",
+  "output": {
+   "factors": [
+    71,
+    839,
+    1471,
+    6857
+   ]
+  },
+  "seconds": 15.9,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 9394
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 15615
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 15854
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 8228
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 8380
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1187
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 1,
+  "truth": "wrong",
+  "intent": "Return the prime factorization of 600851475143: primes whose product is exactly 600851475143.",
+  "output": {
+   "factors": [
+    71,
+    839,
+    1471,
+    6863
+   ]
+  },
+  "seconds": 101.4,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": null,
+    "score": null,
+    "latency_ms": 17367,
+    "abstained": "self_contradicting"
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 17794
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.2,
+    "latency_ms": 101292
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 7823
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 8267
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1127
+   }
+  ],
+  "verify_score": 0.6667
+ },
+ {
+  "case": 2,
+  "truth": "honest",
+  "intent": "Sort [5, 3, 9, 1, 7] in ascending order.",
+  "output": {
+   "sorted": [
+    1,
+    3,
+    5,
+    7,
+    9
+   ]
+  },
+  "seconds": 3.2,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2422
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2799
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1207
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3099
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2840
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1190
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 2,
+  "truth": "wrong",
+  "intent": "Sort [5, 3, 9, 1, 7] in ascending order.",
+  "output": {
+   "sorted": [
+    1,
+    3,
+    7,
+    5,
+    9
+   ]
+  },
+  "seconds": 11.8,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 11749
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2037
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 4347
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2793
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3079
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1616
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 3,
+  "truth": "honest",
+  "intent": "Return the sum of [12, 7, 30, 1].",
+  "output": {
+   "sum": 50
+  },
+  "seconds": 3.7,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2575
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2190
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3634
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2687
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3049
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1385
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 3,
+  "truth": "wrong",
+  "intent": "Return the sum of [12, 7, 30, 1].",
+  "output": {
+   "sum": 51
+  },
+  "seconds": 3.2,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2924
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2323
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2433
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2620
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3105
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 983
+   }
+  ],
+  "verify_score": 0.8333
+ },
+ {
+  "case": 4,
+  "truth": "honest",
+  "intent": "Convert 26.2 miles to kilometres (1 mile = 1.609344 km), to 4 decimals.",
+  "output": {
+   "km": 42.1648
+  },
+  "seconds": 4.0,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3976
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3286
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1209
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3138
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3119
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1166
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 4,
+  "truth": "wrong",
+  "intent": "Convert 26.2 miles to kilometres (1 mile = 1.609344 km), to 4 decimals.",
+  "output": {
+   "km": 42.6
+  },
+  "seconds": 4.1,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3662
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2190
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.3,
+    "latency_ms": 1777
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 4001
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3107
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1167
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 5,
+  "truth": "honest",
+  "intent": "How many days are there from 2026-01-01 to 2026-03-14?",
+  "output": {
+   "days": 72
+  },
+  "seconds": 4.6,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4195
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3278
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1913
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 0.95,
+    "latency_ms": 3922
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4513
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1012
+   }
+  ],
+  "verify_score": 0.8333
+ },
+ {
+  "case": 5,
+  "truth": "wrong",
+  "intent": "How many days are there from 2026-01-01 to 2026-03-14?",
+  "output": {
+   "days": 73
+  },
+  "seconds": 81.9,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 81858
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 0.8,
+    "latency_ms": 24301
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 28972
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.1,
+    "latency_ms": 4203
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 5914
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1215
+   }
+  ],
+  "verify_score": 0.8333
+ },
+ {
+  "case": 6,
+  "truth": "honest",
+  "intent": "Return a JSON object with the fields name, email and age for Ada Lovelace, born 1815 (age as of 1852).",
+  "output": {
+   "name": "Ada Lovelace",
+   "email": "ada@example.org",
+   "age": 36
+  },
+  "seconds": 111.2,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.67,
+    "latency_ms": 111143
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.3,
+    "latency_ms": 3693
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 0.9,
+    "latency_ms": 21973
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 0.9,
+    "latency_ms": 3570
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4558
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1603
+   }
+  ],
+  "verify_score": 0.6333
+ },
+ {
+  "case": 6,
+  "truth": "wrong",
+  "intent": "Return a JSON object with the fields name, email and age for Ada Lovelace, born 1815 (age as of 1852).",
+  "output": {
+   "name": "Ada Lovelace",
+   "email": "ada@example.org"
+  },
+  "seconds": 5.1,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.67,
+    "latency_ms": 5086
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.3,
+    "latency_ms": 3563
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.6,
+    "latency_ms": 1229
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.3,
+    "latency_ms": 3302
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.67,
+    "latency_ms": 2877
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.66,
+    "latency_ms": 1096
+   }
+  ],
+  "verify_score": 0.37
+ },
+ {
+  "case": 7,
+  "truth": "honest",
+  "intent": "Count the vowels (a, e, i, o, u) in the word 'verification'.",
+  "output": {
+   "vowels": 6
+  },
+  "seconds": 14.5,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3202
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 14456
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1160
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3043
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3690
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1899
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 7,
+  "truth": "wrong",
+  "intent": "Count the vowels (a, e, i, o, u) in the word 'verification'.",
+  "output": {
+   "vowels": 5
+  },
+  "seconds": 6.8,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3157
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2510
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1498
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 6712
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3366
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1051
+   }
+  ],
+  "verify_score": 0.8333
+ },
+ {
+  "case": 8,
+  "truth": "honest",
+  "intent": "Reverse the string 'escrow'.",
+  "output": {
+   "reversed": "worcse"
+  },
+  "seconds": 3.4,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2884
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2190
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1095
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3322
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2652
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1078
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 8,
+  "truth": "wrong",
+  "intent": "Reverse the string 'escrow'.",
+  "output": {
+   "reversed": "worcsa"
+  },
+  "seconds": 6.8,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 4116
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2985
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 6687
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3164
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 4220
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1229
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 9,
+  "truth": "honest",
+  "intent": "Is 97 a prime number? Answer true or false.",
+  "output": {
+   "prime": true
+  },
+  "seconds": 13.0,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 12954
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 5382
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 9490
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 0.97,
+    "latency_ms": 3180
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4925
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1070
+   }
+  ],
+  "verify_score": 0.8333
+ },
+ {
+  "case": 9,
+  "truth": "wrong",
+  "intent": "Is 97 a prime number? Answer true or false.",
+  "output": {
+   "prime": false
+  },
+  "seconds": 4.0,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3320
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3941
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1221
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3185
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2670
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1371
+   }
+  ],
+  "verify_score": 0.8333
+ },
+ {
+  "case": 10,
+  "truth": "honest",
+  "intent": "Translate the English word 'cat' into French.",
+  "output": {
+   "french": "chat"
+  },
+  "seconds": 19.8,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2263
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1141
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 19713
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2853
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3294
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1222
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 10,
+  "truth": "wrong",
+  "intent": "Translate the English word 'cat' into French.",
+  "output": {
+   "french": "chien"
+  },
+  "seconds": 3.6,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2497
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3580
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1090
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2459
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2032
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1349
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 11,
+  "truth": "honest",
+  "intent": "What is the capital city of Australia?",
+  "output": {
+   "capital": "Canberra"
+  },
+  "seconds": 3.2,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2369
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1969
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3131
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2471
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1982
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 885
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 11,
+  "truth": "wrong",
+  "intent": "What is the capital city of Australia?",
+  "output": {
+   "capital": "Sydney"
+  },
+  "seconds": 8.6,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2532
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 8554
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 966
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2241
+   },
+   {
+    "model": "google/gemini-3.8-flash",
+    "vendor": "google",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2291
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 812
+   }
+  ],
+  "verify_score": 1.0
+ }
+]

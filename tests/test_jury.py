@@ -442,6 +442,18 @@ def test_the_default_switch_routes_every_verify_through_the_jury(cfg, client_for
     assert r.json()["route"] == "jury" and len(rec.calls) == 3
 
 
+def test_the_default_switch_leaves_a_free_form_question_to_the_pipeline(cfg, client_for, monkeypatch):
+    """No audit_id, no verdict object demanded: a question, not an audit. Five jurors would
+    answer it in prose and abstain, and the caller would get "no majority" for everything."""
+    rec = _install(monkeypatch, {s.model: _verdict(True, 0.95) for s in ROSTER})
+    cfg.jury_default_for_verify = True
+    r = client_for(cfg).post("/v1/verify", json={"input": "Is 2 + 2 = 4?", "route": "fast"})
+    assert r.status_code == 200 and r.json()["route"] == "fast" and rec.calls == []
+    # …while an explicit jury route still convenes it without an audit_id.
+    r = client_for(cfg).post("/v1/verify", json={"input": _prompt(), "route": "jury", "min_verify_score": 0.7})
+    assert r.json()["route"] == "jury"
+
+
 def test_without_the_switch_a_named_route_still_runs_the_pipeline(cfg, client_for, monkeypatch):
     rec = _install(monkeypatch, {s.model: _verdict(True, 0.95) for s in ROSTER})
     r = client_for(cfg).post("/v1/verify", json={"input": "audit this", "route": "fast"})
@@ -579,3 +591,34 @@ def test_moa_seats_are_held_to_the_council_bar():
 
     with pytest.raises(ValueError, match="MoA seats"):
         asyncio.run(moa.run_layered_moa(cfg, TaskSpec(goal="g", confidence=0.9), "q"))
+
+
+# ── per-juror request extras (reasoning switched on for a model that only thinks when asked) ──
+
+def test_a_jurors_extra_body_reaches_its_requests():
+    cfg = RuntimeConfig(jury_models=[
+        JurorSlot(model="deepseek-v4-pro", base_url="https://a.example/v1", api_key="k"),
+        JurorSlot(model="mistralai/mistral-medium-3-5", base_url="https://b.example/v1", api_key="k",
+                  extra_body={"reasoning": {"effort": "medium"}}),
+        JurorSlot(model="z-ai/glm-5.3", base_url="https://c.example/v1", api_key="k"),
+    ])
+    seats = {s.slot.model: s.slot for s in jury.juror_seats(cfg)}
+    assert seats["mistralai/mistral-medium-3-5"].extra_body == {"reasoning": {"effort": "medium"}}
+    assert seats["deepseek-v4-pro"].extra_body == {}
+
+
+def test_extra_body_is_merged_but_never_replaces_model_or_messages():
+    slot = ModelSlot(name="juror_1", model="m", base_url="https://x.example/v1", api_key="k",
+                     extra_body={"reasoning": {"effort": "medium"}, "model": "evil", "messages": []})
+    provider = OpenAICompatProvider(slot)
+    sent = {}
+
+    async def fake_post(payload):
+        sent.update(payload)
+        return {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}
+
+    provider._post = fake_post
+    from metis.models.provider import Message
+    asyncio.run(provider.complete([Message(role="user", content="hi")]))
+    assert sent["reasoning"] == {"effort": "medium"}
+    assert sent["model"] == "m" and sent["messages"][0]["content"] == "hi"

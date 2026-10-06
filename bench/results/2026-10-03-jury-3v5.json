@@ -1,0 +1,1162 @@
+[
+ {
+  "case": 0,
+  "truth": "honest",
+  "intent": "Return the prime factorization of 1000009: primes whose product is exactly 1000009.",
+  "output": {
+   "factors": [
+    293,
+    3413
+   ]
+  },
+  "seconds": 6.8,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 5527
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3093
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4527
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 6647
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1624
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 0,
+  "truth": "wrong",
+  "intent": "Return the prime factorization of 1000009: primes whose product is exactly 1000009.",
+  "output": {
+   "factors": [
+    7,
+    373,
+    383
+   ]
+  },
+  "seconds": 41.0,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 5389
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 10544
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 40915
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 5106
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1413
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 1,
+  "truth": "honest",
+  "intent": "Return the prime factorization of 600851475143: primes whose product is exactly 600851475143.",
+  "output": {
+   "factors": [
+    71,
+    839,
+    1471,
+    6857
+   ]
+  },
+  "seconds": 16.7,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4238
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 5740
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 16700
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 5392
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1034
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 1,
+  "truth": "wrong",
+  "intent": "Return the prime factorization of 600851475143: primes whose product is exactly 600851475143.",
+  "output": {
+   "factors": [
+    71,
+    839,
+    1471,
+    6863
+   ]
+  },
+  "seconds": 29.3,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 29242
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 5645
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 23430
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.02,
+    "latency_ms": 5276
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1189
+   }
+  ],
+  "verify_score": 0.8
+ },
+ {
+  "case": 2,
+  "truth": "honest",
+  "intent": "Sort [5, 3, 9, 1, 7] in ascending order.",
+  "output": {
+   "sorted": [
+    1,
+    3,
+    5,
+    7,
+    9
+   ]
+  },
+  "seconds": 9.7,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2469
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 9643
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3801
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2547
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1457
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 2,
+  "truth": "wrong",
+  "intent": "Sort [5, 3, 9, 1, 7] in ascending order.",
+  "output": {
+   "sorted": [
+    1,
+    3,
+    7,
+    5,
+    9
+   ]
+  },
+  "seconds": 6.9,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.5,
+    "latency_ms": 6857
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2689
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.2,
+    "latency_ms": 5489
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2715
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.6,
+    "latency_ms": 1131
+   }
+  ],
+  "verify_score": 0.8
+ },
+ {
+  "case": 3,
+  "truth": "honest",
+  "intent": "Return the sum of [12, 7, 30, 1].",
+  "output": {
+   "sum": 50
+  },
+  "seconds": 3.7,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2386
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3313
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3648
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2461
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 859
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 3,
+  "truth": "wrong",
+  "intent": "Return the sum of [12, 7, 30, 1].",
+  "output": {
+   "sum": 51
+  },
+  "seconds": 3.8,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3125
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2543
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3792
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3313
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 976
+   }
+  ],
+  "verify_score": 0.8
+ },
+ {
+  "case": 4,
+  "truth": "honest",
+  "intent": "Convert 26.2 miles to kilometres (1 mile = 1.609344 km), to 4 decimals.",
+  "output": {
+   "km": 42.1648
+  },
+  "seconds": 5.4,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3582
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1853
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 5311
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3143
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 938
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 4,
+  "truth": "wrong",
+  "intent": "Convert 26.2 miles to kilometres (1 mile = 1.609344 km), to 4 decimals.",
+  "output": {
+   "km": 42.6
+  },
+  "seconds": 7.4,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3898
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3185
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 7346
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3712
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.5,
+    "latency_ms": 967
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 5,
+  "truth": "honest",
+  "intent": "How many days are there from 2026-01-01 to 2026-03-14?",
+  "output": {
+   "days": 72
+  },
+  "seconds": 7.4,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 6237
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3150
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 7251
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 0.93,
+    "latency_ms": 3953
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1111
+   }
+  ],
+  "verify_score": 0.8
+ },
+ {
+  "case": 5,
+  "truth": "wrong",
+  "intent": "How many days are there from 2026-01-01 to 2026-03-14?",
+  "output": {
+   "days": 73
+  },
+  "seconds": 26.7,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 16952
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.4,
+    "latency_ms": 26656
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 15196
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.1,
+    "latency_ms": 4039
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 8460
+   }
+  ],
+  "verify_score": 0.54
+ },
+ {
+  "case": 6,
+  "truth": "honest",
+  "intent": "Return a JSON object with the fields name, email and age for Ada Lovelace, born 1815 (age as of 1852).",
+  "output": {
+   "name": "Ada Lovelace",
+   "email": "ada@example.org",
+   "age": 36
+  },
+  "seconds": 52.5,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 19254
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.5,
+    "latency_ms": 3686
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.67,
+    "latency_ms": 52426
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 0.85,
+    "latency_ms": 5642
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1043
+   }
+  ],
+  "verify_score": 0.6
+ },
+ {
+  "case": 6,
+  "truth": "wrong",
+  "intent": "Return a JSON object with the fields name, email and age for Ada Lovelace, born 1815 (age as of 1852).",
+  "output": {
+   "name": "Ada Lovelace",
+   "email": "ada@example.org"
+  },
+  "seconds": 14.0,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.6,
+    "latency_ms": 8658
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.3,
+    "latency_ms": 3795
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.6,
+    "latency_ms": 13936
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.2,
+    "latency_ms": 3139
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.67,
+    "latency_ms": 1161
+   }
+  ],
+  "verify_score": 0.4
+ },
+ {
+  "case": 7,
+  "truth": "honest",
+  "intent": "Count the vowels (a, e, i, o, u) in the word 'verification'.",
+  "output": {
+   "vowels": 6
+  },
+  "seconds": 4.2,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3084
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1320
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4179
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 0.97,
+    "latency_ms": 3128
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 912
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 7,
+  "truth": "wrong",
+  "intent": "Count the vowels (a, e, i, o, u) in the word 'verification'.",
+  "output": {
+   "vowels": 5
+  },
+  "seconds": 9.7,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3422
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3395
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 9662
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3003
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1343
+   }
+  ],
+  "verify_score": 0.8
+ },
+ {
+  "case": 8,
+  "truth": "honest",
+  "intent": "Reverse the string 'escrow'.",
+  "output": {
+   "reversed": "worcse"
+  },
+  "seconds": 9.6,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2709
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 9528
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3987
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3106
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 914
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 8,
+  "truth": "wrong",
+  "intent": "Reverse the string 'escrow'.",
+  "output": {
+   "reversed": "worcsa"
+  },
+  "seconds": 4.7,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3976
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1842
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 4609
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3168
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1030
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 9,
+  "truth": "honest",
+  "intent": "Is 97 a prime number? Answer true or false.",
+  "output": {
+   "prime": true
+  },
+  "seconds": 11.0,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4516
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 10960
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 4784
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 0.97,
+    "latency_ms": 3013
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2030
+   }
+  ],
+  "verify_score": 0.8
+ },
+ {
+  "case": 9,
+  "truth": "wrong",
+  "intent": "Is 97 a prime number? Answer true or false.",
+  "output": {
+   "prime": false
+  },
+  "seconds": 4.5,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2576
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2800
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 4424
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2992
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1731
+   }
+  ],
+  "verify_score": 0.8
+ },
+ {
+  "case": 10,
+  "truth": "honest",
+  "intent": "Translate the English word 'cat' into French.",
+  "output": {
+   "french": "chat"
+  },
+  "seconds": 3.2,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2236
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2436
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3120
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2485
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 878
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 10,
+  "truth": "wrong",
+  "intent": "Translate the English word 'cat' into French.",
+  "output": {
+   "french": "chien"
+  },
+  "seconds": 3.5,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2776
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2232
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3480
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2517
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1007
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 11,
+  "truth": "honest",
+  "intent": "What is the capital city of Australia?",
+  "output": {
+   "capital": "Canberra"
+  },
+  "seconds": 3.6,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2281
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2060
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 3563
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 2492
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": true,
+    "score": 1.0,
+    "latency_ms": 1135
+   }
+  ],
+  "verify_score": 1.0
+ },
+ {
+  "case": 11,
+  "truth": "wrong",
+  "intent": "What is the capital city of Australia?",
+  "output": {
+   "capital": "Sydney"
+  },
+  "seconds": 4.0,
+  "jury": [
+   {
+    "model": "deepseek-v4-pro",
+    "vendor": "deepseek",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2524
+   },
+   {
+    "model": "minimax/minimax-m3",
+    "vendor": "minimax",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2705
+   },
+   {
+    "model": "z-ai/glm-5.3",
+    "vendor": "zhipu",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 3931
+   },
+   {
+    "model": "anthropic/claude-sonnet-5.5",
+    "vendor": "anthropic",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 2573
+   },
+   {
+    "model": "mistralai/mistral-medium-3-5",
+    "vendor": "mistral",
+    "fulfils": false,
+    "score": 0.0,
+    "latency_ms": 1164
+   }
+  ],
+  "verify_score": 1.0
+ }
+]

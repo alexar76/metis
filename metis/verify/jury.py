@@ -113,16 +113,27 @@ def is_jury_route(route: Optional[str]) -> bool:
     return (route or "").strip().lower() == JURY_ROUTE
 
 
-def jury_selected(cfg: RuntimeConfig, route: Optional[str], *, for_verify: bool) -> bool:
+def jury_selected(cfg: RuntimeConfig, route: Optional[str], *, for_verify: bool,
+                  audit_id: Optional[str] = None) -> bool:
     """Should this request be decided by the jury?
 
     An explicit `route: "jury"` always asks for it (the caller must then get a clear error
-    when no roster exists — see ecosystem.py). Otherwise only /v1/verify, and only when
-    the operator switched `jury_default_for_verify` on for a configured roster.
+    when no roster exists — see ecosystem.py). Otherwise only /v1/verify, only when the
+    operator switched `jury_default_for_verify` on for a configured roster, and only for an
+    AUDIT — a request carrying the per-attempt `audit_id` its prompt asks the verdict to
+    echo (the hub's Pay-on-Verified, the playground).
+
+    A free-form request (the MCP verify tool, the factory's confidence gate, THEMIS's
+    advisor) asks for a verified ANSWER, which a vote of {fulfils, score} objects cannot
+    give: its prompt demands no verdict object, so every juror answers in prose, none of
+    that is a vote, and the caller got "the jury reached no majority" for every question
+    while the default was on for all of /v1/verify (measured 2026-10-04: 5 of 5 abstained
+    on the playground's assessment, every run).
     """
     if is_jury_route(route):
         return True
-    return bool(for_verify and jury_configured(cfg) and getattr(cfg, "jury_default_for_verify", False))
+    return bool(for_verify and (audit_id or "").strip() and jury_configured(cfg)
+                and getattr(cfg, "jury_default_for_verify", False))
 
 
 def juror_seats(cfg: RuntimeConfig) -> List[JurorSeat]:
@@ -154,6 +165,7 @@ def juror_seats(cfg: RuntimeConfig) -> List[JurorSeat]:
             max_tokens=juror.max_tokens or 4096,
             extra_headers=juror.extra_headers or {},
             omit_temperature=juror.omit_temperature,
+            extra_body=juror.extra_body or {},
         )
         seats.append(JurorSeat(slot=slot, vendor=_seat_vendor(juror)))
     return seats

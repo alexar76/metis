@@ -126,6 +126,9 @@ class OpenAICompatProvider(LLMProvider):
         }
         if getattr(self.slot, "omit_temperature", False):
             payload.pop("temperature")
+        for key, value in (getattr(self.slot, "extra_body", None) or {}).items():
+            if key not in ("model", "messages"):
+                payload[key] = value
         data = await self._post(payload)
         choice = data["choices"][0]
         msg = choice["message"]

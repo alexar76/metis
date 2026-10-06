@@ -395,7 +395,7 @@ async def _run_envelope(
         raise HTTPException(status_code=413, detail="input too large")
 
     cfg = _config(request)
-    if jury.jury_selected(cfg, route, for_verify=ensure_verified):
+    if jury.jury_selected(cfg, route, for_verify=ensure_verified, audit_id=audit_id):
         if not ensure_verified:
             # /aimarket/invoke is a billed capability priced at one cognition pass; a
             # jury is N passes the hub never priced.

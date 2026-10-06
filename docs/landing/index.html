@@ -53,6 +53,12 @@
     border-radius:16px;background:var(--glass);backdrop-filter:blur(14px);
     box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 30px rgba(124,77,255,.15);overflow:hidden}
   #chat.min{max-height:52px}
+  /* Phone keyboard open (--kb-inset/--vv-h set from visualViewport below): sit above it and fit
+     the visible area, or the input stays under the keyboard. 16px stops iOS focus-zoom. */
+  @media (max-width:760px){
+    #chat{bottom:max(22px,calc(var(--kb-inset,0px) + 8px));max-height:min(72vh,620px,calc(var(--vv-h,100dvh) - 16px))}
+    .cin input{font-size:16px}
+  }
   .chead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
   .chead b{font-size:13px;letter-spacing:.08em}
   .chead .sub{font-size:10px;color:var(--muted);margin-left:auto;letter-spacing:.05em}
@@ -165,6 +171,7 @@
   <div class="brand">
     <h1>METIS <span class="greek">μῆτις</span></h1>
     <p data-i18n="tagline">A distributed cognitive layer over any LLM. It deliberates, verifies, and asks before it guesses. Grab the star to rotate it — watch it pulse and think — then talk to it.</p>
+    <p class="trustline"><b data-i18n="trustline">Agents can already pay each other. We make it possible for them to trust each other.</b> <span data-i18n="trustrole">Metis is the verifier behind Pay-on-Verified on modelmarket.dev: the hub pays a seller only when Metis passes the delivery.</span> <a href="https://github.com/alexar76/aicom/blob/main/docs/pay-on-verified-enable.md" target="_blank" rel="noreferrer">→</a></p>
   </div>
   <nav class="links">
     <span class="langsw" id="langsw" aria-label="Language">
@@ -454,6 +461,8 @@ if(cfg.deep===undefined) cfg.deep=true;
 // ══════════════════════════ i18n (EN / RU / ES) ══════════════════════════
 const I18N = {
   en: {
+    trustline:"Agents can already pay each other. We make it possible for them to trust each other.",
+    trustrole:"Metis is the verifier behind Pay-on-Verified on modelmarket.dev: the hub pays a seller only when Metis passes the delivery.",
     tagline:"A distributed cognitive layer over any LLM. It deliberates, verifies, and asks before it guesses. Grab the star to rotate it — watch it pulse and think — then talk to it.",
     status_idle:"star idle · grab to rotate", status_idle_mobile:"drag to rotate",
     hint:"grab to rotate · scroll to zoom", hint_mobile:"drag to rotate · pinch to zoom",
@@ -473,6 +482,8 @@ const I18N = {
     answer_directive:"Always reply in English, regardless of the language of the question.",
   },
   ru: {
+    trustline:"Агенты уже умеют платить друг другу. Мы делаем так, чтобы они могли друг другу доверять.",
+    trustrole:"Metis — проверяющий в Pay-on-Verified на modelmarket.dev: хаб платит продавцу, только когда Metis подтвердил результат.",
     tagline:"Распределённый когнитивный слой над любой LLM. Он размышляет, проверяет и переспрашивает, прежде чем гадать. Схвати звезду мышкой, чтобы вращать, смотри как она пульсирует и думает — и поговори с ней.",
     status_idle:"звезда покоится · тяни, чтобы вращать", status_idle_mobile:"тяни, чтобы вращать",
     hint:"тяни, чтобы вращать · колесо — зум", hint_mobile:"тяни, чтобы вращать · щипок — зум",
@@ -492,6 +503,8 @@ const I18N = {
     answer_directive:"Всегда отвечай на русском языке, независимо от языка вопроса.",
   },
   es: {
+    trustline:"Los agentes ya saben pagarse entre sí. Nosotros hacemos posible que confíen entre sí.",
+    trustrole:"Metis es el verificador de Pay-on-Verified en modelmarket.dev: el hub solo paga al vendedor cuando Metis aprueba la entrega.",
     tagline:"Una capa cognitiva distribuida sobre cualquier LLM. Delibera, verifica y pregunta antes de adivinar. Agarra la estrella para rotarla, mírala pulsar y pensar, y habla con ella.",
     status_idle:"estrella en reposo · arrastra para rotar", status_idle_mobile:"arrastra para rotar",
     hint:"arrastra para rotar · rueda para zoom", hint_mobile:"arrastra para rotar · pellizca para zoom",
@@ -511,6 +524,8 @@ const I18N = {
     answer_directive:"Responde siempre en español, sin importar el idioma de la pregunta.",
   },
   fr: {
+    trustline:"Les agents savent déjà se payer entre eux. Nous leur permettons de se faire confiance.",
+    trustrole:"Metis est le vérificateur de Pay-on-Verified sur modelmarket.dev : le hub ne paie le vendeur que lorsque Metis valide la livraison.",
     tagline:"Une couche cognitive distribuée au-dessus de n'importe quel LLM. Elle délibère, vérifie et demande avant de deviner. Attrape l'étoile pour la faire tourner, regarde-la pulser et réfléchir, puis parle-lui.",
     status_idle:"étoile au repos · attrape pour tourner", status_idle_mobile:"glisse pour tourner",
     hint:"attrape pour tourner · molette pour zoomer", hint_mobile:"glisse pour tourner · pince pour zoomer",
@@ -530,6 +545,8 @@ const I18N = {
     answer_directive:"Réponds toujours en français, quelle que soit la langue de la question.",
   },
   zh: {
+    trustline:"智能体已经能够互相付款。我们让它们能够互相信任。",
+    trustrole:"Metis 是 modelmarket.dev 上验证后付款（Pay-on-Verified）的验证者：只有 Metis 确认交付后，hub 才向卖方付款。",
     tagline:"一个架构在任意 LLM 之上的分布式认知层。它会审议、验证，并在猜测前先发问。抓住星体拖动旋转，看它脉动与思考，然后与它对话。",
     status_idle:"星体静止 · 拖动以旋转", status_idle_mobile:"拖动以旋转",
     hint:"拖动以旋转 · 滚轮缩放", hint_mobile:"拖动以旋转 · 双指捏合缩放",
@@ -700,6 +717,18 @@ async function ask(text){
 }
 document.getElementById('sendBtn').onclick=()=>ask(cinput.value);
 cinput.addEventListener('keydown',e=>{ if(e.key==='Enter') ask(cinput.value); });
+// The keyboard covers the page without resizing the layout on iOS / Android Chrome; only
+// visualViewport knows the visible area, the mobile #chat rule reads it from these vars.
+if(window.visualViewport){
+  const vv=window.visualViewport, chatEl=document.getElementById('chat');
+  const fitVisible=()=>{
+    const inset=Math.max(0, innerHeight - vv.height - Math.max(0, vv.offsetTop));
+    chatEl.style.setProperty('--kb-inset', Math.round(inset)+'px');
+    chatEl.style.setProperty('--vv-h', Math.round(vv.height)+'px');
+  };
+  fitVisible(); vv.addEventListener('resize', fitVisible); vv.addEventListener('scroll', fitVisible);
+  cinput.addEventListener('focus', ()=>setTimeout(()=>{ clog.scrollTop=clog.scrollHeight; }, 350));
+}
 
 // ══════════════════════ COGNITION PANEL (live real-trace) ══════════════════════
 // A constellation of Metis's REAL components. Each node/edge lights from the SSE

@@ -47,6 +47,9 @@ class ModelSlot(BaseModel):
     #: openai/gpt-6-sol or anthropic/claude-sonnet-5), and a juror whose every call 400s
     #: is a juror that silently abstains on every verdict.
     omit_temperature: bool = False
+    #: Extra fields merged into the request body (e.g. OpenRouter's
+    #: `reasoning: {"effort": "medium"}`). Never overrides model or messages.
+    extra_body: dict = {}
 
 
 class JurorSlot(BaseModel):
@@ -68,6 +71,10 @@ class JurorSlot(BaseModel):
     vendor: Optional[str] = None
     temperature: Optional[float] = None  # None → RuntimeConfig.jury_temperature
     omit_temperature: bool = False
+    #: Merged into every request this juror sends — e.g. turn reasoning ON for a
+    #: model that only thinks when asked. A juror checking arithmetic without
+    #: thinking accepted wrong answers (docs/jury-3-vs-5.md).
+    extra_body: Optional[dict] = None
     max_tokens: Optional[int] = None
     extra_headers: Optional[dict] = None
 
