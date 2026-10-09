@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
 import threading
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -11,6 +13,20 @@ from typing import Dict, List
 
 from metis.knowledge.experience import _categorize_query
 from metis.observability.reliability.detector import FailureKind
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    """Replace ``path`` in one rename, so a crash mid-write leaves the old file, not a torn one."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        if path.exists():
+            os.chmod(tmp, stat.S_IMODE(path.stat().st_mode))
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 class FailurePatterns:
@@ -32,7 +48,7 @@ class FailurePatterns:
 
     def _save(self) -> None:
         serializable = {k: dict(v) for k, v in self._data.items()}
-        self._file.write_text(json.dumps(serializable, indent=2))
+        _write_atomic(self._file, json.dumps(serializable, indent=2))
 
     def record(self, query: str, kind: FailureKind) -> None:
         cat = _categorize_query(query)

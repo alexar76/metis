@@ -58,14 +58,13 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["metis"]
+# Only what a unit run cannot exercise: the fine-tuning pipeline needs the [training] extras
+# and a GPU, and the two argparse front-ends only dispatch into modules measured here.
+# The node server, the serve entrypoint and the Anthropic adapter are measured.
 omit = [
     "metis/training/*",
-    "metis/serve.py",
     "metis/cli.py",
     "metis/distributed/cli.py",
-    "metis/distributed/server.py",
-    "metis/models/anthropic.py",
-    "metis/security.py",
 ]
 
 [tool.coverage.report]
