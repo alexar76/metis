@@ -74,7 +74,9 @@ def test_mcp_server_config_from_preset():
 
 
 def test_aimarket_web_preset_uses_the_live_hosted_hub_mcp(monkeypatch):
-    """mcp.modelmarket.dev never had DNS. The hosted gateway is the Hub at /mcp."""
+    """The preset names the primary address. mcp.modelmarket.dev/mcp has served the same Hub MCP only
+    since 2026-10-12 (before that it had no vhost and answered with another site's certificate), so
+    a preset pointing there would have failed for every install older than that."""
     monkeypatch.delenv("AIMARKET_MCP_URL", raising=False)
     cfg = MCPServerConfig.from_ecosystem_preset("aimarket-web")
     assert cfg.url == "https://modelmarket.dev/mcp"
