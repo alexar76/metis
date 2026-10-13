@@ -35,11 +35,26 @@ rsync -avz --delete \
   "${REPO}/skopos/docs/landing/" "${METIS_HOST}:${LANDING_REMOTE}/"
 
 echo "[sync] nginx.conf → ${METIS_HOST}:${NGINX_REMOTE}"
-# --inplace: the file is bind-mounted into metis-nginx; a rename-style update
-# creates a new inode the container never sees, so the in-container `nginx -t`
-# below would validate the STALE config while restart applies the new one.
-rsync -avz --inplace \
-  "${REPO}/metis/deploy/nginx.conf" "${METIS_HOST}:${NGINX_REMOTE}"
+# Other projects append their vhosts to this file on the host (cite-desks did,
+# with a "do not replace" note). Overwriting it drops them at the restart below,
+# so a host copy that has drifted is left alone unless SKOPOS_NGINX_OVERWRITE=1.
+NGINX_HOST_COPY="$(mktemp)"
+ssh "${METIS_HOST}" "cat ${NGINX_REMOTE} 2>/dev/null || true" > "${NGINX_HOST_COPY}"
+if cmp -s "${NGINX_HOST_COPY}" "${REPO}/metis/deploy/nginx.conf"; then
+  echo "[sync] nginx.conf: host copy already matches"
+elif [[ ! -s "${NGINX_HOST_COPY}" || "${SKOPOS_NGINX_OVERWRITE:-0}" == "1" ]]; then
+  # --inplace: the file is bind-mounted into metis-nginx; a rename-style update
+  # creates a new inode the container never sees, so the in-container `nginx -t`
+  # below would validate the STALE config while restart applies the new one.
+  rsync -avz --inplace \
+    "${REPO}/metis/deploy/nginx.conf" "${METIS_HOST}:${NGINX_REMOTE}"
+else
+  echo "[sync] WARNING: ${NGINX_REMOTE} differs from the monorepo copy — NOT overwriting it." >&2
+  echo "[sync]          Lines only on the host: $(diff "${REPO}/metis/deploy/nginx.conf" "${NGINX_HOST_COPY}" | grep -c '^>' || true);" \
+       "only in the monorepo: $(diff "${REPO}/metis/deploy/nginx.conf" "${NGINX_HOST_COPY}" | grep -c '^<' || true)." >&2
+  echo "[sync]          Merge them, then rerun with SKOPOS_NGINX_OVERWRITE=1." >&2
+fi
+rm -f "${NGINX_HOST_COPY}"
 
 # Ensure probe key exists, distribute to factory/oracle, then build + start stack.
 ssh "${METIS_HOST}" "bash -s" <<'REMOTE'
