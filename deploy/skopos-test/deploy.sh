@@ -86,6 +86,31 @@ cd "${ROOT}"
 log "Building SKOPOS image…"
 docker compose build
 
+# A servers.yaml that has lost an enrolled host fails nowhere: the node keeps
+# signing reports, the collector answers each one 400 "not configured", and the
+# dashboard just stops hearing from it (2026-09-25: three hosts, nine days).
+# Check the file this deploy is about to mount, with the new image, before it
+# replaces the running container. Exit 1 = orphans found; 2 = could not tell.
+log "Checking servers.yaml against enrolled agents…"
+docker compose up -d --wait postgres || true
+set +e
+docker compose run --rm --no-deps -T --entrypoint python skopos \
+  skoposctl.py --config /app/servers.yaml node-check
+check_rc=$?
+set -e
+if [[ ${check_rc} -eq 1 ]]; then
+  if [[ "${SKOPOS_ALLOW_UNROUTED_NODES:-0}" == "1" ]]; then
+    log "…deploying anyway (SKOPOS_ALLOW_UNROUTED_NODES=1)"
+  else
+    echo "[skopos-test] Refusing to deploy: the agents above would have every report refused." >&2
+    echo "[skopos-test] Restore their servers.yaml entries, revoke them (skoposctl node-revoke)," >&2
+    echo "[skopos-test] or rerun with SKOPOS_ALLOW_UNROUTED_NODES=1. The running stack is untouched." >&2
+    exit 1
+  fi
+elif [[ ${check_rc} -ne 0 ]]; then
+  log "Enrolled-agent check could not run (exit ${check_rc}); continuing."
+fi
+
 log "Starting Postgres + SKOPOS…"
 docker compose up -d
 

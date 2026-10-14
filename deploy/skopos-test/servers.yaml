@@ -20,6 +20,10 @@ security_scan_interval_minutes: 60
 #   scp install.sh <host>: && ssh <host> "printf %s '<ticket>' | sudo bash install.sh"
 #
 # `address` only labels the traffic; nothing dials it.
+#
+# This file is the whole list. A host enrolled with a ticket but missing here
+# authenticates fine and then has every report refused, silently; deploy.sh
+# runs `skoposctl node-check` against it and refuses to go live in that case.
 
 servers:
   - name: factory
@@ -66,3 +70,45 @@ servers:
         - modelmarket-hub
         - signal-hunt-hub-1
         - signal-hunt-game-1
+
+  - name: attested
+    source: ssh_nginx_access_log
+    transport: agent-push
+    address: attestedmemory.net
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: true
+      docker_log_containers:
+        - aicom-edge-1
+
+  # pingblip.com + forge.pingblip.com + world.pingblip.com on one VPS.
+  # Combined log only — blip.access.log is a custom GeoIP format for Yard, not SKOPOS.
+  - name: pingblip
+    source: ssh_nginx_access_log
+    transport: agent-push
+    address: pingblip.com
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: false
+      auto_discover_docker_logs: false
+
+  - name: independentai-hub
+    source: ssh_nginx_access_log
+    transport: agent-push
+    address: independentai.network
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: false
+
+  # The factory host since the 2026-10-01 move (magic-ai-factory.com, the apex
+  # hub). `factory` above is the agent still enrolled on the previous host.
+  - name: factory-vps
+    source: ssh_nginx_access_log
+    transport: agent-push
+    address: magic-ai-factory.com
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: false
