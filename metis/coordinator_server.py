@@ -12,6 +12,7 @@ from metis.config import RouteMode, RuntimeConfig, SecurityConfig
 from metis.exoskeleton import RunStatus, Metis
 from metis.security.audit import log_security_event
 from metis.security.ratelimit import RateLimiter
+from metis import __version__
 
 try:
     from pydantic import BaseModel, Field
@@ -76,7 +77,7 @@ def create_coordinator_app(
     expected_key = _resolve_api_key()
     limiter = RateLimiter(sc.rate_limit)
 
-    app = FastAPI(title="Metis Coordinator", version="0.1.0")
+    app = FastAPI(title="Metis Coordinator", version=__version__)
 
     brain = Metis(cfg)
     from metis.api.bridge import OpenAIMetisBridge

@@ -10,6 +10,7 @@ import httpx
 from metis.mcp.client import MCPConnectionError, MCPToolDescriptor
 from metis.mcp.config import MCPServerConfig
 from metis.security.ssrf import validate_url
+from metis import __version__
 
 
 class MCPSSEClient:
@@ -34,7 +35,7 @@ class MCPSSEClient:
                 "params": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {},
-                    "clientInfo": {"name": "metis", "version": "0.1.0"},
+                    "clientInfo": {"name": "metis", "version": __version__},
                 },
             },
             headers={"Accept": "application/json, text/event-stream"},

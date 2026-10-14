@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from metis.mcp.config import MCPServerConfig, MCPTransport
 from metis.observability.logging.pipeline_events import PipelineEventKind, emit_pipeline_event
+from metis import __version__
 
 
 class MCPConnectionError(RuntimeError):
@@ -111,7 +112,7 @@ class MCPClient:
             {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "metis", "version": "0.1.0"},
+                "clientInfo": {"name": "metis", "version": __version__},
             },
         )
         await self._notify("notifications/initialized", {})

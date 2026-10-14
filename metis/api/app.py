@@ -18,6 +18,7 @@ from metis.exoskeleton import Metis
 from metis.observability.logging.audit import configure_audit
 from metis.observability.logging.tracer import init_logging
 from metis.observability.reliability.circuit_breaker import all_breaker_status
+from metis import __version__
 
 
 def _load_config() -> RuntimeConfig:
@@ -51,7 +52,7 @@ def create_app(config: Optional[RuntimeConfig] = None) -> FastAPI:
     app = FastAPI(
         title="Metis API",
         description="OpenAI-compatible API for the Metis cognitive runtime",
-        version="0.2.0",
+        version=__version__,
         lifespan=_lifespan,
     )
     app.state.config = runtime_config
@@ -98,7 +99,7 @@ def create_app(config: Optional[RuntimeConfig] = None) -> FastAPI:
         return {
             "status": "ok",
             "service": "metis",
-            "version": "0.2.0",
+            "version": __version__,
             "nodes": nodes,
             "circuit_breakers": all_breaker_status(),
             "knowledge_entries": (
@@ -117,7 +118,7 @@ def create_app(config: Optional[RuntimeConfig] = None) -> FastAPI:
             "metis_up 1",
             "# HELP metis_build_info build/version info",
             "# TYPE metis_build_info gauge",
-            'metis_build_info{version="0.2.0"} 1',
+            f'metis_build_info{{version="{__version__}"}} 1',
         ]
         kn = brain._knowledge_store.count() if brain._knowledge_store else 0
         lines += ["# HELP metis_knowledge_entries entries in the knowledge store",

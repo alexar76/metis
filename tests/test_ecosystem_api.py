@@ -178,4 +178,4 @@ def test_metrics_endpoint_prometheus(client):
     assert "# TYPE metis_up gauge" in body
     assert "metis_knowledge_entries" in body
     assert "metis_circuit_breaker_open" in body
-    assert 'metis_build_info{version="0.2.0"} 1' in body
+    assert f'metis_build_info{{version="{__import__("metis").__version__}"}} 1' in body

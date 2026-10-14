@@ -26,7 +26,7 @@ def test_health_detailed(client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "ok"
-    assert data["version"] == "0.2.0"
+    assert data["version"] == __import__("metis").__version__
     assert "circuit_breakers" in data
     assert "knowledge_entries" in data
 

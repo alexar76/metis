@@ -19,6 +19,7 @@ from metis.distributed.security import (
 from metis.models.provider import Message, create_provider
 from metis.security.audit import log_security_event
 from metis.security.ratelimit import RateLimiter
+from metis import __version__
 
 logger = logging.getLogger("metis.distributed.server")
 
@@ -52,7 +53,7 @@ def create_app(
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse
 
-    app = FastAPI(title=f"Metis Node {node_id}", version="0.1.0")
+    app = FastAPI(title=f"Metis Node {node_id}", version=__version__)
     sec = security or SecuritySettings()
     sc = sec_config or SecurityConfig()
     slot = local_slot or ModelSlot(
