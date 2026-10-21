@@ -52,7 +52,7 @@ metis-benchmark run --models qwen3:8b --route council -o reports/bench.md
 
 ### Real run — DeepSeek, `simple` dataset, Direct vs Metis (council)
 
-_2026-07-10 · no mocks · [`reports/bench-real-deepseek.md`](../reports/bench-real-deepseek.md)_
+_2026-07-10 · no mocks · `reports/bench-real-deepseek.md` (local run output, not in the repository)_
 
 | Runner | Cases | Pass rate | Avg latency | Avg cost | Avg LLM calls |
 |--------|------:|----------:|------------:|---------:|--------------:|

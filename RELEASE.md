@@ -63,7 +63,7 @@ docker compose up -d --build
 | Deployment | [docs/en/DEPLOYMENT.md](docs/en/DEPLOYMENT.md) |
 | Security | [docs/en/SECURITY.md](docs/en/SECURITY.md) |
 | Landing page | [docs/landing/index.html](docs/landing/index.html) |
-| Wiki | [wiki/Home.md](wiki/Home.md) |
+| Wiki | [wiki/Home.md](https://github.com/alexar76/metis/blob/main/wiki/Home.md) |
 
 ## Ecosystem position
 

@@ -9,7 +9,7 @@
 
 <!-- aicom-readme-badges -->
 <p align="center">
-  <a href="https://github.com/alexar76/metis/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/alexar76/metis/refs/heads/main/docs/badges/ci.svg" alt="CI" /></a>
+  <a href="https://github.com/alexar76/metis/actions/workflows/ci.yml"><img src="https://github.com/alexar76/metis/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://pypi.org/project/aimarket-metis/"><img src="https://raw.githubusercontent.com/alexar76/metis/refs/heads/main/docs/badges/pypi.svg" alt="PyPI" /></a>
   <img src="https://raw.githubusercontent.com/alexar76/metis/refs/heads/main/docs/badges/python.svg" alt="Python 3.11 | 3.12" />
   <img src="https://raw.githubusercontent.com/alexar76/metis/refs/heads/main/docs/badges/tests.svg" alt="238 tests passing" />
@@ -81,7 +81,7 @@ docker compose up -d
 | **Distributed** | [EN](docs/en/DISTRIBUTED.md) · [RU](docs/ru/DISTRIBUTED.md) · [ES](docs/es/DISTRIBUTED.md) |
 | **Ecosystem** | [EN](docs/en/ECOSYSTEM.md) · [RU](docs/ru/ECOSYSTEM.md) · [ES](docs/es/ECOSYSTEM.md) |
 | **Research** | [EN](docs/en/RESEARCH.md) · [RU](docs/ru/RESEARCH.md) · [ES](docs/es/RESEARCH.md) |
-| **Wiki** | [Home](wiki/Home.md) · [Quick Start](wiki/Quick-Start.md) · [FAQ](wiki/FAQ.md) |
+| **Wiki** | [Home](https://github.com/alexar76/metis/blob/main/wiki/Home.md) · [Quick Start](https://github.com/alexar76/metis/blob/main/wiki/Quick-Start.md) · [FAQ](https://github.com/alexar76/metis/blob/main/wiki/FAQ.md) |
 | **Landing page** | [Live demo](https://metis.modelmarket.dev/) · [docs/landing/index.html](docs/landing/index.html) · [deploy guide](docs/landing/README.md) |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) · [RELEASE.md](RELEASE.md) |
 
