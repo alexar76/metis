@@ -40,8 +40,10 @@ def _app(**kwargs):
     return node_server.create_app(node_id="node-a", models=["echo-1"], roles=["worker"], **kwargs)
 
 
-async def _call(app, method: str, path: str, **kwargs):
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+async def _call(app, method: str, path: str, *, peer: str = "127.0.0.1", base_url: str = "http://localhost",
+                **kwargs):
+    transport = ASGITransport(app=app, client=(peer, 50000))
+    async with AsyncClient(transport=transport, base_url=base_url) as client:
         return await client.request(method, path, **kwargs)
 
 
@@ -157,3 +159,24 @@ def test_serve_node_hands_the_built_app_to_uvicorn(provider, monkeypatch):
     node_server.serve_node(host="127.0.0.9", port=9443, node_id="n9", model="m9")
     assert seen["host"] == "127.0.0.9" and seen["port"] == 9443
     assert seen["app"].title == "Metis Node n9"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "peer, base_url, headers",
+    [
+        ("93.184.216.34", "http://localhost", {}),  # another machine: the node binds 0.0.0.0
+        ("127.0.0.1", "http://node.example", {}),  # a rebinding name
+        ("127.0.0.1", "http://localhost", {"X-Forwarded-For": "93.184.216.34"}),  # via a local proxy
+        ("127.0.0.1", "http://localhost", {"Origin": "https://evil.example"}),  # a page in a browser
+    ],
+)
+async def test_a_keyless_node_serves_only_its_own_machine(provider, peer, base_url, headers):
+    app = _app()
+    r = await _call(app, "POST", "/metis/invoke", peer=peer, base_url=base_url, headers=headers,
+                    content=_invoke_body())
+    assert r.status_code == 401
+    r = await _call(app, "POST", "/v1/chat/completions", peer=peer, base_url=base_url, headers=headers,
+                    json={"model": "echo-1", "messages": [{"role": "user", "content": "hi"}]})
+    assert r.status_code == 401
+    assert provider.calls == []

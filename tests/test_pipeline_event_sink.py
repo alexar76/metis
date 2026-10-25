@@ -106,7 +106,7 @@ def cfg(tmp_path):
 
 @pytest.fixture
 def client(cfg):
-    return TestClient(create_app(cfg))
+    return TestClient(create_app(cfg), client=("127.0.0.1", 50000), base_url="http://localhost")
 
 
 def _frames(text: str):

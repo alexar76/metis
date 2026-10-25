@@ -47,7 +47,7 @@ def cfg(tmp_path):
 
 @pytest.fixture
 def client(cfg):
-    return TestClient(create_app(cfg))
+    return TestClient(create_app(cfg), client=("127.0.0.1", 50000), base_url="http://localhost")
 
 
 def test_request_timeout_defaults_to_600_seconds_and_can_be_lowered():
@@ -155,7 +155,7 @@ def test_rate_limit_429(tmp_path):
     app = create_app(cfg)
     # Tiny bucket so throttling is deterministic (burst of 1, no refill in-window).
     app.state.eco_limiter = RateLimiter(RateLimitConfig(requests_per_minute=1, burst=1))
-    c = TestClient(app)
+    c = TestClient(app, client=("127.0.0.1", 50000), base_url="http://localhost")
     codes = [c.post("/v1/verify", json={"input": "hi", "route": "fast"}).status_code for _ in range(4)]
     assert codes[0] == 200 and 429 in codes  # first allowed, then throttled
 

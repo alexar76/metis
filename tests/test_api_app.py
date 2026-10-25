@@ -15,7 +15,7 @@ def client(tmp_path):
         memory_dir=tmp_path / "memory",
         thinking_samples=1,
     )
-    return TestClient(create_app(cfg))
+    return TestClient(create_app(cfg), client=("127.0.0.1", 50000), base_url="http://localhost")
 
 
 def test_health(client):

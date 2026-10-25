@@ -7,7 +7,7 @@ name = "aimarket-metis"
 # Bumped because the tree diverged from the published 0.2.0 wheel: `pip install
 # aimarket-metis==0.2.0` served code this tree had already moved past, at the same version
 # string, so every fix in it was unpublishable and unreachable.
-version = "0.2.1"
+version = "0.2.2"
 description = "Metis — distributed cognitive layer over any LLM"
 readme = "README.md"
 requires-python = ">=3.9"

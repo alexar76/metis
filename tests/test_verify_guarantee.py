@@ -91,7 +91,7 @@ def client(cfg, monkeypatch):
                 "METIS_PRODUCTION", "SUPERBRAIN_PRODUCTION", "COGNITIVE_PRODUCTION",
                 "AIFACTORY_PROD", "AIFACTORY_PRODUCTION", "AIFACTORY_ENV"):
         monkeypatch.delenv(var, raising=False)
-    return TestClient(create_app(cfg))
+    return TestClient(create_app(cfg), client=("127.0.0.1", 50000), base_url="http://localhost")
 
 
 def _post(client, calls, path, body):

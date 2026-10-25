@@ -716,7 +716,7 @@ Security events log via `log_security_event()` — structured JSON without promp
 
 Legacy aliases `superbrain-*` are supported.
 
-**Authentication** (`api/auth.py`): Bearer token required when `METIS_PRODUCTION=true` or `METIS_API_KEY` is set. Accepts `METIS_API_KEY`, `SUPERBRAIN_API_KEY`, or `COGNITIVE_API_KEY`.
+**Authentication** (`api/auth.py`): Bearer token required when `METIS_PRODUCTION=true` or `METIS_API_KEY` is set. Accepts `METIS_API_KEY`, `SUPERBRAIN_API_KEY`, or `COGNITIVE_API_KEY`. With neither set, only callers on the machine itself are served (loopback peer and `Host`, no forwarding headers, no cross-site `Origin`); the same rule holds for `metis-coordinator` and `metis-node`.
 
 **Start server**:
 

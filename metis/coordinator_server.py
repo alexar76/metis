@@ -80,6 +80,7 @@ def create_coordinator_app(
     app = FastAPI(title="Metis Coordinator", version=__version__)
 
     brain = Metis(cfg)
+    from metis.api.auth import local_caller
     from metis.api.bridge import OpenAIMetisBridge
     from metis.api.openai_compat import router as openai_router
 
@@ -96,7 +97,7 @@ def create_coordinator_app(
             allow_headers=["Authorization", "Content-Type"],
         )
 
-    def _check_auth(authorization: Optional[str], client_ip: str) -> str:
+    def _check_auth(authorization: Optional[str], client_ip: str, request: Any = None) -> str:
         if cfg.production and not expected_key:
             raise HTTPException(status_code=500, detail="Production requires API key env var")
         token = ""
@@ -108,6 +109,13 @@ def create_coordinator_app(
                 raise HTTPException(status_code=403, detail="Invalid API key")
         elif cfg.production:
             raise HTTPException(status_code=401, detail="Authentication required")
+        elif request is not None and not local_caller(request):
+            # No key outside production: callers on this machine only. Any caller that could
+            # reach the port (0.0.0.0 by default) used to spend this node's model budget.
+            raise HTTPException(
+                status_code=401,
+                detail="No API key is configured, so only callers on this machine are served",
+            )
         allowed, retry = limiter.allow(limiter.client_key(client_ip, token))
         if not allowed:
             raise HTTPException(status_code=429, detail=f"Rate limit exceeded, retry in {retry}s")
@@ -129,7 +137,7 @@ def create_coordinator_app(
         payload: CoordinatorQueryRequest = Body(...),
     ) -> JSONResponse:
         ip = req.client.host if req.client else "unknown"
-        _check_auth(authorization, ip)
+        _check_auth(authorization, ip, req)
         if len(payload.query) > sc.max_user_input_chars:
             raise HTTPException(status_code=413, detail="Query too long")
 

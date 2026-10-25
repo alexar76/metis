@@ -18,7 +18,7 @@ def client(tmp_path):
         knowledge={"enabled": True, "store_path": str(tmp_path / "knowledge")},
         observability={"trace_dir": str(tmp_path / "traces")},
     )
-    return TestClient(create_app(cfg))
+    return TestClient(create_app(cfg), client=("127.0.0.1", 50000), base_url="http://localhost")
 
 
 def test_health_detailed(client):

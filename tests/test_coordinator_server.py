@@ -56,3 +56,21 @@ async def test_query_rejects_without_key_in_production(monkeypatch):
             headers={"Authorization": "Bearer wrong"},
         )
     assert r.status_code in (403, 500)
+
+
+@pytest.mark.asyncio
+async def test_keyless_dev_coordinator_serves_only_its_own_machine(monkeypatch):
+    for name in ("METIS_API_KEY", "SUPERBRAIN_API_KEY", "COGNITIVE_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    cfg = RuntimeConfig(production=False, allow_test_provider=True, provider="mock", base_model="test")
+    app = create_coordinator_app(config=cfg)
+    # Another machine: the coordinator binds 0.0.0.0 by default.
+    transport = ASGITransport(app=app, client=("93.184.216.34", 40000))
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
+        r = await client.post("/v1/query", json={"query": "hello"})
+    assert r.status_code == 401
+    # A proxy on this host relaying someone else.
+    transport = ASGITransport(app=app, client=("127.0.0.1", 40000))
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
+        r = await client.post("/v1/query", json={"query": "hello"}, headers={"X-Real-IP": "93.184.216.34"})
+    assert r.status_code == 401

@@ -111,7 +111,7 @@ def test_chat_completions_accepts_images(tmp_path):
         provider=ProviderKind.MOCK, allow_test_provider=True, base_model="llava",
         memory_dir=tmp_path / "m", thinking_samples=1,
     )
-    client = TestClient(create_app(cfg))
+    client = TestClient(create_app(cfg), client=("127.0.0.1", 50000), base_url="http://localhost")
     r = client.post("/v1/chat/completions", json={
         "model": "metis-fast",
         "messages": [{"role": "user", "content": [

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-25
+
+### Security
+
+- Without `METIS_API_KEY` and outside production mode, `metis-serve`, `metis-coordinator` and `metis-node` answered every caller that could reach the port, and all three bind `0.0.0.0` by default: anyone on the network could spend the operator's model budget through `/v1/verify`, `/v1/chat/completions`, `/v1/query` or `/metis/invoke`. They now serve only callers on the machine itself (a loopback peer with a loopback `Host`, no forwarding headers, no cross-site `Origin`) until a key is set. Same class as Vulnetix GCVE-110-PYPI-2026-018883 (CWE-306) in aimarket-mcp.
+
 ### Added
 
 - **Jury verification** — `jury_models` roster (one seat per vendor, `jury_min_vendors`), `route: "jury"` on `/v1/verify`, and `jury_default_for_verify` to decide every verify request by a cross-vendor vote. Envelope gains `jury`, `jury_outcome`, `jury_agreement`, `input_flags`; `VerifyRequest.audit_id` makes a vote count only when it echoes the caller's per-attempt id. See README "Jury verification" and `deploy/prod.jury.example.yaml`.

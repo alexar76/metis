@@ -53,6 +53,8 @@ def create_app(
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse
 
+    from metis.api.auth import local_caller
+
     app = FastAPI(title=f"Metis Node {node_id}", version=__version__)
     sec = security or SecuritySettings()
     sc = sec_config or SecurityConfig()
@@ -73,7 +75,7 @@ def create_app(
             allow_headers=["Authorization", "Content-Type", "X-Metis-Timestamp", "X-Metis-Signature"],
         )
 
-    def _check_auth(authorization: Optional[str], client_ip: str) -> str:
+    def _check_auth(authorization: Optional[str], client_ip: str, request: Any = None) -> str:
         if production and not expected_key:
             raise HTTPException(status_code=500, detail="Production requires API key env var")
         token = ""
@@ -85,6 +87,13 @@ def create_app(
                 raise HTTPException(status_code=403, detail="Invalid API key")
         elif production:
             raise HTTPException(status_code=401, detail="Authentication required")
+        elif request is not None and not local_caller(request):
+            # No key outside production: callers on this machine only. Any caller that could
+            # reach the port (0.0.0.0 by default) used to spend this node's model budget.
+            raise HTTPException(
+                status_code=401,
+                detail="No API key is configured, so only callers on this machine are served",
+            )
         allowed, retry = limiter.allow(limiter.client_key(client_ip, token))
         if not allowed:
             raise HTTPException(status_code=429, detail=f"Rate limit exceeded, retry in {retry}s")
@@ -113,7 +122,7 @@ def create_app(
     @app.post("/metis/invoke")
     async def invoke(http_request: Request, authorization: Optional[str] = Header(None)) -> InvokeResponse:
         ip = http_request.client.host if http_request.client else "unknown"
-        _check_auth(authorization, ip)
+        _check_auth(authorization, ip, http_request)
         body = await _read_body(http_request)
         await _check_signature(http_request, body)
         try:
@@ -127,7 +136,7 @@ def create_app(
     @app.post("/v1/chat/completions")
     async def openai_proxy(http_request: Request, authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
         ip = http_request.client.host if http_request.client else "unknown"
-        _check_auth(authorization, ip)
+        _check_auth(authorization, ip, http_request)
         body = await _read_body(http_request)
         await _check_signature(http_request, body)
         try:

@@ -3,7 +3,7 @@
 import os
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from metis.api.auth import get_api_key_from_env, is_production_mode, verify_api_key
 from metis.api.bridge import (
@@ -76,11 +76,44 @@ async def test_openai_bridge_stream(mock_config):
     assert "".join(chunks) == "hello world"
 
 
+def _request(peer: str = "127.0.0.1", host: str = "localhost", **headers: str) -> Request:
+    raw = [(b"host", host.encode())] + [(k.replace("_", "-").lower().encode(), v.encode()) for k, v in headers.items()]
+    return Request({"type": "http", "client": (peer, 50000), "headers": raw})
+
+
 @pytest.mark.asyncio
 async def test_verify_api_key_no_auth_when_dev(monkeypatch):
     monkeypatch.delenv("METIS_API_KEY", raising=False)
     monkeypatch.delenv("METIS_PRODUCTION", raising=False)
-    assert await verify_api_key(None) is None
+    assert await verify_api_key(_request(), None) is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "request_",
+    [
+        _request(peer="93.184.216.34"),  # another machine (the server binds 0.0.0.0)
+        _request(host="metis.example"),  # a rebinding name
+        _request(x_forwarded_for="93.184.216.34"),  # relayed by a proxy on this host
+        _request(x_real_ip="93.184.216.34"),
+        _request(origin="https://evil.example"),  # a page in the user's browser
+        _request(origin="null"),
+    ],
+)
+async def test_keyless_dev_serves_only_this_machine(monkeypatch, request_):
+    monkeypatch.delenv("METIS_API_KEY", raising=False)
+    monkeypatch.delenv("METIS_PRODUCTION", raising=False)
+    monkeypatch.delenv("AIFACTORY_ENV", raising=False)
+    with pytest.raises(HTTPException) as exc:
+        await verify_api_key(request_, None)
+    assert exc.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_keyless_dev_serves_a_local_page(monkeypatch):
+    monkeypatch.delenv("METIS_API_KEY", raising=False)
+    monkeypatch.delenv("METIS_PRODUCTION", raising=False)
+    assert await verify_api_key(_request(host="127.0.0.1:8080", origin="http://localhost:5173"), None) is None
 
 
 @pytest.mark.asyncio
@@ -88,7 +121,7 @@ async def test_verify_api_key_required_in_production(monkeypatch):
     monkeypatch.setenv("METIS_PRODUCTION", "1")
     monkeypatch.setenv("METIS_API_KEY", "sk-test")
     with pytest.raises(HTTPException) as exc:
-        await verify_api_key(None)
+        await verify_api_key(_request(), None)
     assert exc.value.status_code == 401
 
 
@@ -98,7 +131,7 @@ async def test_verify_api_key_valid(monkeypatch):
     from fastapi.security import HTTPAuthorizationCredentials
 
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="sk-good")
-    assert await verify_api_key(creds) == "sk-good"
+    assert await verify_api_key(_request(peer="93.184.216.34"), creds) == "sk-good"
 
 
 def test_legacy_env_key(monkeypatch):
