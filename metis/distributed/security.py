@@ -49,16 +49,17 @@ def build_auth_headers(
     }
     if security and security.request_signing:
         secret = security.hmac_secret()
-        if secret:
-            timestamp = str(int(time.time()))
-            payload = f"{timestamp}.".encode("utf-8") + body
-            signature = hmac.new(
-                secret.encode("utf-8"),
-                payload,
-                hashlib.sha256,
-            ).hexdigest()
-            headers["X-Metis-Timestamp"] = timestamp
-            headers["X-Metis-Signature"] = signature
+        if not secret:
+            raise ValueError("request signing requires a configured HMAC secret")
+        timestamp = str(int(time.time()))
+        payload = f"{timestamp}.".encode("utf-8") + body
+        signature = hmac.new(
+            secret.encode("utf-8"),
+            payload,
+            hashlib.sha256,
+        ).hexdigest()
+        headers["X-Metis-Timestamp"] = timestamp
+        headers["X-Metis-Signature"] = signature
     return headers
 
 

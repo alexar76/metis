@@ -16,6 +16,12 @@ import subprocess
 from metis.tools.sandbox import execute_sandboxed
 
 
+@pytest.fixture(autouse=True)
+def _trusted_private_execution_examples(monkeypatch):
+    monkeypatch.setenv("METIS_UNSAFE_LOCAL_CODE", "1")
+    monkeypatch.delenv("METIS_PRODUCTION", raising=False)
+
+
 def test_hmac_replay_rejected():
     secret = "test-secret"
     body = b'{"model":"test"}'
@@ -185,6 +191,7 @@ def test_scrub_child_env_denies_unknown_secrets_by_default():
         "BRAND_NEW_SERVICE_TOKEN": "x",
         "WHATEVER_PRIVATE_KEY": "x",
         "NEW_SIGNING_SEED": "x",
+        "UNLABELLED_FUTURE_VALUE": "x",
     }
     assert scrub_child_env(invented) == {}
 

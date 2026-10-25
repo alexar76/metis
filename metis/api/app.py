@@ -55,6 +55,9 @@ def create_app(config: Optional[RuntimeConfig] = None) -> FastAPI:
         version=__version__,
         lifespan=_lifespan,
     )
+    from metis.security.code_execution import DenyPublicHostExecution
+
+    app.add_middleware(DenyPublicHostExecution)
     app.state.config = runtime_config
     app.state.brain = brain
     app.state.bridge = OpenAIMetisBridge(brain)

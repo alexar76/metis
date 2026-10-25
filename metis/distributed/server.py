@@ -56,6 +56,9 @@ def create_app(
     from metis.api.auth import local_caller
 
     app = FastAPI(title=f"Metis Node {node_id}", version=__version__)
+    from metis.security.code_execution import DenyPublicHostExecution
+
+    app.add_middleware(DenyPublicHostExecution)
     sec = security or SecuritySettings()
     sc = sec_config or SecurityConfig()
     slot = local_slot or ModelSlot(
@@ -100,19 +103,22 @@ def create_app(
         return token
 
     async def _read_body(http_request: Request) -> bytes:
-        body = await http_request.body()
-        if len(body) > sc.max_request_body_bytes:
-            raise HTTPException(status_code=413, detail="Request body too large")
-        return body
+        body = bytearray()
+        async for chunk in http_request.stream():
+            if len(body) + len(chunk) > sc.max_request_body_bytes:
+                raise HTTPException(status_code=413, detail="Request body too large")
+            body.extend(chunk)
+        return bytes(body)
 
     async def _check_signature(http_request: Request, body: bytes) -> None:
         if sec.request_signing:
             secret = sec.hmac_secret()
-            if secret:
-                ts = http_request.headers.get("X-Metis-Timestamp", "")
-                sig = http_request.headers.get("X-Metis-Signature", "")
-                if not verify_request_signature(body, ts, sig, secret):
-                    raise HTTPException(status_code=401, detail="Invalid signature")
+            if not secret:
+                raise HTTPException(status_code=503, detail="Request signing is not configured")
+            ts = http_request.headers.get("X-Metis-Timestamp", "")
+            sig = http_request.headers.get("X-Metis-Signature", "")
+            if not verify_request_signature(body, ts, sig, secret):
+                raise HTTPException(status_code=401, detail="Invalid signature")
 
     @app.get("/metis/health")
     async def health(authorization: Optional[str] = Header(None)) -> HealthResponse:

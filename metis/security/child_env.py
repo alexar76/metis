@@ -1,18 +1,14 @@
 """Scrub the environment handed to the code-interpreter subprocess.
 
-METIS runs UNTRUSTED, model-emitted Python (see ``metis.tools.sandbox`` — the in-process
-screen is defence-in-depth, not a boundary). The child used to inherit ``os.environ``
-wholesale: the service's LLM provider keys, its Ed25519 signing seed, the hub/admin tokens,
-and ``DOCKER_HOST``. A screen escape — three were demonstrated in the 2026-09 re-audit — then
-read all of it straight out of the environment. Scrubbing the child's environment turns "RCE
-that walks off with every credential the service holds" into "code running in an ephemeral
-worker that holds none".
+Host execution is disabled for production and public requests. Trusted private
+development can opt in; its child receives only the runtime variables below.
+Scrubbing an environment does not isolate the filesystem or make Python safe.
 
 This is a self-contained copy of the monorepo's ``core.child_env`` idea rather than an import
 of it: METIS is published as the standalone ``aimarket-metis`` wheel, which does not ship
 ``core``. The two must stay aligned by hand.
 
-Denylist by design: a secret added to the deployment next month must be dropped by DEFAULT,
+Allowlist by design: a secret added to the deployment next month must be dropped by DEFAULT,
 never opted in by whoever remembers to edit this file. What survives is only what a Python
 child needs to start and import METIS — PATH, PYTHONPATH, HOME, the venv markers.
 """
@@ -44,6 +40,10 @@ _DROP_SUBSTRINGS: tuple[str, ...] = (
     "DEEPSEEK", "ANTHROPIC", "OPENAI", "OLLAMA_KEY", "TELEGRAM", "DISCORD", "SMTP",
     "TWILIO", "STRIPE", "INFURA", "ALCHEMY", "RPC_URL", "METIS_ADMIN", "OPERATOR",
 )
+_RUNTIME_NAMES = frozenset({
+    "PATH", "PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV", "LANG", "LC_ALL", "LC_CTYPE",
+    "HOME", "TMPDIR", "TMP", "TEMP", "PYTHONDONTWRITEBYTECODE", "PYTHONNOUSERSITE",
+})
 
 
 def is_sensitive(name: str) -> bool:
@@ -64,5 +64,5 @@ def scrub_child_env(source: Mapping[str, str], *, keep: Iterable[str] = ()) -> d
     return {
         name: value
         for name, value in source.items()
-        if name in keep_set or not is_sensitive(name)
+        if name in keep_set or (name in _RUNTIME_NAMES and not is_sensitive(name))
     }

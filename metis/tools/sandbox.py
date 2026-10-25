@@ -10,11 +10,10 @@ such escapes against this very function — operator.attrgetter, str.format fiel
 io.FileIO — none of which the screen saw. Each has since been closed here, but the class has
 not: assume a determined caller can still escape the screen.
 
-The boundary that actually contains a caller therefore lives one level up, in
-`metis.tools.registry.CodeInterpreterTool`, which runs this module as a SUBPROCESS with a
-scrubbed environment (no API keys / signing seeds / DOCKER_HOST — see
-`metis.security.child_env`), resource limits, and an isolated working directory. Harden BOTH
-layers when you touch either, and never move a secret back into the child's environment.
+Host execution is disabled by default and always refused for public HTTP/WebSocket
+requests and production deployments. METIS_UNSAFE_LOCAL_CODE=1 retains trusted private
+development examples. A subprocess, scrubbed environment and temporary working directory
+do not isolate the host filesystem; use an external isolated service for untrusted code.
 """
 
 from __future__ import annotations
@@ -203,7 +202,7 @@ def _screen_code(code: str) -> str | None:
     for node in ast.walk(tree):
         if isinstance(node, ast.Attribute):
             attr = node.attr
-            if (attr.startswith("__") and attr.endswith("__")) or attr in _FORBIDDEN_ATTRS:
+            if attr.startswith("_") or attr in _FORBIDDEN_ATTRS:
                 return f"SecurityError: forbidden attribute access '{attr}'"
         elif isinstance(node, ast.Name) and node.id in _FORBIDDEN_NAMES:
             return f"SecurityError: forbidden name '{node.id}'"
@@ -216,6 +215,8 @@ def _screen_code(code: str) -> str | None:
             base = (node.module or "").split(".")[0]
             if base not in _ALLOWED_MODULES:
                 return f"SecurityError: import of '{node.module}' is not allowed"
+            if any(alias.name.startswith("_") for alias in node.names):
+                return "SecurityError: private imports are not allowed"
     return None
 
 
@@ -225,7 +226,12 @@ def execute_sandboxed(code: str) -> Tuple[bool, str, str]:
 
     Returns (success, stdout, stderr).
     """
-    # SECURITY: structural + substring pre-screen for sandbox-escape patterns.
+    from metis.security.code_execution import host_execution_refusal
+
+    refusal = host_execution_refusal()
+    if refusal:
+        return False, "", refusal
+    # This screen is defense in depth for the explicit trusted-local opt-in.
     screen_error = _screen_code(code)
     if screen_error is not None:
         return False, "", screen_error

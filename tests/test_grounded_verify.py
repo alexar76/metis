@@ -22,7 +22,8 @@ def spec():
 
 
 @pytest.fixture
-def tools():
+def tools(monkeypatch):
+    monkeypatch.setenv("METIS_UNSAFE_LOCAL_CODE", "1")
     return ToolRegistry([CodeInterpreterTool(timeout=15)])
 
 

@@ -229,7 +229,7 @@ class RuntimeConfig(BaseSettings):
     enable_long_term_memory: bool = True
     rag_top_k: int = 5
 
-    enable_code_interpreter: bool = True
+    enable_code_interpreter: bool = False
     enable_web_search: bool = True
     web_search_url: str = "https://html.duckduckgo.com/html/"
     code_timeout_seconds: int = 10

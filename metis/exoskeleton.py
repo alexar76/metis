@@ -171,8 +171,11 @@ class Metis:
 
     def _build_builtin_tools(self) -> ToolRegistry:
         registry = ToolRegistry()
-        if self.config.enable_code_interpreter:
-            registry.register(CodeInterpreterTool(timeout=self.config.code_timeout_seconds))
+        from metis.security.code_execution import host_execution_refusal
+
+        if self.config.enable_code_interpreter and host_execution_refusal(production=self.config.production) is None:
+            registry.register(CodeInterpreterTool(timeout=self.config.code_timeout_seconds,
+                                                   production=self.config.production))
         if self.config.enable_web_search:
             registry.register(WebSearchTool(search_url=self.config.web_search_url))
         # Paid ecosystem invoke — the agent can pay-per-call any AIMarket hub

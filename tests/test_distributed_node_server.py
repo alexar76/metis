@@ -132,6 +132,16 @@ async def test_signed_requests_need_a_valid_fresh_signature(provider, monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_signing_enabled_without_secret_never_accepts_unsigned_request(provider, monkeypatch):
+    monkeypatch.delenv("MISSING_NODE_HMAC", raising=False)
+    app = _app(security=SecuritySettings(request_signing=True, hmac_secret_env="MISSING_NODE_HMAC"))
+    for path in ("/metis/invoke", "/v1/chat/completions"):
+        response = await _call(app, "POST", path, content=_invoke_body())
+        assert response.status_code == 503
+    assert provider.calls == []
+
+
+@pytest.mark.asyncio
 async def test_openai_proxy_shape(provider):
     r = await _call(_app(), "POST", "/v1/chat/completions", content=_invoke_body("hi"))
     assert r.status_code == 200

@@ -67,22 +67,27 @@ class CodeInterpreterTool(Tool):
     name = "code_interpreter"
     description = "Execute Python code for math, data analysis, and logic verification."
 
-    def __init__(self, timeout: int = 10):
+    def __init__(self, timeout: int = 10, *, production: bool = False):
         self.timeout = timeout
+        self.production = production
 
     async def run(self, input_text: str) -> ToolResult:
+        from metis.security.code_execution import host_execution_refusal
+
+        refusal = host_execution_refusal(production=self.production)
+        if refusal:
+            return ToolResult(self.name, False, "", refusal)
         code = input_text.strip()
         if code.startswith("```"):
             code = re.sub(r"^```(?:python)?\s*", "", code)
             code = re.sub(r"\s*```$", "", code)
 
-        # This code is UNTRUSTED and the in-process screen in metis.tools.sandbox is NOT a
-        # boundary (three escapes past it were demonstrated in the 2026-09 re-audit). The
-        # containment is here: a scrubbed environment so an escape finds no credentials, an
-        # isolated working directory, POSIX resource limits, and a hard kill on timeout.
+        # Reached only for trusted private development. These process hygiene
+        # measures do not provide OS isolation from the host filesystem.
         from metis.security.child_env import scrub_child_env
 
         child_env = scrub_child_env(os.environ)
+        child_env["METIS_UNSAFE_LOCAL_CODE"] = "1"  # only after the private-local policy passed
         child_env["PYTHONDONTWRITEBYTECODE"] = "1"
         # cwd is an empty temp dir (FS hygiene: a relative path in a payload lands nowhere
         # useful), so the child must not depend on the parent's cwd to import `metis`. Pin the

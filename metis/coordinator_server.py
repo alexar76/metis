@@ -78,6 +78,9 @@ def create_coordinator_app(
     limiter = RateLimiter(sc.rate_limit)
 
     app = FastAPI(title="Metis Coordinator", version=__version__)
+    from metis.security.code_execution import DenyPublicHostExecution
+
+    app.add_middleware(DenyPublicHostExecution)
 
     brain = Metis(cfg)
     from metis.api.auth import local_caller

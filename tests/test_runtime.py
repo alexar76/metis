@@ -72,7 +72,8 @@ def test_heuristic_router():
 
 
 @pytest.mark.asyncio
-async def test_code_interpreter():
+async def test_code_interpreter(monkeypatch):
+    monkeypatch.setenv("METIS_UNSAFE_LOCAL_CODE", "1")
     tool = CodeInterpreterTool(timeout=5)
     result = await tool.run("print(2 + 2)")
     assert result.success
@@ -89,7 +90,8 @@ def test_vector_memory(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_tool_registry():
+async def test_tool_registry(monkeypatch):
+    monkeypatch.setenv("METIS_UNSAFE_LOCAL_CODE", "1")
     reg = ToolRegistry([CodeInterpreterTool()])
     result = await reg.execute("code_interpreter", "print('ok')")
     assert result.success

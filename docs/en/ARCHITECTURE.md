@@ -925,7 +925,7 @@ Full ecosystem map: [ECOSYSTEM.md](ECOSYSTEM.md).
 | `memory_dir` | path | `data/memory` | Vector memory directory |
 | `enable_long_term_memory` | bool | `true` | TF-IDF vector store |
 | `rag_top_k` | int | `5` | RAG retrieval count |
-| `enable_code_interpreter` | bool | `true` | Builtin sandbox tool |
+| `enable_code_interpreter` | bool | `false` | Trusted private development only; public/production host execution refused |
 | `enable_web_search` | bool | `true` | Builtin search tool |
 | `code_timeout_seconds` | int | `10` | Code interpreter timeout |
 | `web_search_url` | str | DuckDuckGo HTML | Search endpoint |

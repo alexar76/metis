@@ -236,6 +236,13 @@ def test_security_headers_bearer_only():
     assert "X-Metis-Signature" not in headers
 
 
+def test_signing_client_refuses_missing_secret_instead_of_downgrading(monkeypatch):
+    monkeypatch.delenv("MISSING_SIGNING_SECRET", raising=False)
+    security = SecuritySettings(request_signing=True, hmac_secret_env="MISSING_SIGNING_SECRET")
+    with pytest.raises(ValueError, match="HMAC secret"):
+        build_auth_headers("token123", body=b"paid request", security=security)
+
+
 @pytest.mark.asyncio
 async def test_distributed_coordinator_assignments(cluster_yaml):
     registry = NodeRegistry.from_yaml(cluster_yaml)

@@ -50,7 +50,8 @@ def test_sandbox_blocks_import_os():
     assert not ok or "ImportError" in err or "not allowed" in err.lower()
 
 
-def test_sandbox_allows_math():
+def test_sandbox_allows_math(monkeypatch):
+    monkeypatch.setenv("METIS_UNSAFE_LOCAL_CODE", "1")
     ok, out, err = execute_sandboxed("print(2 + 2)")
     assert ok
     assert "4" in out
