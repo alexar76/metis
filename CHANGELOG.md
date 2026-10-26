@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Jury verification** — `jury_models` roster (one seat per vendor, `jury_min_vendors`), `route: "jury"` on `/v1/verify`, and `jury_default_for_verify` to decide every verify request by a cross-vendor vote. Envelope gains `jury`, `jury_outcome`, `jury_agreement`, `input_flags`; `VerifyRequest.audit_id` makes a vote count only when it echoes the caller's per-attempt id. See README "Jury verification" and `deploy/prod.jury.example.yaml`.
 - `omit_temperature` on model slots, for reasoning models that refuse the parameter.
 - `min_unique_council_vendors` — the diversity check counts vendors, and covers the MoA seats as well as the council.
+- **Per-task capability** — `metis calibrate` measures reasoning, coding (what does this program print) and factual sets separately and writes `{model: {overall, reasoning, coding, factual}}`; `--tasks` picks the sets. The capability gate ranks by the score for the kind of query being answered (the router's `task_type`, or a keyword guess), when that kind was measured for the model; otherwise by the overall score. Flat calibration files from earlier runs still load. Each result carries `metadata.task_kind`.
+- **verify_score calibration** — `metis/verify/calibration.py` (Brier score, expected calibration error, reliability table, paid/wrong at the bar) and `bench/jury_3v5.py calibration`. The 2026-10-03 jury runs: Brier 0.047, ECE 0.085, 57 paid at 0.7 with 1 wrong; see `docs/benchmarks/VERIFY-CALIBRATION-2026-10-23.md` for what that does and does not show.
 
 ### Changed
 

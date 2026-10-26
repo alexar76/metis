@@ -162,9 +162,13 @@ class ModuleRegistry:
         return pool
 
     def get_provider_for_role(self, role: str) -> LLMProvider:
-        if role not in self._providers:
-            self._providers[role] = create_provider(self.resolve_slot(role), self.config)
-        return self._providers[role]
+        # Keyed by the model too: with per-task calibration the gate can seat a different
+        # model for the same role on the next query.
+        slot = self.resolve_slot(role)
+        key = f"{role}\x00{slot.model}"
+        if key not in self._providers:
+            self._providers[key] = create_provider(slot, self.config)
+        return self._providers[key]
 
     async def aclose(self) -> None:
         """Close all cached provider HTTP clients."""

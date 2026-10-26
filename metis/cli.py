@@ -135,16 +135,25 @@ def _run_calibrate_cli(argv: list[str]) -> int:
     p.add_argument("--config", "-c", help="Path to config YAML")
     p.add_argument("--out", "-o", default=None, help="Where to write scores (default: config.capability_file)")
     p.add_argument("--json", action="store_true", dest="json_out")
+    p.add_argument("--tasks", default=None,
+                   help="Comma-separated task kinds to measure (default: reasoning,coding,factual)")
     a = p.parse_args(argv)
 
     config = _load_config(a.config)
-    from metis.agents.capability import calibrate_pool, tier_of
+    from metis.agents.capability import TASK_KINDS, calibrate_pool, tier_of
+    tasks = tuple(t.strip() for t in a.tasks.split(",") if t.strip()) if a.tasks else TASK_KINDS
+    unknown = [t for t in tasks if t not in TASK_KINDS]
+    if unknown or not tasks:
+        print(f"Unknown task kind(s): {', '.join(unknown) or '(none given)'}; "
+              f"choose from {', '.join(TASK_KINDS)}", file=sys.stderr)
+        return 2
     pool = ModuleRegistry(config)._reasoning_pool()
     if not pool:
         print("No models configured to calibrate.", file=sys.stderr)
         return 1
-    print(f"Calibrating {len(pool)} model(s) on the built-in checkable set…", file=sys.stderr)
-    scores = asyncio.run(calibrate_pool(pool, config))
+    print(f"Calibrating {len(pool)} model(s) on the built-in checkable sets ({', '.join(tasks)})…",
+          file=sys.stderr)
+    scores = asyncio.run(calibrate_pool(pool, config, tasks))
 
     out = Path(a.out) if a.out else Path(config.capability_file)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -153,10 +162,12 @@ def _run_calibrate_cli(argv: list[str]) -> int:
     if a.json_out:
         print(json.dumps(scores, indent=2))
     else:
-        print(f"{'MODEL':<40} {'SCORE':>6}  TIER")
-        print("-" * 60)
-        for m, s in sorted(scores.items(), key=lambda kv: -kv[1]):
-            print(f"{m:<40} {s:>6}  {tier_of(s).value}")
+        head = "".join(f" {t.upper():>9}" for t in tasks)
+        print(f"{'MODEL':<40} {'OVERALL':>7}{head}  TIER")
+        print("-" * (52 + 10 * len(tasks)))
+        for m, s in sorted(scores.items(), key=lambda kv: -kv[1]["overall"]):
+            cells = "".join(f" {s[t]:>9}" for t in tasks)
+            print(f"{m:<40} {s['overall']:>7}{cells}  {tier_of(s['overall']).value}")
         print(f"\nWrote {len(scores)} score(s) → {out}", file=sys.stderr)
     return 0
 

@@ -33,7 +33,8 @@ from metis.observability.logging.tracer import (
 )
 from metis.observability.trace_store import TraceStore
 from metis.rag.agentic import agentic_rag
-from metis.router.classifier import route_query
+from metis.agents.capability import reset_task_kind, set_task_kind
+from metis.router.classifier import classify_query, task_kind_of
 from metis.schemas.task_spec import TaskSpec
 from metis.security import build_system_prompt, log_security_event, sanitize_tool_output, sanitize_user_input, verify_canary_intact
 from metis.thinking.extended import extended_thinking, self_consistency
@@ -269,7 +270,10 @@ class Metis:
         if images and self.config.enable_multimodal:
             vision_context, mm_meta = await self._perceive(images, query)
 
-        mode = route or await route_query(self.config, query)
+        if route:
+            mode, task_kind = route, task_kind_of(query)
+        else:
+            mode, task_kind = await classify_query(self.config, query)
         depth = sec_depth
         if _OBS_AVAILABLE:
             emit_pipeline_event(PipelineEventKind.ROUTE_SELECTED, {"route": mode.value})
@@ -290,6 +294,8 @@ class Metis:
         trace_id = trace_ctx.trace_id if trace_ctx else None
         meter = UsageMeter(route=mode.value, trace_id=trace_id) if self.config.economy.enabled else None
         set_current_meter(meter)
+        # The capability gate ranks models by their measured score for this kind of query.
+        task_token = set_task_kind(task_kind)
         result = None
         try:
             result = await self._execute(query, mode, depth, security_reason,
@@ -307,6 +313,9 @@ class Metis:
                     result.metadata["answer_repaired"] = True
         finally:
             set_current_meter(None)
+            reset_task_kind(task_token)
+            if result is not None:
+                result.metadata.setdefault("task_kind", task_kind)
             if result is not None and mm_meta:
                 result.metadata.update(mm_meta)
             if meter and self._economy and result is not None:

@@ -33,14 +33,42 @@ TOOL_MARKERS = re.compile(
 )
 
 
+CODE_MARKERS = re.compile(
+    r"\b(code|python|javascript|typescript|rust|golang|java|sql|regex|function|class|"
+    r"implement|debug|compile|stack ?trace|exception|bug)\b",
+    re.I,
+)
+FACT_MARKERS = re.compile(r"^\s*(what|who|when|where|which|how many|how much)\b", re.I)
+
+
+def task_kind_of(query: str) -> str:
+    """Keyword guess at the task kind (capability calibration's names), for when the LLM
+    router did not classify the query."""
+    if CODE_MARKERS.search(query):
+        return "coding"
+    if FACT_MARKERS.search(query) and len(query.split()) < 20:
+        return "factual"
+    return "reasoning"
+
+
 async def route_query(config: RuntimeConfig, query: str) -> RouteMode:
     """Decide execution mode: fast / thinking / agent / council."""
+    return (await classify_query(config, query))[0]
+
+
+async def classify_query(config: RuntimeConfig, query: str) -> tuple[RouteMode, str | None]:
+    """Execution mode plus the task kind the capability gate ranks models by.
+
+    The kind is the LLM router's task_type when it gave one the calibration measures
+    (reasoning, coding, factual); research and planning rank by the overall score (None).
+    Without an LLM classification it is the keyword guess of `task_kind_of`.
+    """
     if config.default_route != RouteMode.COUNCIL:
-        return config.default_route
+        return config.default_route, task_kind_of(query)
 
     # Oracle/ecosystem tool queries → agent (MCP tools available)
     if config.enable_mcp_tools and ORACLE_MARKERS.search(query):
-        return RouteMode.AGENT
+        return RouteMode.AGENT, task_kind_of(query)
 
     try:
         provider = ModuleRegistry(config).get_provider_for_role("router")
@@ -49,20 +77,21 @@ async def route_query(config: RuntimeConfig, query: str) -> RouteMode:
         mode = data.get("mode", "council")
         task_type = data.get("task_type", "")
         scores = data.get("scores", {})
+        kind = task_type if task_type in ("reasoning", "coding", "factual") else None
 
         # Score-based overrides (deterministic layer on top of LLM router)
         if scores.get("tools_needed", 0) >= 7:
-            return RouteMode.AGENT
+            return RouteMode.AGENT, kind
         if task_type in ("coding", "research"):
-            return RouteMode.AGENT
+            return RouteMode.AGENT, kind
         if scores.get("ambiguity", 0) >= 7:
-            return RouteMode.COUNCIL
+            return RouteMode.COUNCIL, kind
         if task_type == "factual" and scores.get("simplicity", 0) >= 7:
-            return RouteMode.FAST
+            return RouteMode.FAST, kind
 
-        return RouteMode(mode)
+        return RouteMode(mode), kind
     except Exception:
-        return _heuristic_route(query)
+        return _heuristic_route(query), task_kind_of(query)
 
 
 def _heuristic_route(query: str) -> RouteMode:

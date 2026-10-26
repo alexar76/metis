@@ -14,9 +14,15 @@ Policy:
     never gated.
 The gate is a no-op for a single-model deployment (the one model is both strongest and
 above the floor), so it only ever helps.
+
+One number per model hides that a model strong at arithmetic can be weaker at reading code or
+at facts. `metis calibrate` therefore measures each task kind on its own set (reasoning,
+coding, factual — the router's task_type names), and the gate ranks by the score for the
+kind of the query being answered when this deployment has measured it.
 """
 from __future__ import annotations
 
+from contextvars import ContextVar, Token
 from enum import Enum
 from typing import Dict, List, Optional, Sequence, TYPE_CHECKING
 
@@ -91,13 +97,60 @@ def _normalize(model: str) -> str:
     return m
 
 
+# Task kinds measured separately. The names are the router's task_type values
+# (metis/router/classifier.py); research and planning have no set and rank by the overall score.
+TASK_KINDS = ("reasoning", "coding", "factual")
+
 # capability overrides loaded from `metis calibrate` (data/capability.json), keyed normalized
 _CALIBRATED: Dict[str, float] = {}
+# per task kind, from the same file: normalized model -> {task kind: score}
+_CALIBRATED_BY_TASK: Dict[str, Dict[str, float]] = {}
+
+# the task kind of the query being answered, set by the exoskeleton after routing
+_TASK_KIND: ContextVar[Optional[str]] = ContextVar("metis_task_kind", default=None)
 
 
-def load_calibration(scores: Dict[str, float]) -> None:
-    """Merge measured capability scores (from calibration) over the static priors."""
-    _CALIBRATED.update({_normalize(k): float(v) for k, v in scores.items()})
+def set_task_kind(task: Optional[str]) -> Token:
+    """Rank models for `task` in this context (None: by the overall score)."""
+    return _TASK_KIND.set(task if task in TASK_KINDS else None)
+
+
+def reset_task_kind(token: Token) -> None:
+    _TASK_KIND.reset(token)
+
+
+def current_task_kind() -> Optional[str]:
+    return _TASK_KIND.get()
+
+
+def _number(v) -> Optional[float]:
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    return float(v)
+
+
+def load_calibration(scores: Dict[str, object]) -> None:
+    """Merge measured capability scores (from calibration) over the static priors.
+
+    Reads both file shapes: the flat one older `metis calibrate` runs wrote
+    ({model: score}) and the per-task one ({model: {"overall": s, "reasoning": s,
+    "coding": s, "factual": s}}). A per-task entry without "overall" gets the mean of its
+    task scores.
+    """
+    for model, value in scores.items():
+        n = _normalize(model)
+        if isinstance(value, dict):
+            per = {t: _number(value.get(t)) for t in TASK_KINDS}
+            per = {t: v for t, v in per.items() if v is not None}
+            if per:
+                _CALIBRATED_BY_TASK[n] = {**_CALIBRATED_BY_TASK.get(n, {}), **per}
+            overall = _number(value.get("overall"))
+            if overall is None and per:
+                overall = sum(per.values()) / len(per)
+            if overall is not None:
+                _CALIBRATED[n] = overall
+        elif _number(value) is not None:
+            _CALIBRATED[n] = float(value)
 
 
 # Family priors — version-drift fallback so a NEW release in a known frontier family
@@ -116,11 +169,17 @@ FAMILY_PRIORS: List[tuple] = [
 ]
 
 
-def capability_of(model: str) -> float:
+def capability_of(model: str, task: Optional[str] = None) -> float:
     """Relative capability (0..100).
-    Calibrated score > exact prior > longest-prefix prior > frontier-family prior > default.
+    Calibrated score for `task` > calibrated score > exact prior > longest-prefix prior >
+    frontier-family prior > default. A task score is used only when it was measured for this
+    exact model; the priors are not split by task.
     """
     n = _normalize(model)
+    if task:
+        measured = _CALIBRATED_BY_TASK.get(n, {}).get(task)
+        if measured is not None:
+            return measured
     table = {**MODEL_CAPABILITY, **_CALIBRATED}
     if n in table:
         return table[n]
@@ -145,8 +204,8 @@ HIGH_LEVERAGE_ROLES = frozenset({"moa_aggregator", "judge", "synthesizer"})
 UNGATED_ROLES = frozenset({"vision", "router"})
 
 
-def strongest(pool: List["ModelSlot"]) -> "ModelSlot":
-    return max(pool, key=lambda s: capability_of(s.model))
+def strongest(pool: List["ModelSlot"], task: Optional[str] = None) -> "ModelSlot":
+    return max(pool, key=lambda s: capability_of(s.model, task))
 
 
 def _reslot(src: "ModelSlot", role: str, temperature: float) -> "ModelSlot":
@@ -183,6 +242,7 @@ def gate_role(
     *,
     explicit: bool = False,
     avoid_vendors: Sequence[str] = (),
+    task: Optional[str] = None,
 ) -> "ModelSlot":
     """Return the model that *should* serve `role` under the capability policy.
 
@@ -199,27 +259,35 @@ def gate_role(
       * `avoid_vendors` — vendors this seat must not share (the judge must not come from
         the lab that wrote the answer it audits). Relaxed from the tail when the pool is
         too small to honour all of it; see `_vendor_candidates`.
+      * `task` — rank by the score measured for this kind of query (default: the kind the
+        exoskeleton set for the current run; None ranks by the overall score).
     """
     if role in UNGATED_ROLES or not pool:
         return resolved
-    top = strongest(pool)
+    if task is None:
+        task = current_task_kind()
+
+    def score(model: str) -> float:
+        return capability_of(model, task)
+
+    top = strongest(pool, task)
     if role in HIGH_LEVERAGE_ROLES:
         from metis.agents.diversity import vendor_of
 
         candidates, avoided = _vendor_candidates(pool, avoid_vendors)
-        if explicit and capability_of(resolved.model) >= min_aggregator \
+        if explicit and score(resolved.model) >= min_aggregator \
                 and vendor_of(resolved.model) not in avoided:
             return resolved
         # the aggregator/verifier/synthesizer must be the strongest we have
-        best = strongest(candidates)
+        best = strongest(candidates, task)
         if resolved.model == best.model:
             return resolved
         return _reslot(best, role, resolved.temperature)
     # proposer / parser: a below-floor model loses its vote
-    if capability_of(resolved.model) >= floor:
+    if score(resolved.model) >= floor:
         return resolved
-    passing = [s for s in pool if capability_of(s.model) >= floor]
-    replacement = max(passing, key=lambda s: capability_of(s.model)) if passing else top
+    passing = [s for s in pool if score(s.model) >= floor]
+    replacement = max(passing, key=lambda s: score(s.model)) if passing else top
     return _reslot(replacement, role, resolved.temperature)
 
 
@@ -243,6 +311,38 @@ CALIBRATION_SET = [
 ]
 _COT = "\n\nSolve step by step, then end with a line exactly like: Answer: <final integer>"
 
+# reading code: what does the program print (each answer checked by running it)
+CODING_SET = [
+    ("x = [1, 2, 3]\ny = x\ny.append(4)\nprint(len(x))", 4),
+    ("print(sum(i * i for i in range(5)))", 30),
+    ("def f(n):\n    return n if n < 2 else f(n - 1) + f(n - 2)\nprint(f(10))", 55),
+    ("print(len({c for c in 'mississippi'}))", 4),
+    ("print(7 // -2)", -4),
+    ("s = 'abcdef'\nprint(len(s[1:-1:2]))", 2),
+    ("print(int('101', 2) + int('17', 8))", 20),
+    ("d = {}\nfor w in 'a b a c b a'.split():\n    d[w] = d.get(w, 0) + 1\n"
+     "print(d['a'] * 100 + d['b'] * 10 + d['c'])", 321),
+]
+_CODE_PROMPT = "What does this Python 3 program print?\n\n```python\n{}\n```"
+
+# stable facts with integer answers
+FACTUAL_SET = [
+    ("In what year did the Apollo 11 crew first land on the Moon?", 1969),
+    ("How many bones are in the typical adult human skeleton?", 206),
+    ("What is the atomic number of gold?", 79),
+    ("In what year did the Berlin Wall fall?", 1989),
+    ("What is the boiling point of water at sea level in degrees Fahrenheit?", 212),
+    ("How many chromosomes does a typical human body cell have?", 46),
+    ("How many players does one team have on the pitch in association football?", 11),
+    ("In what year was the first iPhone released?", 2007),
+]
+
+CALIBRATION_SETS = {
+    "reasoning": CALIBRATION_SET,
+    "coding": [(_CODE_PROMPT.format(code), num) for code, num in CODING_SET],
+    "factual": FACTUAL_SET,
+}
+
 
 def _grade(resp: str, num: int) -> bool:
     import re
@@ -255,31 +355,51 @@ def _grade(resp: str, num: int) -> bool:
     return bool(nums) and int(nums[-1]) == num
 
 
-async def calibrate_model(slot: "ModelSlot", config) -> float:
-    """Measure a model's capability (0..100) on the calibration set via the provider layer."""
+async def calibrate_model_by_task(
+    slot: "ModelSlot", config, tasks: Sequence[str] = TASK_KINDS,
+) -> Dict[str, float]:
+    """Measure a model (0..100) on each task kind's set via the provider layer.
+
+    Returns {task: score, ..., "overall": score over every question asked}.
+    """
     from metis.models.provider import create_provider
 
     provider = create_provider(slot, config)
-    correct = 0
+    out: Dict[str, float] = {}
+    correct_all = asked_all = 0
     try:
-        for q, num in CALIBRATION_SET:
-            try:
-                ans = await provider.complete_text("You are a careful solver.", q + _COT, temperature=0.0)
-                if _grade(ans, num):
-                    correct += 1
-            except Exception:
-                pass
+        for task in tasks:
+            items = CALIBRATION_SETS[task]
+            correct = 0
+            for q, num in items:
+                try:
+                    ans = await provider.complete_text("You are a careful solver.", q + _COT, temperature=0.0)
+                    if _grade(ans, num):
+                        correct += 1
+                except Exception:
+                    pass
+            out[task] = round(100.0 * correct / len(items), 1)
+            correct_all += correct
+            asked_all += len(items)
     finally:
         if hasattr(provider, "aclose"):
             await provider.aclose()
-    return round(100.0 * correct / len(CALIBRATION_SET), 1)
+    out["overall"] = round(100.0 * correct_all / asked_all, 1) if asked_all else 0.0
+    return out
 
 
-async def calibrate_pool(pool: List["ModelSlot"], config) -> Dict[str, float]:
-    """Calibrate every distinct model in the pool. Returns {model: score}."""
-    scores: Dict[str, float] = {}
+async def calibrate_model(slot: "ModelSlot", config) -> float:
+    """Measure a model's capability (0..100) on the reasoning set via the provider layer."""
+    return (await calibrate_model_by_task(slot, config, ("reasoning",)))["reasoning"]
+
+
+async def calibrate_pool(
+    pool: List["ModelSlot"], config, tasks: Sequence[str] = TASK_KINDS,
+) -> Dict[str, Dict[str, float]]:
+    """Calibrate every distinct model in the pool. Returns {model: {task: score, "overall": score}}."""
+    scores: Dict[str, Dict[str, float]] = {}
     for slot in pool:
         if slot.model in scores:
             continue
-        scores[slot.model] = await calibrate_model(slot, config)
+        scores[slot.model] = await calibrate_model_by_task(slot, config, tasks)
     return scores

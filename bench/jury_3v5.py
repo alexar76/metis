@@ -7,6 +7,8 @@
     python3 jury_3v5.py run --cases /tmp/jury_cases.json --out /tmp/jury_votes.json --url http://127.0.0.1:8080
     # 3. tally any sub-roster from the same votes
     python3 metis/bench/jury_3v5.py tally --votes /tmp/jury_votes.json
+    # 4. is verify_score a probability? reliability table, Brier, ECE (metis/verify/calibration.py)
+    python3 metis/bench/jury_3v5.py calibration --votes metis/bench/results/*.json
 
 Every case is run ONCE through the full roster; smaller juries are computed from the same
 per-juror votes with the jury's own arithmetic (metis/verify/jury.py): a side wins only with a
@@ -134,6 +136,20 @@ def tally(votes_path: str, exclude: tuple[int, ...] = ()) -> None:
     print("per juror — abstentions / wrong votes:", abst or "none")
 
 
+def calibration(paths: list[str], bins: int) -> None:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from metis.verify.calibration import calibration_report, format_report, verdicts_from_jury_bench
+
+    pooled = []
+    for path in paths:
+        verdicts = verdicts_from_jury_bench(json.loads(Path(path).read_text()))
+        pooled.extend(verdicts)
+        print(format_report(calibration_report(verdicts, bins=bins, bar=BAR), title=Path(path).name))
+        print()
+    if len(paths) > 1:
+        print(format_report(calibration_report(pooled, bins=bins, bar=BAR), title="all files pooled"))
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -143,5 +159,9 @@ if __name__ == "__main__":
     t = sub.add_parser("tally"); t.add_argument("--votes", required=True)
     t.add_argument("--exclude-case", type=int, action="append", default=[],
                    help="leave a task out (e.g. 5: the original, ambiguous 'days from A to B')")
+    c = sub.add_parser("calibration"); c.add_argument("--votes", required=True, nargs="+")
+    c.add_argument("--bins", type=int, default=5)
     a = ap.parse_args()
-    {"build": lambda: build(a.out), "run": lambda: run(a.cases, a.out, a.url), "tally": lambda: tally(a.votes, tuple(a.exclude_case))}[a.cmd]()
+    {"build": lambda: build(a.out), "run": lambda: run(a.cases, a.out, a.url),
+     "tally": lambda: tally(a.votes, tuple(a.exclude_case)),
+     "calibration": lambda: calibration(a.votes, a.bins)}[a.cmd]()
