@@ -6,6 +6,7 @@ import hmac
 import ipaddress
 import logging
 import os
+import sys
 from typing import Optional
 
 from fastapi import HTTPException, Request, Security
@@ -50,6 +51,66 @@ def is_production_mode() -> bool:
 _LOOPBACK_NAMES = frozenset({"localhost", "127.0.0.1", "::1"})
 _FORWARDING_HEADERS = ("x-forwarded-for", "x-real-ip", "forwarded", "x-forwarded-host")
 
+# The kernel's tables of TCP sockets, with the uid that owns each (Linux).
+_PROC_NET_TCP = ("/proc/net/tcp", "/proc/net/tcp6")
+
+
+def _proc_endpoint(field: str) -> tuple[str, int]:
+    """`0100007F:1F90` -> ("127.0.0.1", 8080): each 32-bit word of the address is printed in
+    the kernel's byte order, the port in plain hex."""
+    hexaddr, _, hexport = field.partition(":")
+    raw = bytes.fromhex(hexaddr)
+    if sys.byteorder == "little":
+        raw = b"".join(raw[i:i + 4][::-1] for i in range(0, len(raw), 4))
+    addr = ipaddress.ip_address(raw)
+    if addr.version == 6 and addr.ipv4_mapped:
+        addr = addr.ipv4_mapped
+    return str(addr), int(hexport, 16)
+
+
+def _caller_is_this_user(conn: Request) -> bool:
+    """The caller's socket belongs to the user this server runs as.
+
+    A reverse proxy on this machine connects over loopback too, and nginx's default proxy_pass
+    sends the upstream's own Host (127.0.0.1:port) and no forwarding header, so nothing in the
+    request tells it from a local client (Vulnetix, on GCVE-110-PYPI-2026-018883). Its workers
+    run as their own user, and on Linux the kernel records which user owns each socket. A proxy
+    running as this same user, or a system without the table (macOS, Windows), still needs a key
+    to be told apart. A connection the table does not show is refused."""
+    tables = [p for p in _PROC_NET_TCP if os.path.exists(p)]
+    if not tables:
+        return True
+    client = conn.client
+    if not client:
+        return False
+    try:
+        peer = ipaddress.ip_address(client.host)
+    except ValueError:
+        return False
+    if peer.version == 6 and peer.ipv4_mapped:
+        peer = peer.ipv4_mapped
+    want = (str(peer), int(client.port or 0))
+    server_port = (conn.scope.get("server") or (None, None))[1]
+    for path in tables:
+        try:
+            with open(path, encoding="ascii", errors="replace") as fh:
+                next(fh, None)  # the header line
+                for line in fh:
+                    f = line.split()
+                    if len(f) < 8 or f[3] != "01":  # 01 = ESTABLISHED
+                        continue
+                    try:
+                        if _proc_endpoint(f[1]) != want:
+                            continue
+                        if server_port is not None and _proc_endpoint(f[2])[1] != int(server_port):
+                            continue
+                        return int(f[7]) == os.geteuid()
+                    except ValueError:
+                        continue
+        except OSError:
+            continue
+    return False
+
 
 def _host_is_loopback(hostport: str) -> bool:
     """`localhost[:port]`, `127.0.0.1[:port]` or `[::1][:port]`, as a Host header or netloc."""
@@ -63,8 +124,10 @@ def _host_is_loopback(hostport: str) -> bool:
 
 def local_caller(request: Request) -> bool:
     """The machine's own user: a loopback packet with a loopback Host, no forwarding headers
-    (behind nginx on this host every caller's packet is from 127.0.0.1) and no Origin but a
-    loopback page (a site open in that user's browser can POST here too)."""
+    (behind nginx on this host every caller's packet is from 127.0.0.1), no Origin but a
+    loopback page (a site open in that user's browser can POST here too) and, on Linux, a
+    socket owned by this server's user (nginx's default proxy_pass sends a loopback Host and
+    no forwarding header; its workers run as their own user)."""
     peer = request.client.host if request.client else ""
     try:
         if not ipaddress.ip_address(peer).is_loopback:
@@ -76,10 +139,11 @@ def local_caller(request: Request) -> bool:
     if not _host_is_loopback(request.headers.get("host", "")):
         return False
     origin = request.headers.get("origin")
-    if origin is None:
-        return True
-    scheme, _, rest = origin.strip().partition("://")
-    return scheme in ("http", "https") and _host_is_loopback(rest.split("/", 1)[0])
+    if origin is not None:
+        scheme, _, rest = origin.strip().partition("://")
+        if scheme not in ("http", "https") or not _host_is_loopback(rest.split("/", 1)[0]):
+            return False
+    return _caller_is_this_user(request)
 
 
 async def verify_api_key(

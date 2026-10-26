@@ -1,6 +1,7 @@
 """OpenAI API bridge and auth tests."""
 
 import os
+import sys
 
 import pytest
 from fastapi import HTTPException, Request
@@ -143,3 +144,41 @@ def test_legacy_env_key(monkeypatch):
 def test_models_list_response():
     resp = ModelsListResponse(data=[ModelInfo(id="metis", created=1)])
     assert resp.data[0].id == "metis"
+
+
+_TABLE_HEADER = ("  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt"
+                 "   uid  timeout inode\n")
+
+
+def _socket_table(tmp_path, caller: str, server: str, uid):
+    """A /proc/net/tcp holding the server's end of the connection (ours) and the caller's end
+    owned by `uid`, or no caller's end when uid is None. Endpoints in the kernel's format."""
+    row = "   {n}: {a} {b} 01 00000000:00000000 00:00000000 00000000  {u}        0 {n}00 1 0 20 4 30 10 -1\n"
+    lines = [_TABLE_HEADER, row.format(n=1, a=server, b=caller, u=os.geteuid())]
+    if uid is not None:
+        lines.append(row.format(n=2, a=caller, b=server, u=uid))
+    path = tmp_path / "tcp"
+    path.write_text("".join(lines))
+    return (str(path),)
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(not hasattr(os, "geteuid") or sys.byteorder != "little", reason="POSIX table")
+@pytest.mark.parametrize("owner", ["self", "other", "absent"])
+async def test_keyless_dev_refuses_a_proxy_running_as_another_user(monkeypatch, tmp_path, owner):
+    # nginx's default proxy_pass on this host sends a loopback Host and no forwarding header,
+    # so only the owner of the caller's socket tells its workers from a local client.
+    import metis.api.auth as auth
+
+    monkeypatch.delenv("METIS_API_KEY", raising=False)
+    monkeypatch.delenv("METIS_PRODUCTION", raising=False)
+    monkeypatch.delenv("AIFACTORY_ENV", raising=False)
+    uid = {"self": os.geteuid(), "other": os.geteuid() + 1, "absent": None}[owner]
+    # 127.0.0.1:50000 (the caller in _request) -> 127.0.0.1:8080
+    monkeypatch.setattr(auth, "_PROC_NET_TCP", _socket_table(tmp_path, "0100007F:C350", "0100007F:1F90", uid))
+    if owner == "self":
+        assert await verify_api_key(_request(), None) is None
+    else:
+        with pytest.raises(HTTPException) as exc:
+            await verify_api_key(_request(), None)
+        assert exc.value.status_code == 401

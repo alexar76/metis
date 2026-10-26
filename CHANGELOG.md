@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-26
+
+### Security
+
+- Without a key, the "callers on this machine only" rule of 0.2.2 also let in everyone behind a reverse proxy on the same host that adds no forwarding header and sends a loopback `Host`, which is what nginx's default `proxy_pass` does. On Linux the caller's socket must now also belong to the user the server runs as (read from `/proc/net/tcp`), so a proxy's workers, which run as their own user, are refused. A proxy running as the same user, or any proxy on macOS or Windows, still needs a key. Reported by Vulnetix for aimarket-mcp (GCVE-110-PYPI-2026-018883).
+
 ## [0.2.2] - 2026-10-25
 
 ### Security

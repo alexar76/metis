@@ -195,7 +195,7 @@ Used by web search and any outbound HTTP tool.
 
 | Control | Default | Enforcement |
 |---------|---------|---------------|
-| Bearer auth | Required in production or once a key is set; without either, callers on this machine only | `verify_api_key()` |
+| Bearer auth | Required in production or once a key is set; without either, callers on this machine only (on Linux, the server's own user: a reverse proxy's workers are refused); behind a proxy, set a key | `verify_api_key()` |
 | Rate limit | 60 req/min, burst 10 | `RateLimiter` per IP or API key |
 | Request body | 512 KB (config) / 1 MB (env default) | `413` on exceed |
 | CORS | Empty list (deny all) | `security.cors_origins` |
