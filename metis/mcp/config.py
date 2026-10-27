@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 class MCPTransport(str, Enum):
     STDIO = "stdio"
     SSE = "sse"
+    STREAMABLE_HTTP = "streamable-http"
 
 
 class MCPServerConfig(BaseModel):
@@ -22,7 +23,7 @@ class MCPServerConfig(BaseModel):
     command: Optional[str] = None
     args: List[str] = Field(default_factory=list)
     env: Dict[str, str] = Field(default_factory=dict)
-    url: Optional[str] = None  # SSE endpoint
+    url: Optional[str] = None
     enabled: bool = True
     tool_prefix: Optional[str] = None  # namespace tools as prefix__toolname
 
@@ -33,20 +34,20 @@ class MCPServerConfig(BaseModel):
             "aimarket-oracle-gateway": {
                 "name": "aimarket-oracle-gateway",
                 "command": "python",
-                "args": ["-m", "aimarket_oracle_gateway.mcp_stdio_server"],
+                "args": ["-m", "aimarket_oracle_gateway.stdio_server"],
                 "env": {"AIMARKET_HUB_URL": "https://modelmarket.dev"},
                 "tool_prefix": "oracle",
             },
             "aimarket-plugins": {
                 "name": "aimarket-plugins",
                 "command": "python",
-                "args": ["-m", "aimarket_plugins.mcp_server"],
+                "args": ["-m", "aimarket_mcp_packager.stdio_server"],
                 "env": {"AIMARKET_HUB_URL": "https://modelmarket.dev"},
                 "tool_prefix": "hub",
             },
             "aimarket-web": {
                 "name": "aimarket-web",
-                "transport": MCPTransport.SSE,
+                "transport": MCPTransport.STREAMABLE_HTTP,
                 "url": os.environ.get("AIMARKET_MCP_URL", "https://modelmarket.dev/mcp"),
                 "tool_prefix": "web",
             },

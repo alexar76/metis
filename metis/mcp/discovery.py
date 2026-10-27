@@ -15,15 +15,15 @@ ECOSYSTEM_MCP_CATALOG = {
     },
     "aimarket-plugins": {
         "repo": "https://github.com/alexar76/aimarket-plugins",
-        "description": "15 AIMarket hub plugins — escrow, channels, reputation, safety",
+        "description": "MCP Packager — generate a capability relay, Dockerfile and client config",
         "glama": "https://glama.ai/mcp/servers/alexar76/aimarket-plugins",
-        "tools_count": None,
+        "tools_count": 3,
     },
     "aimarket-web": {
         "repo": "https://github.com/alexar76/aimarket-mcp",
-        "description": "Ecosystem MCP gateway — web fetch/search + Metis verify (SSRF-hardened)",
+        "description": "Hosted AIMarket Hub — discover and invoke ecosystem capabilities",
         "glama": "https://glama.ai/mcp/servers/alexar76/aimarket-mcp",
-        "tools_count": 3,
+        "tools_count": 13,
     },
 }
 

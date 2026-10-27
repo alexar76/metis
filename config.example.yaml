@@ -147,7 +147,7 @@ mcp_servers:
   - name: aimarket-oracle-gateway
     transport: stdio
     command: python
-    args: ["-m", "aimarket_oracle_gateway.mcp_stdio_server"]
+    args: ["-m", "aimarket_oracle_gateway.stdio_server"]
     env:
       AIMARKET_HUB_URL: https://modelmarket.dev
     tool_prefix: oracle
