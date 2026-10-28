@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-28
+
+### Security
+
+- Keyless HTTP is now refused by default even for loopback sockets owned by the server's user: arbitrary same-user proxies and tunnels are indistinguishable from direct clients. Set a bearer key for normal HTTP use. `METIS_LOCAL_RELAY=1` explicitly trusts local TCP callers, including such relays; the caller must still pass loopback Host/peer, Origin, forwarding-header and socket-owner checks. Where Linux socket tables are absent, `METIS_LOCAL_UNVERIFIED=1` is additionally required. Removed process-name/listener heuristics that missed multiprocess proxies. Closes Vulnetix GCVE-110-VULN-PYPI-2026-000641.
+
 ## [0.2.3] - 2026-10-26
 
 ### Security

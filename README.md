@@ -206,6 +206,8 @@ export METIS_API_KEY=sk-...
 metis-serve --config config.production.yaml --production --port 8080
 ```
 
+HTTP requires a configured bearer key by default, including requests from loopback. For trusted private development only, `METIS_LOCAL_RELAY=1` explicitly permits keyless local TCP callers, including same-user proxies and tunnels; peer/Host, browser Origin, forwarding-header and socket-owner checks still apply. Where Linux socket tables are absent (macOS/Windows), `METIS_LOCAL_UNVERIFIED=1` is also required. Both settings default off and cannot bypass a configured key or production mode. Prefer `METIS_API_KEY` for the API, coordinator and worker HTTP servers.
+
 Legacy env vars `SUPERBRAIN_*` and `COGNITIVE_*` are still read for one release cycle.
 
 ## Docker

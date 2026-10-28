@@ -34,6 +34,8 @@ from metis.api.app import create_app
 from metis.config import ProviderKind, RuntimeConfig
 from metis.models.provider import LLMProvider
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 @pytest.fixture
 def cfg(tmp_path):

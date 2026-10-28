@@ -10,6 +10,8 @@ from httpx import ASGITransport, AsyncClient
 from metis.config import RuntimeConfig
 from metis.coordinator_server import create_coordinator_app
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 @pytest.fixture
 def coordinator_app(monkeypatch):
@@ -73,4 +75,17 @@ async def test_keyless_dev_coordinator_serves_only_its_own_machine(monkeypatch):
     transport = ASGITransport(app=app, client=("127.0.0.1", 40000))
     async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         r = await client.post("/v1/query", json={"query": "hello"}, headers={"X-Real-IP": "93.184.216.34"})
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_keyless_coordinator_refuses_loopback_without_explicit_relay_trust(monkeypatch):
+    for name in ("METIS_API_KEY", "SUPERBRAIN_API_KEY", "COGNITIVE_API_KEY",
+                 "METIS_LOCAL_RELAY", "METIS_LOCAL_UNVERIFIED"):
+        monkeypatch.delenv(name, raising=False)
+    cfg = RuntimeConfig(production=False, allow_test_provider=True, provider="mock", base_model="test")
+    app = create_coordinator_app(config=cfg)
+    async with AsyncClient(transport=ASGITransport(app=app, client=("127.0.0.1", 40000)),
+                           base_url="http://localhost") as client:
+        r = await client.post("/v1/query", json={"query": "hello"})
     assert r.status_code == 401

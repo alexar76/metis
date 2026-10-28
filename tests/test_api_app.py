@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 from metis.api.app import create_app
 from metis.config import ProviderKind, RuntimeConfig
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 @pytest.fixture
 def client(tmp_path):
@@ -63,3 +65,15 @@ def test_chat_completions_stream(client):
 def test_chat_empty_messages(client):
     r = client.post("/v1/chat/completions", json={"model": "metis", "messages": []})
     assert r.status_code == 400
+
+
+def test_keyless_http_refuses_loopback_without_explicit_relay_trust(client, monkeypatch):
+    for name in ("METIS_API_KEY", "SUPERBRAIN_API_KEY", "COGNITIVE_API_KEY", "METIS_PRODUCTION",
+                 "AIFACTORY_ENV", "METIS_LOCAL_RELAY", "METIS_LOCAL_UNVERIFIED"):
+        monkeypatch.delenv(name, raising=False)
+    payload = {"model": "metis-fast", "messages": [{"role": "user", "content": "Hello"}]}
+    assert client.post("/v1/chat/completions", json=payload).status_code == 401
+    # Credentials work with secure defaults; no local TCP opt-in is needed.
+    monkeypatch.setenv("METIS_API_KEY", "test-local-bearer")
+    assert client.post("/v1/chat/completions", json=payload,
+                       headers={"Authorization": "Bearer test-local-bearer"}).status_code == 200

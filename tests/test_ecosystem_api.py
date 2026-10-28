@@ -19,6 +19,8 @@ from metis.config import (
     SecurityConfig,
 )
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 ENVELOPE_KEYS = {
     "answer",
     "status",

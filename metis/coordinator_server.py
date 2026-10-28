@@ -113,11 +113,13 @@ def create_coordinator_app(
         elif cfg.production:
             raise HTTPException(status_code=401, detail="Authentication required")
         elif request is not None and not local_caller(request):
-            # No key outside production: callers on this machine only. Any caller that could
-            # reach the port (0.0.0.0 by default) used to spend this node's model budget.
+            # Same-user TCP relays are indistinguishable from direct local clients;
+            # accepting keyless requests requires an explicit operator opt-in.
             raise HTTPException(
                 status_code=401,
-                detail="No API key is configured, so only callers on this machine are served",
+                detail="Set METIS_API_KEY for HTTP access, or explicitly trust local TCP "
+                "relays with METIS_LOCAL_RELAY=1 (also METIS_LOCAL_UNVERIFIED=1 "
+                "on hosts without Linux socket tables).",
             )
         allowed, retry = limiter.allow(limiter.client_key(client_ip, token))
         if not allowed:

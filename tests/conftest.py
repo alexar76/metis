@@ -35,8 +35,16 @@ def _let_metis_logs_reach_caplog():
 
 @pytest.fixture(autouse=True)
 def _no_kernel_socket_table(monkeypatch):
-    """The tests fake loopback callers that are not real sockets, so the kernel's table would
-    never show them on Linux. Each test sees what macOS sees, no table, unless it sets one."""
-    import metis.api.auth as _m
+    """ASGI callers are synthetic sockets; keep secure defaults unless a test opts in."""
+    from metis.api import auth as socket_auth
 
-    monkeypatch.setattr(_m, "_PROC_NET_TCP", ())
+    monkeypatch.setattr(socket_auth, "_PROC_NET_TCP", ())
+    monkeypatch.delenv("METIS_LOCAL_RELAY", raising=False)
+    monkeypatch.delenv("METIS_LOCAL_UNVERIFIED", raising=False)
+
+
+@pytest.fixture
+def local_http_opt_in(monkeypatch):
+    """Explicit test operator choice for protocol tests without real kernel sockets."""
+    monkeypatch.setenv("METIS_LOCAL_RELAY", "1")
+    monkeypatch.setenv("METIS_LOCAL_UNVERIFIED", "1")

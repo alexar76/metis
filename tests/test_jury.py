@@ -34,6 +34,8 @@ from metis.observability.config import ObservabilityConfig
 from metis.observability.trace_store import TraceStore
 from metis.verify import jury
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 AID = "0123456789abcdef01234567"
 ROSTER = (
     JurorSlot(model="deepseek-v4-pro", base_url="https://api.deepseek.test/v1",

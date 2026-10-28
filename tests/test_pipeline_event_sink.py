@@ -29,6 +29,8 @@ from metis.observability.logging.pipeline_events import (
     set_event_sink,
 )
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 @pytest.fixture(autouse=True)
 def _clean_sink():

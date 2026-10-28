@@ -19,6 +19,8 @@ from metis.distributed import server as node_server
 from metis.distributed.security import SecuritySettings
 from metis.models.provider import LLMResponse
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 class _EchoProvider:
     def __init__(self) -> None:
@@ -188,5 +190,16 @@ async def test_a_keyless_node_serves_only_its_own_machine(provider, peer, base_u
     assert r.status_code == 401
     r = await _call(app, "POST", "/v1/chat/completions", peer=peer, base_url=base_url, headers=headers,
                     json={"model": "echo-1", "messages": [{"role": "user", "content": "hi"}]})
+    assert r.status_code == 401
+    assert provider.calls == []
+
+
+@pytest.mark.asyncio
+async def test_keyless_node_refuses_loopback_without_explicit_relay_trust(provider, monkeypatch):
+    monkeypatch.delenv("METIS_LOCAL_RELAY", raising=False)
+    monkeypatch.delenv("METIS_LOCAL_UNVERIFIED", raising=False)
+    app = _app()
+    r = await _call(app, "POST", "/metis/invoke", peer="127.0.0.1", base_url="http://localhost",
+                    content=_invoke_body())
     assert r.status_code == 401
     assert provider.calls == []

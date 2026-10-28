@@ -12,6 +12,8 @@ from metis.exoskeleton import Metis
 from metis.models.provider import model_supports_vision
 from metis.security.media import validate_image_url, validate_images
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 # a real 1×1 png data URI
 PNG = ("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lE"
        "QVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")

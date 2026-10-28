@@ -8,6 +8,8 @@ from metis.security.code_execution import DenyPublicHostExecution
 from metis.tools.registry import CodeInterpreterTool
 from metis.tools.sandbox import execute_sandboxed
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 @pytest.fixture(autouse=True)
 def no_process_starts(monkeypatch):

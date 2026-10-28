@@ -7,6 +7,8 @@ from metis.api.app import create_app
 from metis.config import ProviderKind, RuntimeConfig
 from metis.observability.trace_store import TraceStore
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 @pytest.fixture
 def client(tmp_path):

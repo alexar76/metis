@@ -49,10 +49,12 @@ Con `injection_detected: true` → Metis **rechaza de forma dura** la petición 
 
 | Control | Por defecto |
 |---------|-------------|
-| Bearer auth | Obligatorio en producción |
+| Bearer auth | Obligatorio por defecto, incluso en loopback; TCP sin clave requiere `METIS_LOCAL_RELAY=1` explícito |
 | Rate limit | 60 req/min, burst 10 |
 | Cuerpo de solicitud | 512 KB (config) / 1 MB (env) |
 | CORS | Lista vacía (denegar) |
+
+`METIS_LOCAL_RELAY=1` confía en clientes TCP locales, incluidos proxies y túneles con el mismo UID. Sin las tablas de sockets de Linux también requiere `METIS_LOCAL_UNVERIFIED=1`. Ambos están desactivados por defecto y no omiten una clave configurada ni el modo production. Se recomienda `METIS_API_KEY`: el nombre del proceso no demuestra que la petición sea directa.
 
 ---
 

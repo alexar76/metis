@@ -195,7 +195,7 @@ Used by web search and any outbound HTTP tool.
 
 | Control | Default | Enforcement |
 |---------|---------|---------------|
-| Bearer auth | Required in production or once a key is set; without either, callers on this machine only (on Linux, the server's own user: a reverse proxy's workers are refused); behind a proxy, set a key | `verify_api_key()` |
+| Bearer auth | Required by default, including loopback. Private keyless TCP requires explicit `METIS_LOCAL_RELAY=1`, trusting same-user relays, plus `METIS_LOCAL_UNVERIFIED=1` when Linux socket tables are absent | `verify_api_key()` |
 | Rate limit | 60 req/min, burst 10 | `RateLimiter` per IP or API key |
 | Request body | 512 KB (config) / 1 MB (env default) | `413` on exceed |
 | CORS | Empty list (deny all) | `security.cors_origins` |
@@ -206,10 +206,13 @@ Used by web search and any outbound HTTP tool.
 ```
 Request → METIS_PRODUCTION or METIS_API_KEY set?
   → Yes: require Authorization: Bearer <token>
-  → No:  auth optional (development only)
+  → No:  refuse unless METIS_LOCAL_RELAY=1 and local request/ownership checks pass
+         (without Linux socket tables, also require METIS_LOCAL_UNVERIFIED=1)
 ```
 
 Accepted key env vars: `METIS_API_KEY`, `SUPERBRAIN_API_KEY`, `COGNITIVE_API_KEY`.
+
+Loopback sockets under the same UID cannot distinguish a local client from a proxy or tunnel. `METIS_LOCAL_RELAY=1` explicitly trusts all such callers; process-name and public-listener heuristics are not authorization. A configured key and production mode always take precedence over these development opt-ins.
 
 ---
 

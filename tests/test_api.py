@@ -18,6 +18,8 @@ from metis.api.schemas import ChatCompletionRequest, ChatMessage, ModelInfo, Mod
 from metis.config import ProviderKind, RouteMode, RuntimeConfig
 from metis.exoskeleton import Metis
 
+pytestmark = pytest.mark.usefixtures("local_http_opt_in")
+
 
 @pytest.fixture
 def mock_config(tmp_path):
@@ -83,7 +85,7 @@ def _request(peer: str = "127.0.0.1", host: str = "localhost", **headers: str) -
 
 
 @pytest.mark.asyncio
-async def test_verify_api_key_no_auth_when_dev(monkeypatch):
+async def test_verify_api_key_no_auth_when_dev_explicitly_opts_in(monkeypatch):
     monkeypatch.delenv("METIS_API_KEY", raising=False)
     monkeypatch.delenv("METIS_PRODUCTION", raising=False)
     assert await verify_api_key(_request(), None) is None
@@ -182,3 +184,40 @@ async def test_keyless_dev_refuses_a_proxy_running_as_another_user(monkeypatch, 
         with pytest.raises(HTTPException) as exc:
             await verify_api_key(_request(), None)
         assert exc.value.status_code == 401
+
+
+@pytest.mark.parametrize("relay,unverified,allowed", [(False, False, False), (False, True, False),
+                                                         (True, False, False), (True, True, True)])
+async def test_keyless_dev_without_socket_table_requires_both_opt_ins(monkeypatch, relay, unverified, allowed):
+    import metis.api.auth as auth
+
+    for name in ("METIS_API_KEY", "SUPERBRAIN_API_KEY", "COGNITIVE_API_KEY", "METIS_PRODUCTION", "AIFACTORY_ENV"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(auth, "_PROC_NET_TCP", ())
+    monkeypatch.setenv("METIS_LOCAL_RELAY", "1" if relay else "0")
+    monkeypatch.setenv("METIS_LOCAL_UNVERIFIED", "1" if unverified else "0")
+    if allowed:
+        assert await verify_api_key(_request(), None) is None
+    else:
+        with pytest.raises(HTTPException) as exc:
+            await verify_api_key(_request(), None)
+        assert exc.value.status_code == 401
+
+
+@pytest.mark.skipif(not hasattr(os, "geteuid") or sys.byteorder != "little", reason="POSIX table")
+async def test_keyless_dev_takes_this_users_relay_only_when_the_operator_says_so(monkeypatch, tmp_path):
+    # Vulnetix GCVE-110-VULN-PYPI-2026-000641: a reverse proxy running as the server's own user
+    # passed the owner check. It is remote now, unless the operator opts in.
+    import metis.api.auth as auth
+
+    monkeypatch.delenv("METIS_API_KEY", raising=False)
+    monkeypatch.delenv("METIS_PRODUCTION", raising=False)
+    monkeypatch.delenv("AIFACTORY_ENV", raising=False)
+    monkeypatch.setattr(auth, "_PROC_NET_TCP",
+                        _socket_table(tmp_path, "0100007F:C350", "0100007F:1F90", os.geteuid()))
+    monkeypatch.delenv("METIS_LOCAL_RELAY", raising=False)
+    with pytest.raises(HTTPException):
+        await verify_api_key(_request(), None)
+    monkeypatch.setenv("METIS_LOCAL_RELAY", "1")
+    assert await verify_api_key(_request(), None) is None
+
