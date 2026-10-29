@@ -22,7 +22,7 @@ def serve_main() -> None:
         import uvicorn
     except ImportError as exc:
         raise SystemExit(
-            "uvicorn required. Install: pip install 'metis[distributed]'"
+            "uvicorn required. Install: pip install 'aimarket-metis[distributed]'"
         ) from exc
 
     from metis.api.app import create_app

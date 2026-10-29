@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-10-28
+
+### Fixed
+
+- Include the benchmark CLI package and its four built-in datasets in wheel and source distributions. Clean installations can now run `metis-benchmark` without a source checkout.
+- Package the deterministic offline provider used by `metis-benchmark --mock`; it no longer imports the unpublished `tests` tree. Runtime mock use still requires explicit `allow_test_provider` opt-in.
+- Correct the HTTP server's optional-dependency installation hint to `aimarket-metis[distributed]`.
+- Include benchmark sources in the Docker builder so container-installed CLI tools have the same files as the published wheel. Correct the image's source label to the canonical alexar76 repository.
+
 ## [0.2.5] - 2026-10-28
 
 ### Security

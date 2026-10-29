@@ -213,7 +213,7 @@ def create_provider(
             raise RuntimeError(
                 "Mock provider is test-only. Set allow_test_provider=true in test config."
             )
-        from tests.support.mock_provider import MockProvider
+        from metis.models.mock_provider import MockProvider
         return MockProvider(slot)
 
     inner: LLMProvider

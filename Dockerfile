@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY pyproject.toml README.md ./
 COPY metis ./metis
+COPY benchmarks ./benchmarks
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip wheel --no-cache-dir --wheel-dir /wheels ".[distributed]"
@@ -20,7 +21,7 @@ FROM python:3.11-slim AS runtime
 
 LABEL org.opencontainers.image.title="metis" \
       org.opencontainers.image.description="Multi-agent reasoning orchestrator" \
-      org.opencontainers.image.source="https://github.com/metis/metis"
+      org.opencontainers.image.source="https://github.com/alexar76/metis"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

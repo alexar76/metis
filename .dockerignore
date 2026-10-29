@@ -1,4 +1,4 @@
-# Build context exclusions — production image has no test/mock code
+# Build context exclusions — production image has no test tree or local secrets
 .git
 .gitignore
 .venv
@@ -16,7 +16,7 @@ build
 !.env.example
 !config/docker.env.example
 
-# Tests and dev tooling (no mock provider in production image)
+# Tests and dev tooling (the packaged offline provider remains explicitly opt-in)
 tests/
 docs/
 data/
