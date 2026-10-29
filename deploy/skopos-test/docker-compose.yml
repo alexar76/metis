@@ -58,6 +58,11 @@ services:
       SKOPOS_DATABASE_URL: ${SKOPOS_DATABASE_URL}
       SKOPOS_DASHBOARD_PASSWORD: ${SKOPOS_DASHBOARD_PASSWORD}
       SKOPOS_SSH_STRICT_HOST_KEYS: ${SKOPOS_SSH_STRICT_HOST_KEYS:-1}
+      # Whose X-Real-IP / X-Forwarded-For count: metis-nginx, the TLS front on 80/443 that reaches the
+      # dashboard over metisnet, and the docker gateway. Not every private address: a neighbour would
+      # name itself, and with the gateway alone every browser shared one login budget
+      # (Vulnetix GCVE-110-VULN-PYPI-2026-000636).
+      SKOPOS_TRUSTED_PROXIES: ${SKOPOS_TRUSTED_PROXIES:-127.0.0.1/32,::1/128,metis-nginx,gateway}
       SKOPOS_GEOIP_API_FALLBACK: ${SKOPOS_GEOIP_API_FALLBACK:-}
       MAXMIND_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
       MAXMIND_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}
