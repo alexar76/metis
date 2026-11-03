@@ -67,6 +67,12 @@ services:
       MAXMIND_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
       MAXMIND_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}
       SKOPOS_CONFIG_PATH: /app/servers.yaml
+      # The fleet's own requests are counted per day, not stored (skopos/own_traffic.py, 2026-11-01);
+      # SKOPOS_OWN_ADDRESSES (the fleet's public addresses, comma-separated) lives in .env.
+      SKOPOS_STORE_OWN_TRAFFIC: ${SKOPOS_STORE_OWN_TRAFFIC:-0}
+      SKOPOS_OWN_ADDRESSES: ${SKOPOS_OWN_ADDRESSES:-}
+      # Line hashes older than a week go; the API applies it hourly, as nodes push (2026-11-02).
+      SKOPOS_DEDUP_RETENTION_DAYS: ${SKOPOS_DEDUP_RETENTION_DAYS:-7}
       SKOPOS_HEALTHZ_PORT: "8502"
       STREAMLIT_SERVER_BASE_URL_PATH: app
       SKOPOS_UI_PREFS_PATH: /app/.skopos/ui_prefs.json
