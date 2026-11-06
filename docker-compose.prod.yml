@@ -83,7 +83,7 @@ services:
 
   # Optional nginx TLS sidecar — mount certs at ./certs/
   # nginx:
-  #   image: nginx:1.27-alpine
+  #   image: nginx:1.30-alpine
   #   profiles: [tls]
   #   ports:
   #     - "443:443"
