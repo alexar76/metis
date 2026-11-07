@@ -26,10 +26,12 @@ security_scan_interval_minutes: 60
 # runs `skoposctl node-check` against it and refuses to go live in that case.
 
 servers:
+  # Historical enrollment ID retained. This previous Factory host now runs
+  # the Lottery stack after the 2026-11-07 migration from admin-vps.
   - name: factory
     source: ssh_nginx_access_log
     transport: agent-push
-    address: modeldev.modelmarket.dev
+    address: lottery.modelmarket.dev
     nginx:
       access_log_path: /var/log/nginx/access.log
       auto_discover_logs: true
