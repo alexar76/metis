@@ -33,7 +33,7 @@ def get_api_key_from_env() -> Optional[str]:
 
 
 def is_production_mode() -> bool:
-    val = _resolve_env(
+    flags = (
         "METIS_PRODUCTION",
         "SUPERBRAIN_PRODUCTION",
         "COGNITIVE_PRODUCTION",
@@ -41,8 +41,8 @@ def is_production_mode() -> bool:
         # flip metis into production mode (fail-closed on the paid endpoints).
         "AIFACTORY_PROD",
         "AIFACTORY_PRODUCTION",
-    ) or ""
-    if val.lower() in ("1", "true", "yes"):
+    )
+    if any(_flag(name) for name in flags):
         return True
     env = (os.environ.get("AIFACTORY_ENV") or "").lower()
     return env in ("production", "prod", "live")
@@ -161,7 +161,10 @@ async def verify_api_key(
 ) -> Optional[str]:
     """Validate Bearer token when production mode or key is configured."""
     expected = get_api_key_from_env()
-    production = is_production_mode()
+    # The CLI and YAML configuration set production on the app's RuntimeConfig.
+    app_state = getattr(request.scope.get("app"), "state", None)
+    config = getattr(app_state, "config", None)
+    production = is_production_mode() or getattr(config, "production", False)
 
     if not production and not expected:
         # Without credentials, local TCP trust requires an explicit operator opt-in.

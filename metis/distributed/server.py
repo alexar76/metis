@@ -53,8 +53,9 @@ def create_app(
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse
 
-    from metis.api.auth import local_caller
+    from metis.api.auth import is_production_mode, local_caller
 
+    production = production or is_production_mode()
     app = FastAPI(title=f"Metis Node {node_id}", version=__version__)
     from metis.security.code_execution import DenyPublicHostExecution
 

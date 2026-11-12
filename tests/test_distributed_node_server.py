@@ -73,6 +73,13 @@ async def test_production_without_a_key_env_refuses_everything(provider):
     assert r.status_code == 500
 
 
+async def test_worker_production_environment_disables_keyless_inference(provider, monkeypatch):
+    monkeypatch.setenv("AIFACTORY_PROD", "1")
+    r = await _call(_app(), "POST", "/metis/invoke", content=_invoke_body())
+    assert r.status_code == 500
+    assert provider.calls == []
+
+
 @pytest.mark.asyncio
 async def test_wrong_or_missing_key_is_refused(provider, monkeypatch):
     monkeypatch.setenv("NODE_KEY", "s3cret")

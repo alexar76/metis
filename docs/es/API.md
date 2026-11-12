@@ -21,7 +21,7 @@ Metis es **solo API** — sin interfaz de chat integrada. Los clientes se conect
 Authorization: Bearer sk-your-secret-key
 ```
 
-Token Bearer obligatorio cuando `METIS_PRODUCTION=true` o `METIS_API_KEY` está configurado.
+Las rutas protegidas requieren un token Bearer por defecto, incluso en loopback. Para desarrollo local, consulta las [opciones de acceso sin clave](SECURITY.md).
 
 | Variable | Alias |
 |----------|-------|

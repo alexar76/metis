@@ -204,13 +204,15 @@ Used by web search and any outbound HTTP tool.
 ### Authentication flow
 
 ```
-Request → METIS_PRODUCTION or METIS_API_KEY set?
+Request → production mode or METIS_API_KEY set?
   → Yes: require Authorization: Bearer <token>
   → No:  refuse unless METIS_LOCAL_RELAY=1 and local request/ownership checks pass
          (without Linux socket tables, also require METIS_LOCAL_UNVERIFIED=1)
 ```
 
 Accepted key env vars: `METIS_API_KEY`, `SUPERBRAIN_API_KEY`, `COGNITIVE_API_KEY`.
+
+Production is enabled by `--production`, `production: true` in runtime YAML, or an enabled `METIS_PRODUCTION`, `SUPERBRAIN_PRODUCTION`, `COGNITIVE_PRODUCTION`, `AIFACTORY_PROD`, or `AIFACTORY_PRODUCTION` flag. `AIFACTORY_ENV=production`, `prod`, or `live` also enables it.
 
 Loopback sockets under the same UID cannot distinguish a local client from a proxy or tunnel. `METIS_LOCAL_RELAY=1` explicitly trusts all such callers; process-name and public-listener heuristics are not authorization. A configured key and production mode always take precedence over these development opt-ins.
 

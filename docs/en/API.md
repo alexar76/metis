@@ -39,10 +39,7 @@ All OpenAI-compatible routes are under `/v1`.
 
 ## Authentication
 
-Bearer token authentication is enforced when **either**:
-
-- `METIS_PRODUCTION=true` (or `SUPERBRAIN_PRODUCTION` / `COGNITIVE_PRODUCTION`), **or**
-- `METIS_API_KEY` is set in the environment
+Protected routes require a Bearer token by default, including requests from loopback. For private development, see the [local TCP opt-ins](SECURITY.md#authentication-flow).
 
 ```http
 Authorization: Bearer sk-your-secret-key
@@ -54,9 +51,11 @@ Authorization: Bearer sk-your-secret-key
 
 | Mode | Behavior |
 |------|----------|
-| Development (no key, not production) | Auth optional — requests proceed without `Authorization` |
-| Production or key configured | `401` without valid Bearer token |
-| Production without key set | `500` — `METIS_API_KEY must be set in production mode` |
+| Development without a key | `401` unless the operator opts into keyless local TCP and the request passes the local caller checks |
+| Key configured | `401` without a valid Bearer token |
+| Production without a key | `401` without a Bearer token, `500` with one because the server has no key to check it against |
+
+Production mode can be set through `--production`, `production: true` in the runtime YAML, or the production environment flags. A production signal or a configured key takes precedence over the local TCP opt-ins.
 
 ---
 

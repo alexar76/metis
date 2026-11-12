@@ -66,11 +66,13 @@ def create_coordinator_app(
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse
 
+    from metis.api.auth import is_production_mode, local_caller
+
     cfg = config
     if cfg is None and config_path:
         cfg = RuntimeConfig.from_yaml(config_path)
     cfg = cfg or RuntimeConfig()
-    if production:
+    if production or is_production_mode():
         cfg.production = True
 
     sc = sec_config or cfg.security
@@ -83,7 +85,6 @@ def create_coordinator_app(
     app.add_middleware(DenyPublicHostExecution)
 
     brain = Metis(cfg)
-    from metis.api.auth import local_caller
     from metis.api.bridge import OpenAIMetisBridge
     from metis.api.openai_compat import router as openai_router
 

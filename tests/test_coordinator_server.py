@@ -89,3 +89,16 @@ async def test_keyless_coordinator_refuses_loopback_without_explicit_relay_trust
                            base_url="http://localhost") as client:
         r = await client.post("/v1/query", json={"query": "hello"})
     assert r.status_code == 401
+
+
+async def test_coordinator_production_environment_disables_keyless_inference(monkeypatch):
+    for name in ("METIS_API_KEY", "SUPERBRAIN_API_KEY", "COGNITIVE_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("METIS_PRODUCTION", "false")
+    monkeypatch.setenv("AIFACTORY_PROD", "1")
+    cfg = RuntimeConfig(production=False, allow_test_provider=True, provider="mock", base_model="test")
+    app = create_coordinator_app(config=cfg)
+    async with AsyncClient(transport=ASGITransport(app=app, client=("127.0.0.1", 40000)),
+                           base_url="http://localhost") as client:
+        r = await client.post("/v1/query", json={"query": "hello"})
+    assert r.status_code == 500

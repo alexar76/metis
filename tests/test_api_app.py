@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from metis.api.app import create_app
 from metis.config import ProviderKind, RuntimeConfig
+from metis.coordinator_server import create_coordinator_app
 
 pytestmark = pytest.mark.usefixtures("local_http_opt_in")
 
@@ -77,3 +78,26 @@ def test_keyless_http_refuses_loopback_without_explicit_relay_trust(client, monk
     monkeypatch.setenv("METIS_API_KEY", "test-local-bearer")
     assert client.post("/v1/chat/completions", json=payload,
                        headers={"Authorization": "Bearer test-local-bearer"}).status_code == 200
+
+
+@pytest.mark.parametrize("app_factory", [create_app, create_coordinator_app])
+def test_runtime_production_refuses_keyless_inference_with_relay_opt_ins(app_factory, monkeypatch, tmp_path):
+    for name in (
+        "METIS_API_KEY", "SUPERBRAIN_API_KEY", "COGNITIVE_API_KEY",
+        "METIS_PRODUCTION", "SUPERBRAIN_PRODUCTION", "COGNITIVE_PRODUCTION",
+        "AIFACTORY_PROD", "AIFACTORY_PRODUCTION", "AIFACTORY_ENV",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    config = RuntimeConfig(
+        production=True,
+        provider=ProviderKind.MOCK,
+        allow_test_provider=True,
+        memory_dir=tmp_path / "memory",
+    )
+    app = app_factory(config=config)
+    client = TestClient(app, client=("127.0.0.1", 50000), base_url="http://localhost")
+    payload = {"model": "metis-fast", "messages": [{"role": "user", "content": "Hello"}]}
+
+    assert client.post("/v1/chat/completions", json=payload).status_code == 401
+    assert client.post("/v1/chat/completions", json=payload,
+                       headers={"Authorization": "Bearer unknown"}).status_code == 500

@@ -57,12 +57,11 @@ Full stack docs: [`skopos-test/README.md`](skopos-test/README.md).
 
 ## API container (metis-serve)
 
-The image's default `CMD` is `metis-coordinator --production` (the distributed
-coordinator), so the public single-node demo **must** override it with the explicit
-`metis-serve` command, run in **non-production** mode (the demo is intentionally
-keyless — `METIS_PRODUCTION=true`, baked into the image, would make the C4 fail-closed
-auth reject every keyless call), and mount a **persistent** data dir so the
-KnowledgeStore/memory survive a container recreate:
+The image's default `CMD` starts the distributed coordinator. To serve the
+single-node API, override it with `metis-serve`, set `METIS_API_KEY` in a
+root-only env file, and mount a persistent data directory for the KnowledgeStore
+and memory. Keep the key out of public browser code and give it to the API's
+authorized clients.
 
 ```bash
 mkdir -p /opt/metis/data && chown -R 1000:1000 /opt/metis/data   # store persists here
@@ -70,10 +69,10 @@ docker build -t metis:latest /opt/metis
 docker rm -f metis 2>/dev/null || true
 docker run -d --name metis --restart unless-stopped \
   --network metisnet -p 127.0.0.1:8080:8080 \
-  -e METIS_PRODUCTION=false \
+  --env-file /etc/metis-api.env \
   -v /opt/metis/deploy/prod.yaml:/app/config/prod.yaml:ro \
   -v /opt/metis/data:/app/data \
-  metis:latest metis-serve --host 0.0.0.0 --port 8080 --config /app/config/prod.yaml
+  metis:latest metis-serve --host 0.0.0.0 --port 8080 --config /app/config/prod.yaml --production
 docker network connect bridge metis   # outbound already works via metisnet; matches original
 ```
 
@@ -83,9 +82,10 @@ Then seed the reproducible ecosystem knowledge into the persistent store (idempo
 docker exec -i metis python3 - data/knowledge < scripts/seed_ecosystem_knowledge.py
 ```
 
-Miss any of these and the symptoms are: `metis-coordinator` default → `/v1/verify`
-404s; `METIS_PRODUCTION=true` + no key → every call 401s; no data mount → a recreate
-silently resets `knowledge_entries` to 0.
+`/v1/verify` is served by `metis-serve`. Check `/health` for liveness and make an
+authenticated request to `/v1/models` to verify that the API accepts the configured
+key. Check `knowledge_entries` after recreating the container to confirm it reused
+the persisted data.
 
 ## Appeal court (Metis #2)
 
@@ -98,17 +98,17 @@ DeepSeek through its own API. Five seats from five vendors, so one dissent still
 confident majority.
 
 It runs on the attested host behind `https://attestedmemory.net/metis-appeal/` (nginx
-`location ^~ /metis-appeal/` → `127.0.0.1:9510`, `proxy_read_timeout 360s`). The keys live in a
-root-only env file; unlike the public demo, the court requires `METIS_API_KEY`:
+`location ^~ /metis-appeal/` → `127.0.0.1:9510`, `proxy_read_timeout 360s`). Set a
+separate `METIS_API_KEY` for the court in its root-only env file.
 
 ```bash
 # /etc/metis-appeal.env (0600): OPENROUTER_API_KEY, DEEPSEEK_API_KEY, METIS_API_KEY,
-#                               METIS_PRODUCTION=false, METIS_COORDINATOR_PORT=8080
+#                               METIS_COORDINATOR_PORT=8080
 docker run -d --name metis-appeal --restart unless-stopped --env-file /etc/metis-appeal.env \
   -v /opt/metis-appeal/config/prod.yaml:/app/config/prod.yaml:ro \
   -v /opt/metis-appeal/data:/app/data \
   -p 127.0.0.1:9510:8080 metis:<tag> \
-  metis-serve --host 0.0.0.0 --port 8080 --config /app/config/prod.yaml
+  metis-serve --host 0.0.0.0 --port 8080 --config /app/config/prod.yaml --production
 ```
 
 OpenRouter refuses Anthropic, OpenAI and Google models from that host's region (403, "violation

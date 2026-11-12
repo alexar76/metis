@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Honor production mode from the API and coordinator runtime config on Bearer-protected routes, and honor production environment flags on the coordinator and worker. Production mode blocks keyless relay opt-ins on all three servers.
+
 ## [0.2.6] - 2026-10-28
 
 ### Fixed
