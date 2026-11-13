@@ -8,10 +8,10 @@ migrate_legacy_env()
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from metis.economy.config import EconomyConfig
@@ -231,7 +231,9 @@ class RuntimeConfig(BaseSettings):
 
     enable_code_interpreter: bool = False
     enable_web_search: bool = True
+    web_search_provider: Literal["duckduckgo", "tavily"] = "duckduckgo"
     web_search_url: str = "https://html.duckduckgo.com/html/"
+    tavily_api_key: Optional[SecretStr] = None
     code_timeout_seconds: int = 10
     sandbox_use_subprocess: bool = True
 
@@ -254,7 +256,8 @@ class RuntimeConfig(BaseSettings):
 
     def model_post_init(self, __context: Any) -> None:
         from metis.security.ssrf import validate_url
-        self.web_search_url = validate_url(self.web_search_url)
+        if self.web_search_provider == "duckduckgo":
+            self.web_search_url = validate_url(self.web_search_url)
         if self.production and not self.api_key_env_set():
             pass  # api_key from env in production via METIS_API_KEY
 

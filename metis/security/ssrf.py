@@ -138,11 +138,14 @@ async def safe_post(
     url: str,
     *,
     data: Optional[dict] = None,
+    json_body: Optional[dict] = None,
     timeout: float = 15.0,
     max_redirects: int = _MAX_REDIRECTS,
     headers: Optional[dict] = None,
 ) -> httpx.Response:
     """HTTP POST with SSRF protection."""
+    if data is not None and json_body is not None:
+        raise ValueError("Choose either a form or a JSON request body")
     async with httpx.AsyncClient(
         timeout=timeout,
         follow_redirects=False,
@@ -150,10 +153,11 @@ async def safe_post(
     ) as client:
         current = url
         forwarded = {name: value for name, value in (headers or {}).items() if name.lower() != "host"}
-        method, payload = "POST", data
+        method = "POST"
+        body = {"data": data} if json_body is None else {"json": json_body}
         for _ in range(max_redirects + 1):
             target, host_headers, extensions = _pinned_target(current)
-            resp = await client.request(method, target, data=payload,
+            resp = await client.request(method, target, **body,
                                         headers={**forwarded, **host_headers}, extensions=extensions)
             if resp.status_code in (301, 302, 303, 307, 308):
                 location = resp.headers.get("location")
@@ -161,7 +165,7 @@ async def safe_post(
                     return resp
                 next_url = urljoin(current, location)
                 if resp.status_code in (301, 302, 303):
-                    method, payload = "GET", None
+                    method, body = "GET", {}
                 elif _origin(current) != _origin(next_url):
                     raise ValueError("Refusing to forward POST data to another origin")
                 if _origin(current) != _origin(next_url):

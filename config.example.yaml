@@ -19,6 +19,9 @@ enforce_confidence_gate: true
 
 enable_code_interpreter: true
 enable_web_search: true
+# Set METIS_WEB_SEARCH_PROVIDER=tavily to use search results with source URLs.
+# Keyless Tavily uses DuckDuckGo on HTTP 429, HTTP 5xx, or network failure. Set METIS_TAVILY_API_KEY for authenticated Tavily access.
+# Set ALIEN_MONITOR_URL and ALIEN_PROVIDER_EVENTS_TOKEN to report Tavily search outcomes to Alien Monitor.
 enable_long_term_memory: true
 memory_dir: data/memory
 rag_top_k: 5

@@ -1,7 +1,9 @@
 """Search, env compat, and economy bridge tests."""
 
 import os
+from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 
 from metis.economy.bridge import BudgetExceededError, EcosystemBridge
@@ -71,7 +73,17 @@ def test_ecosystem_bridge_finalize():
 
 
 @pytest.mark.asyncio
-async def test_web_search_tool_runs():
-    tool = WebSearchTool()
+async def test_web_search_tool_runs(monkeypatch):
+    url = "https://93.184.216.34/html/"
+    post = AsyncMock(return_value=httpx.Response(
+        200, request=httpx.Request("POST", url),
+        text='<a class="result__snippet">A public result</a>',
+    ))
+    monkeypatch.setattr("metis.tools.registry.safe_post", post)
+    tool = WebSearchTool(search_url=url)
     result = await tool.run("metis multi-agent orchestrator")
     assert result.name == "web_search"
+    assert result.success and "A public result" in result.output
+    post.assert_awaited_once_with(
+        url, data={"q": "metis multi-agent orchestrator"}, headers={"User-Agent": "metis/0.1"},
+    )

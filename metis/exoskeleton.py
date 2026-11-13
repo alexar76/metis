@@ -38,7 +38,7 @@ from metis.router.classifier import classify_query, task_kind_of
 from metis.schemas.task_spec import TaskSpec
 from metis.security import build_system_prompt, log_security_event, sanitize_tool_output, sanitize_user_input, verify_canary_intact
 from metis.thinking.extended import extended_thinking, self_consistency
-from metis.tools.registry import CodeInterpreterTool, ToolRegistry, WebSearchTool
+from metis.tools.registry import CodeInterpreterTool, TavilySearchTool, ToolRegistry, WebSearchTool
 from metis.pipeline.depth import DepthGate, DepthLevel
 from metis.pipeline.escalation import EscalationPolicy
 from metis.verify.critic import verify_answer
@@ -178,7 +178,17 @@ class Metis:
             registry.register(CodeInterpreterTool(timeout=self.config.code_timeout_seconds,
                                                    production=self.config.production))
         if self.config.enable_web_search:
-            registry.register(WebSearchTool(search_url=self.config.web_search_url))
+            if self.config.web_search_provider == "tavily":
+                from metis.observability.provider_events import TavilyActivityReporter
+
+                key = self.config.tavily_api_key
+                registry.register(TavilySearchTool(
+                    api_key=key.get_secret_value() if key else None,
+                    fallback_search_url=self.config.web_search_url if not key else None,
+                    report_provider=TavilyActivityReporter.from_env(),
+                ))
+            else:
+                registry.register(WebSearchTool(search_url=self.config.web_search_url))
         # Paid ecosystem invoke — the agent can pay-per-call any AIMarket hub
         # capability (complements MCP tools). Opt-in + needs a hub URL.
         if getattr(self.config, "enable_ecosystem_invoke", False) and self.config.economy.aimarket_hub_url:

@@ -11,8 +11,10 @@ import tempfile
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
+from urllib.parse import urlsplit
 
+import httpx
 from metis.economy.meter import get_current_meter
 from metis.models.provider import LLMProvider, extract_json
 from metis.observability.logging.pipeline_events import PipelineEventKind, emit_pipeline_event
@@ -172,6 +174,88 @@ class WebSearchTool(Tool):
             return ToolResult(self.name, True, wrapped)
         except Exception as e:
             return ToolResult(self.name, False, "", str(e))
+
+
+class TavilySearchTool(Tool):
+    name = "web_search"
+    description = "Search the web for current facts with source URLs and snippets."
+    url = "https://api.tavily.com/search"
+
+    def __init__(
+        self, *, api_key: str | None = None, fallback_search_url: str | None = None,
+        report_provider: Callable[[bool], None] | None = None,
+    ):
+        self._api_key = api_key
+        self._fallback_search_url = fallback_search_url
+        self._report_provider = report_provider
+
+    async def _fallback(self, query: str, error: str) -> ToolResult:
+        if self._api_key or not self._fallback_search_url:
+            return ToolResult(self.name, False, "", error)
+        try:
+            result = await WebSearchTool(search_url=self._fallback_search_url).run(query)
+        except ValueError:
+            return ToolResult(self.name, False, "", error)
+        if not result.success:
+            return ToolResult(self.name, False, "", error)
+        return ToolResult(self.name, True, "Search provider: DuckDuckGo (Tavily unavailable).\n" + result.output)
+
+    async def run(self, input_text: str) -> ToolResult:
+        query = input_text.strip()[:500]
+        if not query:
+            return ToolResult(self.name, False, "", "Search query is empty.")
+        headers = (
+            {"Authorization": f"Bearer {self._api_key}"}
+            if self._api_key
+            else {"X-Tavily-Access-Mode": "keyless"}
+        )
+        succeeded = False
+        try:
+            response = await safe_post(
+                self.url, headers=headers, max_redirects=0,
+                json_body={"query": query, "max_results": 5, "include_answer": False},
+            )
+            response.raise_for_status()
+            payload = response.json()
+            if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
+                raise ValueError("Invalid Tavily response")
+            sources = []
+            for result in payload["results"][:5]:
+                if not isinstance(result, dict):
+                    continue
+                url = result.get("url")
+                if not isinstance(url, str) or len(url) > 2000 or any(c.isspace() for c in url):
+                    continue
+                try:
+                    parsed = urlsplit(url)
+                except ValueError:
+                    continue
+                if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+                        or parsed.username is not None or parsed.password is not None):
+                    continue
+                title = result.get("title")
+                content = result.get("content")
+                title = " ".join(title[:240].split()) if isinstance(title, str) else ""
+                content = " ".join(content[:640].split()) if isinstance(content, str) else ""
+                sources.append(f"- {title or parsed.hostname}\n  {url}\n  {content}")
+            output = "\n".join(sources) or "No results found."
+            result = ToolResult(self.name, True, sanitize_tool_output(output))
+            succeeded = True
+            return result
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            advice = " Set METIS_TAVILY_API_KEY or retry later." if status == 429 and not self._api_key else ""
+            error = f"Tavily search returned HTTP {status}.{advice}"
+            if status == 429 or 500 <= status < 600:
+                return await self._fallback(query, error)
+            return ToolResult(self.name, False, "", error)
+        except httpx.RequestError:
+            return await self._fallback(query, "Tavily search did not return a usable response.")
+        except ValueError:
+            return ToolResult(self.name, False, "", "Tavily search did not return a usable response.")
+        finally:
+            if self._report_provider is not None:
+                self._report_provider(succeeded)
 
 
 class ToolRegistry:

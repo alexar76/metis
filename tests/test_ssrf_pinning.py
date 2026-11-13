@@ -71,11 +71,12 @@ async def test_redirect_uses_original_hostname_and_drops_cross_origin_credential
 
 
 @pytest.mark.asyncio
-async def test_post_preserving_cross_origin_redirect_is_refused(monkeypatch):
+@pytest.mark.parametrize("body_field", ["data", "json_body"])
+async def test_post_preserving_cross_origin_redirect_is_refused(monkeypatch, body_field):
     monkeypatch.setattr(socket, "getaddrinfo", lambda *args, **kwargs: _dns("93.184.216.34"))
     real_client = httpx.AsyncClient
     transport = httpx.MockTransport(lambda request:
                                    httpx.Response(307, headers={"Location": "https://other.example/"}))
     monkeypatch.setattr(ssrf.httpx, "AsyncClient", lambda **kwargs: real_client(transport=transport, **kwargs))
     with pytest.raises(ValueError, match="another origin"):
-        await ssrf.safe_post("https://search.example/", data={"private-query": "local test"})
+        await ssrf.safe_post("https://search.example/", **{body_field: {"private-query": "local test"}})
