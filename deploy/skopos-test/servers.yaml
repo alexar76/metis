@@ -114,3 +114,12 @@ servers:
       access_log_path: /var/log/nginx/access.log
       auto_discover_logs: true
       auto_discover_docker_logs: false
+
+  - name: histor-vps
+    source: ssh_nginx_access_log
+    transport: agent-push
+    address: histor.modelmarket.dev
+    nginx:
+      access_log_path: /var/log/nginx/access.log
+      auto_discover_logs: true
+      auto_discover_docker_logs: false
