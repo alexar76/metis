@@ -39,7 +39,7 @@ metis_1:
       base_url: https://api.deepseek.com/v1
       api_key_env: DEEPSEEK_API_KEY
     # $0.30 / $1.20
-    - model: minimax/minimax-m3
+    - model: qwen/qwen4-max
       base_url: https://openrouter.ai/api/v1
       api_key_env: OPENROUTER_API_KEY
       extra_headers: {HTTP-Referer: "https://metis.modelmarket.dev", X-Title: "Metis jury"}
