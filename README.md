@@ -82,6 +82,7 @@ docker compose up -d
 | **Research** | [EN](docs/en/RESEARCH.md) · [RU](docs/ru/RESEARCH.md) · [ES](docs/es/RESEARCH.md) |
 | **Wiki** | [Home](https://github.com/alexar76/metis/blob/main/wiki/Home.md) · [Quick Start](https://github.com/alexar76/metis/blob/main/wiki/Quick-Start.md) · [FAQ](https://github.com/alexar76/metis/blob/main/wiki/FAQ.md) |
 | **Landing page** | [Live demo](https://metis.modelmarket.dev/) · [docs/landing/index.html](docs/landing/index.html) · [deploy guide](docs/landing/README.md) |
+| **Live verify example** | [`examples/verify_live.py`](examples/verify_live.py) — `AIMARKET_METIS_KEY` → `POST /v1/verify` |
 | **Changelog** | [CHANGELOG.md](CHANGELOG.md) · [RELEASE.md](RELEASE.md) |
 
 ## Ecosystem map

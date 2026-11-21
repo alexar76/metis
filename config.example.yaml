@@ -143,17 +143,13 @@ modules:
     temperature: 0.1
 
 # --- MCP ecosystem tools ---
+# aimarket-web → aimarket-mcp: SSRF-hardened web_fetch / web_search / metis_verify
+# https://github.com/alexar76/aimarket-mcp
 enable_mcp_tools: true
 mcp_ecosystem_presets:
+  - aimarket-web
   - aimarket-oracle-gateway
 mcp_servers:
-  - name: aimarket-oracle-gateway
-    transport: stdio
-    command: python
-    args: ["-m", "aimarket_oracle_gateway.stdio_server"]
-    env:
-      AIMARKET_HUB_URL: https://modelmarket.dev
-    tool_prefix: oracle
   - name: example-sse-server
     transport: sse
     url: http://localhost:3001/sse

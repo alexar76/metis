@@ -101,6 +101,17 @@
   .card button.ghost{background:transparent;color:var(--muted)}
   .loader{position:fixed;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--muted);font:13px ui-monospace,monospace;letter-spacing:.2em;transition:opacity .6s}
   .loader.hide{opacity:0;pointer-events:none}
+  .help-btn{pointer-events:auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);
+    background:var(--glass);backdrop-filter:blur(8px);color:var(--ink);cursor:pointer;font:700 14px ui-sans-serif,system-ui,sans-serif;
+    display:inline-flex;align-items:center;justify-content:center;transition:.2s}
+  .help-btn:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,229,255,.25);color:var(--cyan)}
+  #help{position:fixed;z-index:6;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,4,10,.7);backdrop-filter:blur(4px)}
+  #help.show{display:flex}
+  #help .card{width:min(420px,92vw)}
+  #help dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:13px;line-height:1.4}
+  #help dt{color:var(--cyan);font:600 11px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;white-space:nowrap}
+  #help dd{margin:0;color:var(--ink)}
+  #help .help-foot{margin:14px 0 0;color:var(--muted);font-size:11px;line-height:1.45}
 
   /* ── cognition panel — live view of Metis's real thought process ────────── */
   #cog{position:fixed;z-index:5;left:22px;top:118px;width:302px;
@@ -180,6 +191,7 @@
     <a href="https://github.com/alexar76/metis" target="_blank" rel="noreferrer">GitHub ↗</a>
     <a href="https://github.com/alexar76/metis#readme" target="_blank" rel="noreferrer">Docs ↗</a>
     <a href="#" id="cfgOpen">⚙ Connect</a>
+    <button type="button" class="help-btn" id="helpOpen" aria-label="Help" title="Help (?)">?</button>
   </nav>
 </header>
 
@@ -248,6 +260,25 @@
     <div class="row">
       <button id="cfgSave" data-i18n="cfg_save">Save</button>
       <button class="ghost" id="cfgClose" data-i18n="cfg_cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="card">
+    <h3 id="helpTitle" data-i18n="help_title">Controls</h3>
+    <p data-i18n="help_desc">Star, language, and chat — nothing here blocks Connect or Send.</p>
+    <dl>
+      <dt data-i18n="help_rotate_k">Drag / grab</dt><dd data-i18n="help_rotate_v">Rotate the star</dd>
+      <dt data-i18n="help_zoom_k">Scroll / pinch</dt><dd data-i18n="help_zoom_v">Zoom in and out</dd>
+      <dt data-i18n="help_lang_k">EN · RU · ES · FR · ZH</dt><dd data-i18n="help_lang_v">Language toggle (UI + answer language)</dd>
+      <dt data-i18n="help_enter_k">Enter</dt><dd data-i18n="help_enter_v">Send the chat message</dd>
+      <dt data-i18n="help_q_k">? / Shift+/</dt><dd data-i18n="help_q_v">Open or close this help</dd>
+      <dt data-i18n="help_esc_k">Esc</dt><dd data-i18n="help_esc_v">Close help or Connect</dd>
+    </dl>
+    <p class="help-foot" data-i18n="help_foot">Use ⚙ Connect for a live Metis URL and optional API key. Cognition panel: ◵ chip (desktop).</p>
+    <div class="row">
+      <button class="ghost" id="helpClose" data-i18n="help_close">Close</button>
     </div>
   </div>
 </div>
@@ -480,6 +511,15 @@ const I18N = {
     max_img:"Up to 5 images per message.",
     connected_ok:"Connected — ask away.", saved_unreach:"Saved, but the endpoint is not reachable (CORS / offline) — demo mode until it responds.", demo_mode:"Demo mode.",
     answer_directive:"Always reply in English, regardless of the language of the question.",
+    help_title:"Controls", help_desc:"Star, language, and chat — nothing here blocks Connect or Send.",
+    help_rotate_k:"Drag / grab", help_rotate_v:"Rotate the star",
+    help_zoom_k:"Scroll / pinch", help_zoom_v:"Zoom in and out",
+    help_lang_k:"EN · RU · ES · FR · ZH", help_lang_v:"Language toggle (UI + answer language)",
+    help_enter_k:"Enter", help_enter_v:"Send the chat message",
+    help_q_k:"? / Shift+/", help_q_v:"Open or close this help",
+    help_esc_k:"Esc", help_esc_v:"Close help or Connect",
+    help_foot:"Use ⚙ Connect for a live Metis URL and optional API key. Cognition panel: ◵ chip (desktop).",
+    help_close:"Close",
   },
   ru: {
     trustline:"Агенты уже умеют платить друг другу. Мы делаем так, чтобы они могли друг другу доверять.",
@@ -959,6 +999,9 @@ function speak(t){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtt
 
 // settings
 const cfgModal=document.getElementById('cfg');
+const helpModal=document.getElementById('help');
+const closeHelp=()=>helpModal.classList.remove('show');
+const openHelp=()=>helpModal.classList.add('show');
 document.getElementById('cfgOpen').onclick=e=>{ e.preventDefault();
   document.getElementById('cfgUrl').value=cfg.url||''; document.getElementById('cfgKey').value=cfg.key||''; cfgModal.classList.add('show'); };
 document.getElementById('cfgClose').onclick=()=>cfgModal.classList.remove('show');
@@ -968,6 +1011,19 @@ document.getElementById('cfgSave').onclick=async()=>{
   const ok=await probeConnection();
   add('sys', !cfg.url ? t('demo_mode') : (ok ? t('connected_ok') : t('saved_unreach')));
 };
+document.getElementById('helpOpen').onclick=()=>openHelp();
+document.getElementById('helpClose').onclick=()=>closeHelp();
+helpModal.addEventListener('click',e=>{ if(e.target===helpModal) closeHelp(); });
+cfgModal.addEventListener('click',e=>{ if(e.target===cfgModal) cfgModal.classList.remove('show'); });
+addEventListener('keydown',e=>{
+  const tag=(e.target && e.target.tagName || '').toLowerCase();
+  const typing = tag==='input' || tag==='textarea';
+  if(e.key==='Escape'){ closeHelp(); cfgModal.classList.remove('show'); return; }
+  if(!typing && (e.key==='?' || (e.key==='/' && e.shiftKey))){
+    e.preventDefault();
+    helpModal.classList.toggle('show');
+  }
+});
 </script>
 </body>
 </html>
