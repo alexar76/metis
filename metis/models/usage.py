@@ -7,7 +7,7 @@ import json
 import logging
 import os
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from time import monotonic
 from urllib.parse import urlsplit
@@ -68,7 +68,7 @@ def _fields(body, host, anthropic):
 def model_usage(slot, url, mcp_servers, *, anthropic=False):
     started = monotonic()
     host = urlsplit(url).hostname
-    stamp = datetime.now(UTC).isoformat()
+    stamp = datetime.now(timezone.utc).isoformat()
     observed = {}
     outcome = "error"
     try:
