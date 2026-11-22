@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, List, Optional
+from urllib.parse import urlsplit
 
 import httpx
 
 from metis.config import ModelSlot, ProviderKind, RuntimeConfig
+from metis.models.usage import MCPToolRef, model_usage, sent_mcp
 
 # Model-name fragments that indicate native vision (multimodal input) support.
 _VISION_HINTS = (
@@ -34,6 +36,8 @@ def model_supports_vision(slot: ModelSlot) -> bool:
 class Message:
     role: str
     content: Any  # str for text, or a list of OpenAI content parts for multimodal
+    mcp_tools: tuple[MCPToolRef, ...] = ()
+    mcp_results: tuple[MCPToolRef, ...] = ()
 
 
 @dataclass
@@ -55,9 +59,9 @@ class LLMProvider(ABC):
     ) -> LLMResponse:
         ...
 
-    async def complete_text(self, system: str, user: str, **kwargs) -> str:
+    async def complete_text(self, system: str, user: str, *, mcp_tools=(), mcp_results=(), **kwargs) -> str:
         resp = await self.complete(
-            [Message("system", system), Message("user", user)],
+            [Message("system", system, mcp_tools=mcp_tools), Message("user", user, mcp_results=mcp_results)],
             **kwargs,
         )
         return resp.content
@@ -129,7 +133,8 @@ class OpenAICompatProvider(LLMProvider):
         for key, value in (getattr(self.slot, "extra_body", None) or {}).items():
             if key not in ("model", "messages"):
                 payload[key] = value
-        data = await self._post(payload)
+        mcp_servers = sent_mcp(messages)
+        data = await self._post(payload, mcp_servers=mcp_servers)
         choice = data["choices"][0]
         msg = choice["message"]
         if msg.get("reasoning_content"):
@@ -141,7 +146,7 @@ class OpenAICompatProvider(LLMProvider):
         # clean, complete content — not an empty string and not raw chain-of-thought.
         if not content and msg.get("reasoning_content") and choice.get("finish_reason") == "length":
             payload["max_tokens"] = min(max(requested * 4, self._REASONING_TOKEN_FLOOR), self._REASONING_RETRY_CAP)
-            data = await self._post(payload)
+            data = await self._post(payload, mcp_servers=mcp_servers)
             choice = data["choices"][0]
             msg = choice["message"]
             content = (msg.get("content") or "").strip()
@@ -151,10 +156,16 @@ class OpenAICompatProvider(LLMProvider):
             content = (msg.get("content") or msg.get("reasoning_content") or "").strip()
         return LLMResponse(content=content, model=self.slot.model, usage=data.get("usage", {}), raw=data)
 
-    async def _post(self, payload: dict) -> dict:
-        r = await self._client.post("/chat/completions", json=payload)
-        r.raise_for_status()
-        return r.json()
+    async def _post(self, payload: dict, *, mcp_servers: list[dict]) -> dict:
+        if urlsplit(self.slot.base_url).hostname == "openrouter.ai":
+            payload["usage"] = {"include": True}
+        with model_usage(self.slot, self.slot.base_url, mcp_servers) as usage:
+            response = await self._client.post("/chat/completions", json=payload)
+            usage["response"] = response
+            response.raise_for_status()
+            data = response.json()
+            usage["body"] = data
+            return data
 
     async def aclose(self) -> None:
         await self._client.aclose()
@@ -192,7 +203,7 @@ class _IdentityProvider(LLMProvider):
         out = list(messages)
         for i, m in enumerate(out):
             if m.role == "system" and isinstance(m.content, str):
-                out[i] = Message("system", f"{self._identity}\n\n{m.content}")
+                out[i] = replace(m, content=f"{self._identity}\n\n{m.content}")
                 break
         else:
             out = [Message("system", self._identity), *out]

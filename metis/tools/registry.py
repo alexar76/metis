@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 import httpx
 from metis.economy.meter import get_current_meter
 from metis.models.provider import LLMProvider, extract_json
+from metis.models.usage import MCPToolRef
 from metis.observability.logging.pipeline_events import PipelineEventKind, emit_pipeline_event
 from metis.security import sanitize_tool_output
 from metis.security.ssrf import safe_post, validate_url
@@ -28,6 +29,7 @@ class ToolResult:
     success: bool
     output: str
     error: str = ""
+    mcp_server: str | None = None
 
 
 def _child_rlimits() -> None:
@@ -59,6 +61,7 @@ def _child_rlimits() -> None:
 class Tool(ABC):
     name: str
     description: str
+    mcp_server: str | None = None
 
     @abstractmethod
     async def run(self, input_text: str) -> ToolResult:
@@ -270,12 +273,16 @@ class ToolRegistry:
     def descriptions(self) -> str:
         return "\n".join(f"- {t.name}: {t.description}" for t in self._tools.values())
 
+    def mcp_tool_refs(self) -> tuple[MCPToolRef, ...]:
+        return tuple((tool.mcp_server, tool.name) for tool in self._tools.values() if tool.mcp_server)
+
     async def execute(self, name: str, input_text: str) -> ToolResult:
         tool = self._tools.get(name)
         if not tool:
             return ToolResult(name, False, "", f"Unknown tool: {name}")
         start = time.perf_counter()
         result = await tool.run(input_text)
+        result.mcp_server = tool.mcp_server
         latency_ms = (time.perf_counter() - start) * 1000
         emit_pipeline_event(
             PipelineEventKind.SEARCH_CALL if name == "web_search" else PipelineEventKind.TOOL_CALL,
@@ -310,6 +317,7 @@ async def agentic_tool_step(
     *,
     context: str = "",
     observations: list[str] | None = None,
+    observation_sources: tuple[MCPToolRef, ...] = (),
 ) -> tuple[str | None, ToolResult | None]:
     """One tool-use decision step. Returns (final_answer, tool_result)."""
     obs = "\n".join(observations or [])
@@ -324,6 +332,8 @@ async def agentic_tool_step(
         TOOL_USE_SYSTEM.format(tools=registry.descriptions()),
         user,
         temperature=0.2,
+        mcp_tools=registry.mcp_tool_refs(),
+        mcp_results=observation_sources if obs else (),
     )
     try:
         data = extract_json(raw)

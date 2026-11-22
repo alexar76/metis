@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 class MessagePayload(BaseModel):
     role: str = Field(..., min_length=1, max_length=32)
     content: str = Field(..., max_length=100_000)
+    mcp_tools: tuple[tuple[str, str], ...] = ()
+    mcp_results: tuple[tuple[str, str], ...] = ()
 
 
 class InvokeRequest(BaseModel):

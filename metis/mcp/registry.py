@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 class MCPTool(Tool):
     """Wraps one MCP tool as a Metis Tool."""
 
-    def __init__(self, client: MCPClient, name: str, description: str, input_schema: dict):
+    def __init__(self, client: MCPClient, name: str, description: str, input_schema: dict, *, server: str | None = None):
+        self.mcp_server = server
         self._client = client
         self.name = name
         self.description = description
@@ -68,7 +69,7 @@ async def load_mcp_tools(
             await client.connect()
             descriptors = await client.list_tools()
             for desc in descriptors:
-                registry.register(MCPTool(client, desc.name, desc.description, desc.input_schema))
+                registry.register(MCPTool(client, desc.name, desc.description, desc.input_schema, server=cfg.name))
                 loaded += 1
             logger.info("Loaded %d tools from MCP server '%s'", len(descriptors), cfg.name)
         except MCPConnectionError as e:

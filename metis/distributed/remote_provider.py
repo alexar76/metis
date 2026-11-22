@@ -56,13 +56,14 @@ class RemoteLLMProvider(LLMProvider):
         request_id = str(uuid.uuid4())
         payload = InvokeRequest(
             model=self.slot.model,
-            messages=[MessagePayload(role=m.role, content=m.content) for m in messages],
+            messages=[MessagePayload(role=m.role, content=m.content, mcp_tools=m.mcp_tools, mcp_results=m.mcp_results)
+                      for m in messages],
             temperature=temperature if temperature is not None else self.slot.temperature,
             max_tokens=max_tokens or self.slot.max_tokens,
             request_id=request_id,
             caller_node=self.source_id,
         )
-        body = payload.model_dump_json().encode("utf-8")
+        body = payload.model_dump_json(exclude_defaults=True).encode("utf-8")
         nodes_to_try = [self.node]
         if self.registry:
             nodes_to_try.extend(

@@ -483,7 +483,7 @@ def test_a_jury_route_without_a_roster_is_a_clear_400(tmp_path, client_for):
 def test_omit_temperature_reaches_the_wire(monkeypatch):
     sent = {}
 
-    async def _post(self, payload):
+    async def _post(self, payload, *, mcp_servers):
         sent.update(payload)
         return {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}
 
@@ -615,7 +615,7 @@ def test_extra_body_is_merged_but_never_replaces_model_or_messages():
     provider = OpenAICompatProvider(slot)
     sent = {}
 
-    async def fake_post(payload):
+    async def fake_post(payload, *, mcp_servers):
         sent.update(payload)
         return {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}
 

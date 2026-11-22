@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from metis.config import RuntimeConfig
 from metis.memory.store import EpisodicMemory, WorkingMemory
 from metis.models.provider import create_provider, extract_json
+from metis.models.usage import MCPToolRef
 from metis.schemas.task_spec import TaskSpec
 from metis.tools.registry import ToolRegistry, agentic_tool_step
 
@@ -40,6 +41,7 @@ async def run_agent_loop(
     working = working or WorkingMemory()
     episodic = episodic or EpisodicMemory()
     state = AgentState()
+    mcp_observations: dict[int, MCPToolRef] = {}
 
     context = task_spec.to_context()
     if episodic.summary():
@@ -71,11 +73,14 @@ async def run_agent_loop(
             tools,
             context=context,
             observations=state.observations,
+            observation_sources=tuple(mcp_observations.values()),
         )
 
         # Observe
         if tool_result:
             obs = f"Tool {tool_result.name}: success={tool_result.success}\n{tool_result.output or tool_result.error}"
+            if tool_result.mcp_server:
+                mcp_observations[len(state.observations)] = (tool_result.mcp_server, tool_result.name)
             state.observations.append(obs)
             episodic.record(f"tool:{tool_result.name}", obs[:300], tool_result.success)
         elif answer:
@@ -87,6 +92,7 @@ async def run_agent_loop(
             REFLECT_SYSTEM,
             f"Plan: {state.plan}\nStep: {current}\nObservations:\n" + "\n".join(state.observations[-3:]),
             temperature=0.2,
+            mcp_results=tuple(ref for i, ref in mcp_observations.items() if i >= len(state.observations) - 3),
         )
         try:
             reflection = extract_json(reflect_raw)

@@ -8,6 +8,7 @@ import httpx
 
 from metis.config import ModelSlot
 from metis.models.provider import LLMProvider, LLMResponse, Message
+from metis.models.usage import model_usage, sent_mcp
 
 
 class AnthropicProvider(LLMProvider):
@@ -56,9 +57,14 @@ class AnthropicProvider(LLMProvider):
         if getattr(self.slot, "omit_temperature", False):
             payload.pop("temperature")
 
-        r = await self._client.post(self._url, json=payload)
-        r.raise_for_status()
-        data = r.json()
+        with model_usage(self.slot, self._url, sent_mcp(
+            m for m in messages if m.role in ("system", "user", "assistant")
+        ), anthropic=True) as observed:
+            response = await self._client.post(self._url, json=payload)
+            observed["response"] = response
+            response.raise_for_status()
+            data = response.json()
+            observed["body"] = data
         content_blocks = data.get("content", [])
         text = ""
         for block in content_blocks:

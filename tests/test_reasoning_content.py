@@ -24,7 +24,7 @@ def _script(provider, responses):
     """Monkeypatch _post to return scripted responses and record sent payloads."""
     sent = []
 
-    async def fake_post(payload):
+    async def fake_post(payload, *, mcp_servers):
         sent.append(dict(payload))
         return responses[min(len(sent) - 1, len(responses) - 1)]
 

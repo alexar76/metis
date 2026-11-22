@@ -138,7 +138,8 @@ def create_app(
             payload = InvokeRequest(**json.loads(body))
         except (json.JSONDecodeError, ValueError) as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        messages = [Message(m.role, m.content) for m in payload.messages]
+        messages = [Message(m.role, m.content, mcp_tools=m.mcp_tools, mcp_results=m.mcp_results)
+                    for m in payload.messages]
         resp = await provider.complete(messages, temperature=payload.temperature, max_tokens=payload.max_tokens)
         return InvokeResponse(content=resp.content, model=resp.model, usage=resp.usage, node_id=node_id)
 
